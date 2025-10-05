@@ -1,0 +1,91 @@
+---
+title: "ETC5521 Diving Deeper into Data Exploration: Project Part 1"
+author: "WRITE YOUR NAME HERE"
+date: "Oct 6, 2025"
+quarto-required: ">=1.8.0"
+format:
+    html: 
+        output-file: report.html
+        css: "assignment.css"
+        embed-resources: true
+---
+
+```{r}
+#| echo: false
+# Set up chunk for all slides
+knitr::opts_chunk$set(
+  fig.width = 6,
+  fig.height = 4,
+  fig.align = "center",
+  out.width = "100%",
+  code.line.numbers = FALSE,
+  fig.retina = 4,
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  cache = FALSE,
+  dev.args = list(pointsize = 11)
+)
+```
+
+```{r}
+#| echo: false
+# Load libraries
+library(tidyverse)
+library(conflicted)
+
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(dplyr::select)
+conflicts_prefer(dplyr::slice)
+
+# Plot options and themes
+options(
+  digits = 2,
+  width = 60,
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis",
+  ggplot2.discrete.colour = c("#D55E00", "#0072B2", "#009E73", "#CC79A7", "#E69F00", "#56B4E9", "#F0E442"),
+  ggplot2.discrete.fill = c("#D55E00", "#0072B2", "#009E73", "#CC79A7", "#E69F00", "#56B4E9", "#F0E442")
+)
+
+theme_set(theme_bw(base_size = 14) +
+   theme(
+     aspect.ratio = 1,
+     plot.background = element_rect(fill = 'transparent', colour = NA),
+     plot.title.position = "plot",
+     plot.title = element_text(size = 24),
+     panel.background = element_rect(fill = 'transparent', colour = NA),
+     legend.background = element_rect(fill = 'transparent', colour = NA),
+     legend.key = element_rect(fill = 'transparent', colour = NA)
+   )
+)
+```
+
+
+## Introduction 
+
+## Data description
+
+## IDA
+
+
+## EDA
+
+## Conclusions
+
+
+## Resources
+
+The materials used for this report are:
+
+Wickham H, Averick M, Bryan J, Chang W, McGowan LD, François R,
+  Grolemund G, Hayes A, Henry L, Hester J, Kuhn M, Pedersen TL,
+  Miller E, Bache SM, Müller K, Ooms J, Robinson D, Seidel DP, Spinu
+  V, Takahashi K, Vaughan D, Wilke C, Woo K, Yutani H (2019).
+  "Welcome to the tidyverse." _Journal of Open Source Software_,
+  *4*(43), 1686. [doi:10.21105/joss.01686](https://doi.org/10.21105/joss.01686).
+
+The links to my use of ChatGPT for help on this assignment are:
+
+- [https://chatgpt.com/share/68857a22-debc-8001-bfcc-10552befba4c]() helped to XXX.
+
