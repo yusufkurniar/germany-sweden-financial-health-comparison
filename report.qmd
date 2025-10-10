@@ -1,6 +1,6 @@
 ---
 title: "ETC5521 Diving Deeper into Data Exploration: Project Part 1"
-author: "project-wallaby"
+author: "P1-wallaby"
 date: "Oct 6, 2025"
 quarto-required: ">=1.8.0"
 format:
@@ -61,21 +61,113 @@ theme_set(theme_bw(base_size = 14) +
 )
 ```
 
+```{r load-library}
+library(dplyr)
+library(stringr)
+```
+
 
 ## Introduction 
-AAA
+
+- Yusuf:
+
+- Rimlan:
+
+- Bhuva:
+
+- Jingyi:
 
 ## Data description
-AAA
+
+- Yusuf:
+
+```{r read-data}
+#define the folder
+data_directory <- "osiris"
+
+#filter only germany
+germany_file_paths <- list.files(
+  data_directory,
+  pattern = "^osiris_?Germany_(2018|2019|2020|2021)\\.rda$",
+  full.names = TRUE,
+  ignore.case = TRUE
+)
+
+#name the list by file stems
+germany_file_stems <- tools::file_path_sans_ext(basename(germany_file_paths))
+osiris_germany <- setNames(vector("list", length(germany_file_paths)), germany_file_stems)
+
+#load each file
+for (file_index in seq_along(germany_file_paths)) {
+  temporary_environment <- new.env(parent = emptyenv())
+  load(germany_file_paths[file_index], envir = temporary_environment)
+  loaded_objects <- as.list(temporary_environment)
+
+  #If the file holds one object, store that object; otherwise store the sub-list
+  osiris_germany[[file_index]] <- if (length(loaded_objects) == 1) loaded_objects[[1]] else loaded_objects
+}
+
+#quick check
+str(osiris_germany, max.level = 1)
+```
+
+```{r}
+#build a single data frame with a 'year' column taken from the filename
+combined_germany <- {
+  germany_parts <- vector("list", length(osiris_germany))
+  names(germany_parts) <- names(osiris_germany)
+
+  for (file_stem in names(osiris_germany)) {
+    data_frame_from_file <- osiris_germany[[file_stem]]
+    extracted_year <- as.integer(str_extract(file_stem, "\\d{4}"))
+
+    germany_parts[[file_stem]] <- mutate(data_frame_from_file, year = extracted_year)
+  }
+
+  #bind and sort by year (optional)
+  bind_rows(germany_parts) |>
+    arrange(year)
+}
+
+glimpse(combined_germany)
+```
+
+
+- Rimlan:
+
+- Bhuva:
+
+- Jingyi:
 
 ## IDA
-AAA
+
+- Yusuf:
+
+- Rimlan:
+
+- Bhuva:
+
+- Jingyi:
 
 ## EDA
-AAA
+
+- Yusuf:
+
+- Rimlan:
+
+- Bhuva:
+
+- Jingyi:
 
 ## Conclusions
-AAA
+
+- Yusuf:
+
+- Rimlan:
+
+- Bhuva:
+
+- Jingyi:
 
 ## Resources
 
