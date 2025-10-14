@@ -128,14 +128,11 @@ glimpse(combined_germany)
 ```
 
 
+### Research Question:
 
+**Which industries in Germany showed unexpected financial resilience or vulnerability during 2020–2022?**
 
-## IDA
-
-
-
-## EDA
-
+This analysis focuses on identifying which sectors of the German economy experienced stronger-than-expected recovery or greater-than-expected financial stress during the pandemic period. By examining patterns in profitability, leverage, and liquidity across industries, we aim to uncover how structural and sectoral factors influenced firms’ ability to withstand and rebound from the economic disruptions of COVID-19.
 
 
 ## Conclusions
