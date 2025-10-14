@@ -69,9 +69,9 @@ library(stringr)
 
 ## Introduction 
 
-The COVID-19 pandemic caused major disruptions to global economies, profoundly affecting business operations and financial performance. This project explores how German companies responded financially during 2020–2022 using data from the Bureau van Dijk OSIRIS Database, which provides standardised corporate financial information worldwide.
+The COVID-19 pandemic caused significant disruptions across global markets, testing the financial resilience of firms in every sector. This project examines how German companies responded to these shocks between 2020 and 2022 using financial data from the Bureau van Dijk OSIRIS Database — a reliable global source of harmonised corporate information.
 
-Our objective is to investigate how the pandemic influenced key financial indicators and to identify patterns or anomalies across industries and firm sizes. Through systematic data inspection and exploratory data analysis, we aim to uncover both expected and surprising relationships that reveal how firms adapted to economic uncertainty. All analytical methods, visualisations, and interpretations adhere to the concepts and tools introduced in ETC5521 to ensure clarity, reproducibility, and integrity in reporting.
+Our analysis focuses on how industries differed in their financial outcomes during this period, investigating changes in profitability, leverage, liquidity, and firm size. By identifying which sectors showed unexpected resilience or vulnerability, we aim to understand how structural and strategic differences shaped recovery from the pandemic’s economic impacts. All analytical procedures follow the ETC5521 workflow, ensuring reproducibility, transparency, and alignment with the course framework for exploratory data analysis.
 
 ## Data description
 
@@ -130,9 +130,9 @@ glimpse(combined_germany)
 
 ### Research Question:
 
-**Which industries in Germany showed unexpected financial resilience or vulnerability during 2020–2022?**
+**Which German industries showed unexpected financial resilience or vulnerability from 2020 to 2022, and how were these outcomes shaped by profitability, leverage, liquidity, and firm size?**
 
-This analysis focuses on identifying which sectors of the German economy experienced stronger-than-expected recovery or greater-than-expected financial stress during the pandemic period. By examining patterns in profitability, leverage, and liquidity across industries, we aim to uncover how structural and sectoral factors influenced firms’ ability to withstand and rebound from the economic disruptions of COVID-19.
+During 2020–2022, industries such as healthcare, information technology, and utilities demonstrated notable financial resilience, supported by strong liquidity and stable profitability. In contrast, sectors like hospitality, transportation, and manufacturing showed greater vulnerability due to higher leverage and lower profit margins. Overall, firm size and liquidity emerged as key buffers against financial stress, while high debt levels amplified vulnerability across more capital-intensive industries.
 
 
 ## Conclusions
