@@ -69,17 +69,12 @@ library(stringr)
 
 ## Introduction 
 
-- Yusuf:
+The COVID-19 pandemic caused major disruptions to global economies, profoundly affecting business operations and financial performance. This project explores how German companies responded financially during 2020–2022 using data from the Bureau van Dijk OSIRIS Database, which provides standardised corporate financial information worldwide.
 
-- Rimlan:
-
-- Bhuva:
-
-- Jingyi:
+Our objective is to investigate how the pandemic influenced key financial indicators and to identify patterns or anomalies across industries and firm sizes. Through systematic data inspection and exploratory data analysis, we aim to uncover both expected and surprising relationships that reveal how firms adapted to economic uncertainty. All analytical methods, visualisations, and interpretations adhere to the concepts and tools introduced in ETC5521 to ensure clarity, reproducibility, and integrity in reporting.
 
 ## Data description
 
-- Yusuf:
 
 ```{r read-data}
 #define the folder
@@ -133,41 +128,19 @@ glimpse(combined_germany)
 ```
 
 
-- Rimlan:
 
-- Bhuva:
-
-- Jingyi:
 
 ## IDA
 
-- Yusuf:
 
-- Rimlan:
-
-- Bhuva:
-
-- Jingyi:
 
 ## EDA
 
-- Yusuf:
 
-- Rimlan:
-
-- Bhuva:
-
-- Jingyi:
 
 ## Conclusions
 
-- Yusuf:
 
-- Rimlan:
-
-- Bhuva:
-
-- Jingyi:
 
 ## Resources
 
