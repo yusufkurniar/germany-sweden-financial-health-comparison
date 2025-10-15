@@ -125,13 +125,12 @@ combined_germany <- {
   bind_rows(germany_parts) |>
     arrange(year)
 }
-
-glimpse(combined_germany)
 ```
 
 ```{r data-cleaning}
 filtered_germany <- combined_germany |>
   clean_names() |>
+  
   rename(
     #IDs / scope (used in all questions)
     company_name = company_name_name, #label
@@ -140,41 +139,43 @@ filtered_germany <- combined_germany |>
     country = country_country,
     city = city_city_city, #city/HQ
     consolidation_code = consolidation_code_consol_code, #consolidated vs standalone
-
+    
     #industry codes (Q1, Q2, Q4)
-    nace_code = nace_rev_1_core_code_cnacecd,
-    icb_code = industrial_classification_benchmark_icb,
-    sic_code = us_sic_core_code_csicuscde,
-
+    nace_code = nace_rev_1_core_code_cnacecd, #EU industry code (primary)
+    icb_code = industrial_classification_benchmark_icb, #ICB classification (fallback)
+    sic_code = us_sic_core_code_csicuscde, #SIC code (fallback)
+    
     #scale / balance sheet (Q2, Q3)
-    total_assets_eur      = total_assets_data13077,
-    total_liabilities_eur = total_liabilities_and_debt_data14022,
-    total_equity_eur      = total_shareholders_equity_data14041,
-
+    total_assets_eur = total_assets_data13077, #base for ratios
+    total_liabilities_eur = total_liabilities_and_debt_data14022, #debt measure
+    total_equity_eur = total_shareholders_equity_data14041, #equity capital
+    
     #revenue & profit (Q1, Q3)
-    total_revenue_eur     = total_revenues_data13004,
-    net_sales_eur         = net_sales_data13002,
-    gross_sales_eur       = gross_sales_data13000,
-    net_income_eur        = net_income_starting_line_data15500,
-
+    total_revenue_eur = total_revenues_data13004, #denominator for margins
+    net_sales_eur = net_sales_data13002, #sales denominator
+    gross_sales_eur = gross_sales_data13000, #top-line revenue
+    net_income_eur = net_income_starting_line_data15500, #used to calculate ROA/ROE
+    
     #profitability ratios (Q1, Q4)
-    ebit_margin_pct       = ebit_margin_percent_data31055,
-    ebitda_margin_pct     = ebitda_margin_percent_data31060,
-    roa_pct               = return_on_total_assets_percent_data31015,
-    roe_pct               = roe_percent_data31065,
-
+    ebit_margin_pct = ebit_margin_percent_data31055, #profitability metric (EBIT %)
+    ebitda_margin_pct = ebitda_margin_percent_data31060, #profitability metric (EBITDA %)
+    roa_pct = return_on_total_assets_percent_data31015, #return on assets
+    roe_pct = roe_percent_data31065, #return on equity
+    
     #efficiency (supporting for Q1/Q4)
-    net_assets_turnover   = net_assets_turnover_data31225,
-    stock_turnover        = stock_turnover_data31220,
-
+    net_assets_turnover = net_assets_turnover_data31225, #asset efficiency
+    stock_turnover = stock_turnover_data31220, #inventory management efficiency
+    
     #leverage, solvency, and liquidity (Q2)
-    solvency_pct          = solvency_ratio_percent_data31310,
-    gearing_pct           = gearing_percent_data31315,
-    current_ratio         = current_ratio_data31105,
-    liquidity_ratio       = liquidity_ratio_data31110,
-    shareholders_liq_pct  = shareholders_liquidity_ratio_data31305,
-    interest_cover        = interest_cover_data31115
+    solvency_pct = solvency_ratio_percent_data31310, #solvency strength
+    gearing_pct = gearing_percent_data31315, #leverage level
+    current_ratio = current_ratio_data31105, #liquidity ratio (short-term)
+    liquidity_ratio = liquidity_ratio_data31110, #alternate liquidity ratio
+    shareholders_liq_pct = shareholders_liquidity_ratio_data31305, #shareholder liquidity
+    interest_cover = interest_cover_data31115 #interest
   ) |>
+  
+  #select only relevant columns to answer the questions
   select(
     company_id, company_name, year, country, city, consolidation_code,
     nace_code, icb_code, sic_code,
@@ -185,6 +186,8 @@ filtered_germany <- combined_germany |>
     solvency_pct, gearing_pct, current_ratio, liquidity_ratio,
     shareholders_liq_pct, interest_cover
   ) |>
+  
+  #filter on the pandemic period
   filter(year %in% 2020:2022)
   
 ```
