@@ -185,10 +185,7 @@ filtered_germany <- combined_germany |>
     net_assets_turnover, stock_turnover,
     solvency_pct, gearing_pct, current_ratio, liquidity_ratio,
     shareholders_liq_pct, interest_cover
-  ) |>
-  
-  #filter on the pandemic period
-  filter(year %in% 2020:2022)
+  ) 
   
 ```
 
@@ -197,6 +194,21 @@ filtered_germany <- combined_germany |>
 **Which German industries showed unexpected financial resilience or vulnerability from 2020 to 2022, and how were these outcomes shaped by profitability, leverage, liquidity, and firm size?**
 
 During 2020–2022, industries such as healthcare, information technology, and utilities demonstrated notable financial resilience, supported by strong liquidity and stable profitability. In contrast, sectors like hospitality, transportation, and manufacturing showed greater vulnerability due to higher leverage and lower profit margins. Overall, firm size and liquidity emerged as key buffers against financial stress, while high debt levels amplified vulnerability across more capital-intensive industries.
+
+
+****
+
+
+#### 
+
+##### IDA
+
+
+```{r}
+germany_q4 <- filtered_germany %>%
+  select(company_id, year, roa_pct, current_ratio)
+```
+
 
 
 ## Conclusions
