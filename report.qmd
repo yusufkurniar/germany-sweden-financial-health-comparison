@@ -66,6 +66,8 @@ library(dplyr)
 library(stringr)
 library(janitor)
 library(skimr)
+library(knitr)
+library(kableExtra)
 ```
 
 
@@ -79,8 +81,6 @@ Our analysis focuses on how industries differed in their financial outcomes duri
 
 
 ## Data description
-
-
 
 ```{r read-data}
 #define the folder
@@ -199,6 +199,48 @@ filtered_germany <- combined_germany |>
   )
   
 ```
+
+```{r table-description}
+data_dictionary <- tribble(
+  ~`Column Name`,           ~Description,                                                                    ~`Data Type`, ~`Original Name`,
+  "company_id",             "Unique company identifier (Bureau van Dijk ID).",                               "character", "BvD ID Number (os_id_number)",
+  "company_name",           "Registered company name (label).",                                               "character", "Company Name (name)",
+  "fy_end_date",            "Company fiscal year-end date for the account.",                                  "date",      "Company Fiscal Year End Date (closdate)",
+  "fy_year",                "Year extracted from fiscal year-end date.",                                      "integer",   "derived from Company Fiscal Year End Date (closdate)",
+  "acct_year",              "Reporting year label carried from file name/field.",                             "integer",   "year",
+  "country",                "Country of head office.",                                                         "character", "Country (country)",
+  "city",                   "City of head office.",                                                            "character", "CITY - City (city)",
+  "consolidation_code",     "Consolidation scope of the accounts (e.g., C1/C2/U1/U2).",                        "character", "Consolidation Code (consol_code)",
+  "nace_code",              "NACE core code (EU industry classification).",                                    "character", "NACE Rev 1, Core Code (cnacecd)",
+  "icb_code",               "ICB industry classification code.",                                               "character", "Industrial Classification Benchmark (icb)",
+  "sic_code",               "US SIC core code.",                                                               "character", "US SIC, Core Code (csicuscde)",
+  "total_assets_eur",       "Total assets (EUR).",                                                              "numeric",   "Total Assets (data13077)",
+  "total_liabilities_eur",  "Total liabilities and debt (EUR).",                                               "numeric",   "Total Liabilities and Debt (data14022)",
+  "total_equity_eur",       "Total shareholders’ equity (EUR).",                                               "numeric",   "Total Shareholders Equity (data14041)",
+  "total_revenue_eur",      "Total revenues / operating revenue (EUR).",                                       "numeric",   "Total revenues (data13004)",
+  "net_sales_eur",          "Net sales (EUR).",                                                                 "numeric",   "Net sales (data13002)",
+  "gross_sales_eur",        "Gross sales (EUR).",                                                               "numeric",   "Gross sales (data13000)",
+  "net_income_eur",         "Net income (EUR).",                                                                "numeric",   "Net Income / Starting Line (data15500)",
+  "ebit_margin_pct",        "EBIT margin (% of sales/revenue).",                                               "numeric",   "EBIT Margin (%) (data31055)",
+  "ebitda_margin_pct",      "EBITDA margin (% of sales/revenue).",                                             "numeric",   "EBITDA Margin (%) (data31060)",
+  "roa_pct",                "Return on total assets (%).",                                                     "numeric",   "Return on Total Assets (%) (data31015)",
+  "roe_pct",                "Return on equity (%).",                                                           "numeric",   "ROE (%) (data31065)",
+  "net_assets_turnover",    "Net assets turnover (times).",                                                    "numeric",   "Net Assets Turnover (data31225)",
+  "stock_turnover",         "Stock / inventory turnover (times).",                                             "numeric",   "Stock Turnover (data31220)",
+  "solvency_pct",           "Solvency ratio (%).",                                                             "numeric",   "Solvency ratio (%) (data31310)",
+  "gearing_pct",            "Gearing ratio (%).",                                                              "numeric",   "Gearing (%) (data31315)",
+  "current_ratio",          "Current ratio (times).",                                                          "numeric",   "Current ratio (data31105)",
+  "liquidity_ratio",        "Liquidity / quick ratio (times).",                                                "numeric",   "Liquidity ratio (data31110)",
+  "shareholders_liq_pct",   "Shareholders’ liquidity ratio (%).",                                              "numeric",   "Shareholders Liquidity ratio (data31305)",
+  "interest_cover",         "Interest cover (times).",                                                         "numeric",   "Interest Cover (data31115)"
+)
+
+#show table
+data_dictionary |>
+  kable(align = "l", booktabs = TRUE) |>
+  kable_styling(full_width = FALSE, font_size = 11)
+```
+
 
 ```{r table-checking}
 
