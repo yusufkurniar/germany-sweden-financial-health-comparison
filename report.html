@@ -2247,7 +2247,8 @@ vertical-align: -.125em;
 </div>
 <section id="introduction" class="level2">
 <h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
-<p>The COVID-19 pandemic caused significant disruptions across global markets, testing the financial resilience of firms in every sector. This project examines how German companies responded to these shocks between 2020 and 2022 using financial data from the Bureau van Dijk OSIRIS Database — a reliable global source of harmonised corporate information.</p>
+<p>The COVID-19 pandemic caused significant disruptions across global markets, testing the financial resilience of firms in every sector. In Germany, the first confirmed case was recorded on 27 January 2020. Nationwide contact restrictions began on 22 March 2020. Most nationwide measures were lifted between 20 March and 2 April 2022, and the final federal provisions expired on 7 April 2023.</p>
+<p>This project examines how German companies responded to these shocks during 2020 – 2021, using financial data from the Bureau van Dijk OSIRIS Database — a reliable global source of harmonised corporate information. The dataset available for this study covers 2018 – 2021. The period from 2018–2019 provides the pre-pandemic baseline, while 2020 – 2021 captures the pandemic period. Data for 2022 are not available in this extract.</p>
 <p>Our analysis focuses on how industries differed in their financial outcomes during this period, investigating changes in profitability, leverage, liquidity, and firm size. By identifying which sectors showed unexpected resilience or vulnerability, we aim to understand how structural and strategic differences shaped recovery from the pandemic’s economic impacts. All analytical procedures follow the ETC5521 workflow, ensuring reproducibility, transparency, and alignment with the course framework for exploratory data analysis.</p>
 </section>
 <section id="data-description" class="level2">
@@ -2364,10 +2365,136 @@ vertical-align: -.125em;
 <span id="cb5-55"><a href="#cb5-55" aria-hidden="true" tabindex="-1"></a>    net_assets_turnover, stock_turnover,</span>
 <span id="cb5-56"><a href="#cb5-56" aria-hidden="true" tabindex="-1"></a>    solvency_pct, gearing_pct, current_ratio, liquidity_ratio,</span>
 <span id="cb5-57"><a href="#cb5-57" aria-hidden="true" tabindex="-1"></a>    shareholders_liq_pct, interest_cover</span>
-<span id="cb5-58"><a href="#cb5-58" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
-<span id="cb5-59"><a href="#cb5-59" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb5-60"><a href="#cb5-60" aria-hidden="true" tabindex="-1"></a>  <span class="co">#filter on the pandemic period</span></span>
-<span id="cb5-61"><a href="#cb5-61" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(year <span class="sc">%in%</span> <span class="dv">2020</span><span class="sc">:</span><span class="dv">2022</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb5-58"><a href="#cb5-58" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>num_cols <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;total_assets_eur&quot;</span>,<span class="st">&quot;total_liabilities_eur&quot;</span>,<span class="st">&quot;total_equity_eur&quot;</span>,</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;total_revenue_eur&quot;</span>,<span class="st">&quot;net_sales_eur&quot;</span>,<span class="st">&quot;gross_sales_eur&quot;</span>,<span class="st">&quot;net_income_eur&quot;</span>,</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;ebit_margin_pct&quot;</span>,<span class="st">&quot;ebitda_margin_pct&quot;</span>,<span class="st">&quot;roa_pct&quot;</span>,<span class="st">&quot;roe_pct&quot;</span>,</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;net_assets_turnover&quot;</span>,<span class="st">&quot;stock_turnover&quot;</span>,</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;solvency_pct&quot;</span>,<span class="st">&quot;gearing_pct&quot;</span>,<span class="st">&quot;current_ratio&quot;</span>,<span class="st">&quot;liquidity_ratio&quot;</span>,</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;shareholders_liq_pct&quot;</span>,<span class="st">&quot;interest_cover&quot;</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="co">#symbol formatting/coerce numerics</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>filtered_germany <span class="ot">&lt;-</span> filtered_germany <span class="sc">|&gt;</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">across</span>(<span class="fu">all_of</span>(num_cols) <span class="sc">&amp;</span> <span class="fu">where</span>(is.character), readr<span class="sc">::</span>parse_number),</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">country =</span> stringr<span class="sc">::</span><span class="fu">str_to_title</span>(country),</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">city    =</span> stringr<span class="sc">::</span><span class="fu">str_to_title</span>(city)</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a><span class="co">#missingness report check (overall and by year)</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>missing_overall <span class="ot">&lt;-</span> filtered_germany <span class="sc">|&gt;</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="fu">across</span>(<span class="fu">everything</span>(), <span class="sc">~</span> <span class="fu">mean</span>(<span class="fu">is.na</span>(.)))) <span class="sc">|&gt;</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="fu">everything</span>(), <span class="at">names_to =</span> <span class="st">&quot;variable&quot;</span>, <span class="at">values_to =</span> <span class="st">&quot;missing_rate&quot;</span>)</span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>missing_by_year <span class="ot">&lt;-</span> filtered_germany <span class="sc">|&gt;</span></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(year) <span class="sc">|&gt;</span></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="fu">across</span>(<span class="fu">everything</span>(), <span class="sc">~</span> <span class="fu">mean</span>(<span class="fu">is.na</span>(.)))) <span class="sc">|&gt;</span></span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="sc">-</span>year, <span class="at">names_to =</span> <span class="st">&quot;variable&quot;</span>, <span class="at">values_to =</span> <span class="st">&quot;missing_rate&quot;</span>)</span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a><span class="co">#sanity checks (optional but recommended)</span></span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>dup_firm_year <span class="ot">&lt;-</span> filtered_germany <span class="sc">|&gt;</span></span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(company_id, year) <span class="sc">|&gt;</span></span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(n <span class="sc">&gt;</span> <span class="dv">1</span>)</span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a>impossible_assets <span class="ot">&lt;-</span> filtered_germany <span class="sc">|&gt;</span></span>
+<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(total_assets_eur) <span class="sc">&amp;</span> total_assets_eur <span class="sc">&lt;</span> <span class="dv">0</span>)</span>
+<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a>consol_levels <span class="ot">&lt;-</span> filtered_germany <span class="sc">|&gt;</span></span>
+<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(consolidation_code, <span class="at">sort =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co">#clean 2-digit NACE as integer</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>filtered_germany <span class="ot">&lt;-</span> filtered_germany <span class="sc">|&gt;</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">nace_num2 =</span> <span class="fu">suppressWarnings</span>(<span class="fu">as.integer</span>(<span class="fu">str_sub</span>(readr<span class="sc">::</span><span class="fu">parse_number</span>(<span class="fu">as.character</span>(nace_code)), <span class="dv">1</span>, <span class="dv">2</span>)))</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="co">#map NACE divisions to broad section names</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>industry_from_nace <span class="ot">&lt;-</span> <span class="cf">function</span>(x){</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">case_when</span>(</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    x <span class="sc">%in%</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span> <span class="sc">~</span> <span class="st">&quot;Agriculture, Forestry &amp; Fishing&quot;</span>,</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    x <span class="sc">%in%</span> <span class="dv">5</span><span class="sc">:</span><span class="dv">9</span> <span class="sc">~</span> <span class="st">&quot;Mining &amp; Quarrying&quot;</span>,</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    x <span class="sc">%in%</span> <span class="dv">10</span><span class="sc">:</span><span class="dv">33</span> <span class="sc">|</span> x <span class="sc">%in%</span> <span class="dv">15</span><span class="sc">:</span><span class="dv">37</span> <span class="sc">~</span> <span class="st">&quot;Manufacturing&quot;</span>,</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    x <span class="sc">%in%</span> <span class="dv">35</span> <span class="sc">~</span> <span class="st">&quot;Electricity, Gas, Steam&quot;</span>,</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    x <span class="sc">%in%</span> <span class="dv">36</span><span class="sc">:</span><span class="dv">39</span> <span class="sc">~</span> <span class="st">&quot;Water Supply &amp; Waste&quot;</span>,</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>    x <span class="sc">%in%</span> <span class="dv">41</span><span class="sc">:</span><span class="dv">43</span> <span class="sc">~</span> <span class="st">&quot;Construction&quot;</span>,</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>    x <span class="sc">%in%</span> <span class="dv">45</span><span class="sc">:</span><span class="dv">47</span> <span class="sc">~</span> <span class="st">&quot;Wholesale &amp; Retail Trade&quot;</span>,</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>    x <span class="sc">%in%</span> <span class="dv">49</span><span class="sc">:</span><span class="dv">53</span> <span class="sc">~</span> <span class="st">&quot;Transport &amp; Storage&quot;</span>,</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>    x <span class="sc">%in%</span> <span class="dv">55</span><span class="sc">:</span><span class="dv">56</span> <span class="sc">~</span> <span class="st">&quot;Accommodation &amp; Food&quot;</span>,</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>    x <span class="sc">%in%</span> <span class="dv">58</span><span class="sc">:</span><span class="dv">63</span> <span class="sc">~</span> <span class="st">&quot;Information &amp; Communication&quot;</span>,</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>    x <span class="sc">%in%</span> <span class="dv">64</span><span class="sc">:</span><span class="dv">66</span> <span class="sc">~</span> <span class="st">&quot;Financial &amp; Insurance&quot;</span>,</span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>    x <span class="sc">%in%</span> <span class="dv">68</span> <span class="sc">~</span> <span class="st">&quot;Real Estate&quot;</span>,</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>    x <span class="sc">%in%</span> <span class="dv">69</span><span class="sc">:</span><span class="dv">75</span> <span class="sc">~</span> <span class="st">&quot;Professional, Scientific &amp; Technical&quot;</span>,</span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>    x <span class="sc">%in%</span> <span class="dv">77</span><span class="sc">:</span><span class="dv">82</span> <span class="sc">~</span> <span class="st">&quot;Administrative &amp; Support&quot;</span>,</span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>    x <span class="sc">%in%</span> <span class="dv">84</span> <span class="sc">~</span> <span class="st">&quot;Public Administration&quot;</span>,</span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>    x <span class="sc">%in%</span> <span class="dv">85</span> <span class="sc">~</span> <span class="st">&quot;Education&quot;</span>,</span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>    x <span class="sc">%in%</span> <span class="dv">86</span><span class="sc">:</span><span class="dv">88</span> <span class="sc">~</span> <span class="st">&quot;Human Health &amp; Social Work&quot;</span>,</span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>    x <span class="sc">%in%</span> <span class="dv">90</span><span class="sc">:</span><span class="dv">93</span> <span class="sc">~</span> <span class="st">&quot;Arts, Entertainment &amp; Recreation&quot;</span>,</span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a>    x <span class="sc">%in%</span> <span class="dv">94</span><span class="sc">:</span><span class="dv">96</span> <span class="sc">~</span> <span class="st">&quot;Other Service Activities&quot;</span>,</span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a>    x <span class="sc">%in%</span> <span class="dv">97</span><span class="sc">:</span><span class="dv">98</span> <span class="sc">~</span> <span class="st">&quot;Household Activities&quot;</span>,</span>
+<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a>    x <span class="sc">%in%</span> <span class="dv">99</span> <span class="sc">~</span> <span class="st">&quot;Extraterritorial Organizations&quot;</span>,</span>
+<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a>    <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">NA_character_</span></span>
+<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb7-34"><a href="#cb7-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-35"><a href="#cb7-35" aria-hidden="true" tabindex="-1"></a><span class="co">#ICB top-level sector labels</span></span>
+<span id="cb7-36"><a href="#cb7-36" aria-hidden="true" tabindex="-1"></a>icb_map <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb7-37"><a href="#cb7-37" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;0001&quot;</span> <span class="ot">=</span> <span class="st">&quot;Oil &amp; Gas&quot;</span>,</span>
+<span id="cb7-38"><a href="#cb7-38" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;1000&quot;</span> <span class="ot">=</span> <span class="st">&quot;Basic Materials&quot;</span>,</span>
+<span id="cb7-39"><a href="#cb7-39" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;2000&quot;</span> <span class="ot">=</span> <span class="st">&quot;Industrials&quot;</span>,</span>
+<span id="cb7-40"><a href="#cb7-40" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;3000&quot;</span> <span class="ot">=</span> <span class="st">&quot;Consumer Goods&quot;</span>,</span>
+<span id="cb7-41"><a href="#cb7-41" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;4000&quot;</span> <span class="ot">=</span> <span class="st">&quot;Health Care&quot;</span>,</span>
+<span id="cb7-42"><a href="#cb7-42" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;5000&quot;</span> <span class="ot">=</span> <span class="st">&quot;Consumer Services&quot;</span>,</span>
+<span id="cb7-43"><a href="#cb7-43" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;6000&quot;</span> <span class="ot">=</span> <span class="st">&quot;Telecommunications&quot;</span>,</span>
+<span id="cb7-44"><a href="#cb7-44" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;7000&quot;</span> <span class="ot">=</span> <span class="st">&quot;Utilities&quot;</span>,</span>
+<span id="cb7-45"><a href="#cb7-45" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;8000&quot;</span> <span class="ot">=</span> <span class="st">&quot;Financials&quot;</span>,</span>
+<span id="cb7-46"><a href="#cb7-46" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;9000&quot;</span> <span class="ot">=</span> <span class="st">&quot;Technology&quot;</span></span>
+<span id="cb7-47"><a href="#cb7-47" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb7-48"><a href="#cb7-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-49"><a href="#cb7-49" aria-hidden="true" tabindex="-1"></a><span class="co">#normalize ICB to a 4-digit “bucket” (example: 2573 to 2000)</span></span>
+<span id="cb7-50"><a href="#cb7-50" aria-hidden="true" tabindex="-1"></a>normalize_icb <span class="ot">&lt;-</span> <span class="cf">function</span>(x){</span>
+<span id="cb7-51"><a href="#cb7-51" aria-hidden="true" tabindex="-1"></a>  x_chr <span class="ot">&lt;-</span> <span class="fu">str_extract</span>(<span class="fu">as.character</span>(x), <span class="st">&quot;</span><span class="sc">\\</span><span class="st">d+&quot;</span>)</span>
+<span id="cb7-52"><a href="#cb7-52" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ifelse</span>(<span class="fu">is.na</span>(x_chr), <span class="cn">NA_character_</span>,</span>
+<span id="cb7-53"><a href="#cb7-53" aria-hidden="true" tabindex="-1"></a>         <span class="fu">sprintf</span>(<span class="st">&quot;%04d&quot;</span>, <span class="fu">as.integer</span>(<span class="fu">floor</span>(<span class="fu">as.numeric</span>(x_chr) <span class="sc">/</span> <span class="dv">1000</span>) <span class="sc">*</span> <span class="dv">1000</span>)))</span>
+<span id="cb7-54"><a href="#cb7-54" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb7-55"><a href="#cb7-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-56"><a href="#cb7-56" aria-hidden="true" tabindex="-1"></a>filtered_germany <span class="ot">&lt;-</span> filtered_germany <span class="sc">|&gt;</span></span>
+<span id="cb7-57"><a href="#cb7-57" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb7-58"><a href="#cb7-58" aria-hidden="true" tabindex="-1"></a>    <span class="at">industry_nace =</span> <span class="fu">industry_from_nace</span>(nace_num2),</span>
+<span id="cb7-59"><a href="#cb7-59" aria-hidden="true" tabindex="-1"></a>    <span class="at">icb_bucket    =</span> <span class="fu">normalize_icb</span>(icb_code),</span>
+<span id="cb7-60"><a href="#cb7-60" aria-hidden="true" tabindex="-1"></a>    <span class="at">industry_icb  =</span> icb_map[icb_bucket],</span>
+<span id="cb7-61"><a href="#cb7-61" aria-hidden="true" tabindex="-1"></a>    <span class="at">industry_group =</span> <span class="fu">coalesce</span>(industry_nace, industry_icb, <span class="st">&quot;Other / Unmapped&quot;</span>)</span>
+<span id="cb7-62"><a href="#cb7-62" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb7-63"><a href="#cb7-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-64"><a href="#cb7-64" aria-hidden="true" tabindex="-1"></a><span class="co">#check</span></span>
+<span id="cb7-65"><a href="#cb7-65" aria-hidden="true" tabindex="-1"></a>unmapped_sample <span class="ot">&lt;-</span> filtered_germany <span class="sc">|&gt;</span></span>
+<span id="cb7-66"><a href="#cb7-66" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(industry_group <span class="sc">==</span> <span class="st">&quot;Other / Unmapped&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb7-67"><a href="#cb7-67" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(company_id, year, nace_code, icb_code) <span class="sc">|&gt;</span></span>
+<span id="cb7-68"><a href="#cb7-68" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>(<span class="dv">15</span>)</span>
+<span id="cb7-69"><a href="#cb7-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-70"><a href="#cb7-70" aria-hidden="true" tabindex="-1"></a><span class="co"># 5)factor order for plots</span></span>
+<span id="cb7-71"><a href="#cb7-71" aria-hidden="true" tabindex="-1"></a>ordered_levels <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb7-72"><a href="#cb7-72" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;Agriculture, Forestry &amp; Fishing&quot;</span>,<span class="st">&quot;Mining &amp; Quarrying&quot;</span>,<span class="st">&quot;Manufacturing&quot;</span>,</span>
+<span id="cb7-73"><a href="#cb7-73" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;Electricity, Gas, Steam&quot;</span>,<span class="st">&quot;Water Supply &amp; Waste&quot;</span>,<span class="st">&quot;Construction&quot;</span>,</span>
+<span id="cb7-74"><a href="#cb7-74" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;Wholesale &amp; Retail Trade&quot;</span>,<span class="st">&quot;Transport &amp; Storage&quot;</span>,<span class="st">&quot;Accommodation &amp; Food&quot;</span>,</span>
+<span id="cb7-75"><a href="#cb7-75" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;Information &amp; Communication&quot;</span>,<span class="st">&quot;Financial &amp; Insurance&quot;</span>,<span class="st">&quot;Real Estate&quot;</span>,</span>
+<span id="cb7-76"><a href="#cb7-76" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;Professional, Scientific &amp; Technical&quot;</span>,<span class="st">&quot;Administrative &amp; Support&quot;</span>,</span>
+<span id="cb7-77"><a href="#cb7-77" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;Public Administration&quot;</span>,<span class="st">&quot;Education&quot;</span>,<span class="st">&quot;Human Health &amp; Social Work&quot;</span>,</span>
+<span id="cb7-78"><a href="#cb7-78" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;Arts, Entertainment &amp; Recreation&quot;</span>,<span class="st">&quot;Other Service Activities&quot;</span>,</span>
+<span id="cb7-79"><a href="#cb7-79" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;Household Activities&quot;</span>,<span class="st">&quot;Extraterritorial Organizations&quot;</span>,</span>
+<span id="cb7-80"><a href="#cb7-80" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;Oil &amp; Gas&quot;</span>,<span class="st">&quot;Basic Materials&quot;</span>,<span class="st">&quot;Industrials&quot;</span>,<span class="st">&quot;Consumer Goods&quot;</span>,<span class="st">&quot;Health Care&quot;</span>,</span>
+<span id="cb7-81"><a href="#cb7-81" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;Consumer Services&quot;</span>,<span class="st">&quot;Telecommunications&quot;</span>,<span class="st">&quot;Utilities&quot;</span>,<span class="st">&quot;Financials&quot;</span>,<span class="st">&quot;Technology&quot;</span>,</span>
+<span id="cb7-82"><a href="#cb7-82" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;Other / Unmapped&quot;</span></span>
+<span id="cb7-83"><a href="#cb7-83" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb7-84"><a href="#cb7-84" aria-hidden="true" tabindex="-1"></a>filtered_germany <span class="ot">&lt;-</span> filtered_germany <span class="sc">|&gt;</span></span>
+<span id="cb7-85"><a href="#cb7-85" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">industry_group =</span> <span class="fu">factor</span>(industry_group, <span class="at">levels =</span> ordered_levels))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(filtered_germany, <span class="at">file =</span> <span class="st">&quot;filtered_germany.csv&quot;</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <section id="research-question" class="level3">
 <h3 class="anchored" data-anchor-id="research-question">Research Question</h3>
