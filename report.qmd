@@ -71,9 +71,12 @@ library(skimr)
 
 ## Introduction 
 
-The COVID-19 pandemic caused significant disruptions across global markets, testing the financial resilience of firms in every sector. This project examines how German companies responded to these shocks between 2020 and 2022 using financial data from the Bureau van Dijk OSIRIS Database — a reliable global source of harmonised corporate information.
+The COVID-19 pandemic caused significant disruptions across global markets, testing the financial resilience of firms in every sector. In Germany, the first confirmed case was recorded on 27 January 2020. Nationwide contact restrictions began on 22 March 2020. Most nationwide measures were lifted between 20 March and 2 April 2022, and the final federal provisions expired on 7 April 2023.
+
+This project examines how German companies responded to these shocks during 2020 – 2021, using financial data from the Bureau van Dijk OSIRIS Database — a reliable global source of harmonised corporate information. The dataset available for this study covers 2018 – 2021. The period from 2018–2019 provides the pre-pandemic baseline, while 2020 – 2021 captures the pandemic period. Data for 2022 are not available in this extract.
 
 Our analysis focuses on how industries differed in their financial outcomes during this period, investigating changes in profitability, leverage, liquidity, and firm size. By identifying which sectors showed unexpected resilience or vulnerability, we aim to understand how structural and strategic differences shaped recovery from the pandemic’s economic impacts. All analytical procedures follow the ETC5521 workflow, ensuring reproducibility, transparency, and alignment with the course framework for exploratory data analysis.
+
 
 ## Data description
 
@@ -185,9 +188,145 @@ filtered_germany <- combined_germany |>
     net_assets_turnover, stock_turnover,
     solvency_pct, gearing_pct, current_ratio, liquidity_ratio,
     shareholders_liq_pct, interest_cover
-  ) 
+  )
   
 ```
+
+```{r table-checking}
+
+num_cols <- c(
+  "total_assets_eur","total_liabilities_eur","total_equity_eur",
+  "total_revenue_eur","net_sales_eur","gross_sales_eur","net_income_eur",
+  "ebit_margin_pct","ebitda_margin_pct","roa_pct","roe_pct",
+  "net_assets_turnover","stock_turnover",
+  "solvency_pct","gearing_pct","current_ratio","liquidity_ratio",
+  "shareholders_liq_pct","interest_cover"
+)
+
+#symbol formatting/coerce numerics
+filtered_germany <- filtered_germany |>
+  mutate(
+    across(all_of(num_cols) & where(is.character), readr::parse_number),
+    country = stringr::str_to_title(country),
+    city    = stringr::str_to_title(city)
+  )
+
+#missingness report check (overall and by year)
+missing_overall <- filtered_germany |>
+  summarise(across(everything(), ~ mean(is.na(.)))) |>
+  pivot_longer(everything(), names_to = "variable", values_to = "missing_rate")
+
+missing_by_year <- filtered_germany |>
+  group_by(year) |>
+  summarise(across(everything(), ~ mean(is.na(.)))) |>
+  pivot_longer(-year, names_to = "variable", values_to = "missing_rate")
+
+#sanity checks (optional but recommended)
+dup_firm_year <- filtered_germany |>
+  count(company_id, year) |>
+  filter(n > 1)
+
+impossible_assets <- filtered_germany |>
+  filter(!is.na(total_assets_eur) & total_assets_eur < 0)
+
+consol_levels <- filtered_germany |>
+  count(consolidation_code, sort = TRUE)
+
+```
+
+```{r NACE-column}
+#clean 2-digit NACE as integer
+filtered_germany <- filtered_germany |>
+  mutate(
+    nace_num2 = suppressWarnings(as.integer(str_sub(readr::parse_number(as.character(nace_code)), 1, 2)))
+  )
+
+#map NACE divisions to broad section names
+industry_from_nace <- function(x){
+  case_when(
+    x %in% 1:3 ~ "Agriculture, Forestry & Fishing",
+    x %in% 5:9 ~ "Mining & Quarrying",
+    x %in% 10:33 | x %in% 15:37 ~ "Manufacturing",
+    x %in% 35 ~ "Electricity, Gas, Steam",
+    x %in% 36:39 ~ "Water Supply & Waste",
+    x %in% 41:43 ~ "Construction",
+    x %in% 45:47 ~ "Wholesale & Retail Trade",
+    x %in% 49:53 ~ "Transport & Storage",
+    x %in% 55:56 ~ "Accommodation & Food",
+    x %in% 58:63 ~ "Information & Communication",
+    x %in% 64:66 ~ "Financial & Insurance",
+    x %in% 68 ~ "Real Estate",
+    x %in% 69:75 ~ "Professional, Scientific & Technical",
+    x %in% 77:82 ~ "Administrative & Support",
+    x %in% 84 ~ "Public Administration",
+    x %in% 85 ~ "Education",
+    x %in% 86:88 ~ "Human Health & Social Work",
+    x %in% 90:93 ~ "Arts, Entertainment & Recreation",
+    x %in% 94:96 ~ "Other Service Activities",
+    x %in% 97:98 ~ "Household Activities",
+    x %in% 99 ~ "Extraterritorial Organizations",
+    TRUE ~ NA_character_
+  )
+}
+
+#ICB top-level sector labels
+icb_map <- c(
+  "0001" = "Oil & Gas",
+  "1000" = "Basic Materials",
+  "2000" = "Industrials",
+  "3000" = "Consumer Goods",
+  "4000" = "Health Care",
+  "5000" = "Consumer Services",
+  "6000" = "Telecommunications",
+  "7000" = "Utilities",
+  "8000" = "Financials",
+  "9000" = "Technology"
+)
+
+#normalize ICB to a 4-digit “bucket” (example: 2573 to 2000)
+normalize_icb <- function(x){
+  x_chr <- str_extract(as.character(x), "\\d+")
+  ifelse(is.na(x_chr), NA_character_,
+         sprintf("%04d", as.integer(floor(as.numeric(x_chr) / 1000) * 1000)))
+}
+
+filtered_germany <- filtered_germany |>
+  mutate(
+    industry_nace = industry_from_nace(nace_num2),
+    icb_bucket    = normalize_icb(icb_code),
+    industry_icb  = icb_map[icb_bucket],
+    industry_group = coalesce(industry_nace, industry_icb, "Other / Unmapped")
+  )
+
+#check
+unmapped_sample <- filtered_germany |>
+  filter(industry_group == "Other / Unmapped") |>
+  select(company_id, year, nace_code, icb_code) |>
+  head(15)
+
+# 5)factor order for plots
+ordered_levels <- c(
+  "Agriculture, Forestry & Fishing","Mining & Quarrying","Manufacturing",
+  "Electricity, Gas, Steam","Water Supply & Waste","Construction",
+  "Wholesale & Retail Trade","Transport & Storage","Accommodation & Food",
+  "Information & Communication","Financial & Insurance","Real Estate",
+  "Professional, Scientific & Technical","Administrative & Support",
+  "Public Administration","Education","Human Health & Social Work",
+  "Arts, Entertainment & Recreation","Other Service Activities",
+  "Household Activities","Extraterritorial Organizations",
+  "Oil & Gas","Basic Materials","Industrials","Consumer Goods","Health Care",
+  "Consumer Services","Telecommunications","Utilities","Financials","Technology",
+  "Other / Unmapped"
+)
+filtered_germany <- filtered_germany |>
+  mutate(industry_group = factor(industry_group, levels = ordered_levels))
+```
+
+
+```{r}
+write.csv(filtered_germany, file = "filtered_germany.csv", row.names = FALSE)
+```
+
 
 ### Research Question
 
