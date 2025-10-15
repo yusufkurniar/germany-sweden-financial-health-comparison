@@ -2402,7 +2402,7 @@ vertical-align: -.125em;
 <span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a><span class="co">#sanity checks (optional but recommended)</span></span>
 <span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>dup_firm_year <span class="ot">&lt;-</span> filtered_germany <span class="sc">|&gt;</span></span>
-<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(company_id, fy_year) <span class="sc">|&gt;</span></span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(company_id, fy_year, acct_year) <span class="sc">|&gt;</span></span>
 <span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(n <span class="sc">&gt;</span> <span class="dv">1</span>)</span>
 <span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a>impossible_assets <span class="ot">&lt;-</span> filtered_germany <span class="sc">|&gt;</span></span>
@@ -2478,7 +2478,7 @@ vertical-align: -.125em;
 <span id="cb7-64"><a href="#cb7-64" aria-hidden="true" tabindex="-1"></a><span class="co">#check</span></span>
 <span id="cb7-65"><a href="#cb7-65" aria-hidden="true" tabindex="-1"></a>unmapped_sample <span class="ot">&lt;-</span> filtered_germany <span class="sc">|&gt;</span></span>
 <span id="cb7-66"><a href="#cb7-66" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(industry_group <span class="sc">==</span> <span class="st">&quot;Other / Unmapped&quot;</span>) <span class="sc">|&gt;</span></span>
-<span id="cb7-67"><a href="#cb7-67" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(company_id, fy_year, nace_code, icb_code) <span class="sc">|&gt;</span></span>
+<span id="cb7-67"><a href="#cb7-67" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(company_id, fy_year, acct_year, nace_code, icb_code) <span class="sc">|&gt;</span></span>
 <span id="cb7-68"><a href="#cb7-68" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>(<span class="dv">15</span>)</span>
 <span id="cb7-69"><a href="#cb7-69" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-70"><a href="#cb7-70" aria-hidden="true" tabindex="-1"></a><span class="co">#factor order for plots</span></span>
