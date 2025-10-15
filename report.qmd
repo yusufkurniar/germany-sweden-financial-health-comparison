@@ -66,6 +66,8 @@ library(dplyr)
 library(stringr)
 library(janitor)
 library(skimr)
+library(tsibble)
+library(knitr)
 ```
 
 
@@ -335,18 +337,89 @@ write.csv(filtered_germany, file = "filtered_germany.csv", row.names = FALSE)
 During 2020–2022, industries such as healthcare, information technology, and utilities demonstrated notable financial resilience, supported by strong liquidity and stable profitability. In contrast, sectors like hospitality, transportation, and manufacturing showed greater vulnerability due to higher leverage and lower profit margins. Overall, firm size and liquidity emerged as key buffers against financial stress, while high debt levels amplified vulnerability across more capital-intensive industries.
 
 
-****
+#### How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic?				
 
 
-#### 
+The COVID-19 pandemic from 2020 to 2022 severely disrupted global business activity, placing significant stress on corporate financial structures. One critical dimension of this disruption lies in how firms managed their liquidity—the ability to meet short-term obligations—while maintaining profitability during the crisis. Financial theory typically suggests that maintaining sufficient liquidity supports profitability by ensuring operational stability and investment flexibility. However, during the pandemic, this fundamental relationship may have fractured across industries due to uneven economic shocks and varying policy responses.
+
+This study investigates how the relationship between corporate liquidity and profitability evolved and diverged across industries during the pandemic period. Using data from the OSIRIS database for Germany between 2017 and 2022, I focus on two key indicators: 
+
+- **Return on Assets (ROA)** as a measure of profitability 
+
+- **Current Ratio** as a measure of liquidity. 
+
+I aim to uncover distinct recovery patterns—such as “K-shaped” rebounds, resilient sectors, and hidden crises—that reveal how the financial health of different industries adapted or deteriorated during the pandemic.
+
+
+ 
 
 ##### IDA
+
+1. Data Cleaning on Consolidation Codes
+
+The raw data from Orbis contained financial statements under different consolidation codes (C1, C2, C\*, U1, U2). To ensure consistency and comparability, I prioritized consolidated accounts which represent the entire economic entity. For each firm-year observation, I retained the highest-priority available consolidated statement following the order: C1 > C2 > C*. Unconsolidated statements (U1, U2) were excluded from the analysis.
 
 
 ```{r}
 germany_q4 <- filtered_germany %>%
-  select(company_id, year, roa_pct, current_ratio)
+  mutate(
+    consolidation_priority = case_when(
+      consolidation_code == "C1" ~ 1,  # highest priority
+      consolidation_code == "C2" ~ 2,
+      consolidation_code == "C*" ~ 3,
+      consolidation_code == "U1" ~ 99, # Very low priority, about to be filtered
+      consolidation_code == "U2" ~ 99,
+      TRUE ~ 99  # Handle any unexpected code
+    )
+  ) %>%
+  
+  # Group by company and year, and keep only the highest priority records
+  group_by(company_id, fy_year) %>%
+  arrange(consolidation_priority, .by_group = TRUE) %>%
+  slice(1) %>% # Take the first row of each group, which has the highest priority
+  ungroup() %>%
+  # Filter out the remaining non-consolidated records
+  filter(consolidation_priority %in% c(1, 2, 3))
 ```
+
+2. Select the columns to be analyzed
+
+```{r}
+germany_q4 <- germany_q4 %>%
+  select(company_id, fy_year, roa_pct, current_ratio, industry_group)
+```
+
+3. Convert data into a tsibble object using the tsibble package
+
+
+Each company was defined as a key and the financial year as the index. Basic screening was performed to check for missing values, outliers, and duplicates.
+
+
+```{r}
+germany_ts <- germany_q4 %>%
+  mutate(fy_year = as.integer(fy_year)) %>%
+  as_tsibble(key = company_id, index = fy_year) %>%
+  arrange(company_id, fy_year)
+```
+
+
+4. Summary
+
+The trends in ROA and Current Ratio from 2017 to 2021 reveal a distinct pattern, potentially linked to the pandemic. ROA showed significant volatility: it was stable pre-pandemic, fell to a negative value in 2020, but then recovered strongly to a peak of 4.87% in 2021. In contrast, the Current Ratio remained relatively stable throughout the period, indicating consistent short-term liquidity despite the economic disruption. This suggests that while profitability was heavily impacted, the company's ability to meet its short-term obligations was maintained.
+
+```{r}
+#| label: tbl-summary
+#| tbl-cap: "Trends in Mean Return on Assets (ROA) and Current Ratio from Pre-Pandemic to Post-Pandemic Years (2017-2021)"
+
+kable(germany_ts %>%
+  index_by(fy_year) %>%
+  summarise(mean_roa = mean(roa_pct, na.rm = TRUE),
+            mean_cr = mean(current_ratio, na.rm = TRUE)))
+```
+
+##### EDA
+
+
 
 
 
