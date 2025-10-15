@@ -138,7 +138,7 @@ filtered_germany <- combined_germany |>
     #IDs / scope (used in all questions)
     company_name = company_name_name, #label
     company_id = name_id, #unique firm id
-    year = year, #reporting year
+    acct_year = year, #reporting year
     country = country_country,
     city = city_city_city, #city/HQ
     consolidation_code = consolidation_code_consol_code, #consolidated vs standalone
@@ -178,9 +178,14 @@ filtered_germany <- combined_germany |>
     interest_cover = interest_cover_data31115 #interest
   ) |>
   
+  mutate(
+    fy_end_date = ymd(as.character(company_fiscal_year_end_date_closdate)),
+    fy_year     = year(fy_end_date)
+  ) |>
+  
   #select only relevant columns to answer the questions
   select(
-    company_id, company_name, year, country, city, consolidation_code,
+    company_id, company_name, fy_end_date, fy_year, acct_year, country, city, consolidation_code,
     nace_code, icb_code, sic_code,
     total_assets_eur, total_liabilities_eur, total_equity_eur,
     total_revenue_eur, net_sales_eur, gross_sales_eur, net_income_eur,
@@ -217,13 +222,13 @@ missing_overall <- filtered_germany |>
   pivot_longer(everything(), names_to = "variable", values_to = "missing_rate")
 
 missing_by_year <- filtered_germany |>
-  group_by(year) |>
+  group_by(fy_year) |>
   summarise(across(everything(), ~ mean(is.na(.)))) |>
-  pivot_longer(-year, names_to = "variable", values_to = "missing_rate")
+  pivot_longer(-fy_year, names_to = "variable", values_to = "missing_rate")
 
 #sanity checks (optional but recommended)
 dup_firm_year <- filtered_germany |>
-  count(company_id, year) |>
+  count(company_id, fy_year) |>
   filter(n > 1)
 
 impossible_assets <- filtered_germany |>
@@ -301,7 +306,7 @@ filtered_germany <- filtered_germany |>
 #check
 unmapped_sample <- filtered_germany |>
   filter(industry_group == "Other / Unmapped") |>
-  select(company_id, year, nace_code, icb_code) |>
+  select(company_id, fy_year, nace_code, icb_code) |>
   head(15)
 
 #factor order for plots
