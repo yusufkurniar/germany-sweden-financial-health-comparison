@@ -64,6 +64,8 @@ theme_set(theme_bw(base_size = 14) +
 ```{r load-library}
 library(dplyr)
 library(stringr)
+library(janitor)
+library(skimr)
 ```
 
 
@@ -106,7 +108,7 @@ for (file_index in seq_along(germany_file_paths)) {
 str(osiris_germany, max.level = 1)
 ```
 
-```{r}
+```{r read-data-2}
 #build a single data frame with a 'year' column taken from the filename
 combined_germany <- {
   germany_parts <- vector("list", length(osiris_germany))
@@ -127,8 +129,67 @@ combined_germany <- {
 glimpse(combined_germany)
 ```
 
+```{r data-cleaning}
+filtered_germany <- combined_germany |>
+  clean_names() |>
+  rename(
+    #IDs / scope (used in all questions)
+    company_name = company_name_name, #label
+    company_id = name_id, #unique firm id
+    year = year, #reporting year
+    country = country_country,
+    city = city_city_city, #city/HQ
+    consolidation_code = consolidation_code_consol_code, #consolidated vs standalone
 
-### Research Question:
+    #industry codes (Q1, Q2, Q4)
+    nace_code = nace_rev_1_core_code_cnacecd,
+    icb_code = industrial_classification_benchmark_icb,
+    sic_code = us_sic_core_code_csicuscde,
+
+    #scale / balance sheet (Q2, Q3)
+    total_assets_eur      = total_assets_data13077,
+    total_liabilities_eur = total_liabilities_and_debt_data14022,
+    total_equity_eur      = total_shareholders_equity_data14041,
+
+    #revenue & profit (Q1, Q3)
+    total_revenue_eur     = total_revenues_data13004,
+    net_sales_eur         = net_sales_data13002,
+    gross_sales_eur       = gross_sales_data13000,
+    net_income_eur        = net_income_starting_line_data15500,
+
+    #profitability ratios (Q1, Q4)
+    ebit_margin_pct       = ebit_margin_percent_data31055,
+    ebitda_margin_pct     = ebitda_margin_percent_data31060,
+    roa_pct               = return_on_total_assets_percent_data31015,
+    roe_pct               = roe_percent_data31065,
+
+    #efficiency (supporting for Q1/Q4)
+    net_assets_turnover   = net_assets_turnover_data31225,
+    stock_turnover        = stock_turnover_data31220,
+
+    #leverage, solvency, and liquidity (Q2)
+    solvency_pct          = solvency_ratio_percent_data31310,
+    gearing_pct           = gearing_percent_data31315,
+    current_ratio         = current_ratio_data31105,
+    liquidity_ratio       = liquidity_ratio_data31110,
+    shareholders_liq_pct  = shareholders_liquidity_ratio_data31305,
+    interest_cover        = interest_cover_data31115
+  ) |>
+  select(
+    company_id, company_name, year, country, city, consolidation_code,
+    nace_code, icb_code, sic_code,
+    total_assets_eur, total_liabilities_eur, total_equity_eur,
+    total_revenue_eur, net_sales_eur, gross_sales_eur, net_income_eur,
+    ebit_margin_pct, ebitda_margin_pct, roa_pct, roe_pct,
+    net_assets_turnover, stock_turnover,
+    solvency_pct, gearing_pct, current_ratio, liquidity_ratio,
+    shareholders_liq_pct, interest_cover
+  ) |>
+  filter(year %in% 2020:2022)
+  
+```
+
+### Research Question
 
 **Which German industries showed unexpected financial resilience or vulnerability from 2020 to 2022, and how were these outcomes shaped by profitability, leverage, liquidity, and firm size?**
 
