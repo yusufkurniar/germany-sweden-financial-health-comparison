@@ -68,7 +68,10 @@ library(janitor)
 library(skimr)
 library(tsibble)
 library(knitr)
+library(naniar)
+library(patchwork)
 ```
+
 
 
 ## Introduction 
@@ -140,7 +143,7 @@ filtered_germany <- combined_germany |>
     #IDs / scope (used in all questions)
     company_name = company_name_name, #label
     company_id = name_id, #unique firm id
-    year = year, #reporting year
+    acct_year = year, #reporting year
     country = country_country,
     city = city_city_city, #city/HQ
     consolidation_code = consolidation_code_consol_code, #consolidated vs standalone
@@ -180,9 +183,14 @@ filtered_germany <- combined_germany |>
     interest_cover = interest_cover_data31115 #interest
   ) |>
   
+  mutate(
+    fy_end_date = ymd(as.character(company_fiscal_year_end_date_closdate)),
+    fy_year     = year(fy_end_date)
+  ) |>
+  
   #select only relevant columns to answer the questions
   select(
-    company_id, company_name, year, country, city, consolidation_code,
+    company_id, company_name, fy_end_date, fy_year, acct_year, country, city, consolidation_code,
     nace_code, icb_code, sic_code,
     total_assets_eur, total_liabilities_eur, total_equity_eur,
     total_revenue_eur, net_sales_eur, gross_sales_eur, net_income_eur,
@@ -219,13 +227,13 @@ missing_overall <- filtered_germany |>
   pivot_longer(everything(), names_to = "variable", values_to = "missing_rate")
 
 missing_by_year <- filtered_germany |>
-  group_by(year) |>
+  group_by(fy_year) |>
   summarise(across(everything(), ~ mean(is.na(.)))) |>
-  pivot_longer(-year, names_to = "variable", values_to = "missing_rate")
+  pivot_longer(-fy_year, names_to = "variable", values_to = "missing_rate")
 
 #sanity checks (optional but recommended)
 dup_firm_year <- filtered_germany |>
-  count(company_id, year) |>
+  count(company_id, fy_year, acct_year) |>
   filter(n > 1)
 
 impossible_assets <- filtered_germany |>
@@ -303,10 +311,10 @@ filtered_germany <- filtered_germany |>
 #check
 unmapped_sample <- filtered_germany |>
   filter(industry_group == "Other / Unmapped") |>
-  select(company_id, year, nace_code, icb_code) |>
+  select(company_id, fy_year, acct_year, nace_code, icb_code) |>
   head(15)
 
-# 5)factor order for plots
+#factor order for plots
 ordered_levels <- c(
   "Agriculture, Forestry & Fishing","Mining & Quarrying","Manufacturing",
   "Electricity, Gas, Steam","Water Supply & Waste","Construction",
@@ -419,6 +427,66 @@ kable(germany_ts %>%
 
 ##### EDA
 
+1. Check for missing value (Tutorial 8)
+
+```{r}
+#| label: fig-missing_plots
+#| tbl-cap: "The plots of Missing Value Distribution"
+
+
+# Check for missing ROA and CR
+miss_var <- 
+  gg_miss_var(germany_ts, show_pct = TRUE) + 
+  labs(title = "Distribution of Missing Values", 
+       subtitle = "For all variables")
+
+# Check for missing values by industry group
+miss_industry <- germany_ts |> 
+  group_by(industry_group) |> 
+  gg_miss_var(show_pct = TRUE) + 
+  labs(title = "Distribution of Missing Values", 
+       subtitle = "By industry group")
+
+
+# Missing case pattern
+miss_case <- gg_miss_case(germany_ts, show_pct = TRUE) + 
+  labs(title = "Distribution of Missing Case Pattern")
+  
+
+miss_var / miss_industry / miss_case
+```
+
+
+```{r}
+#| label: fig-missing_clu
+#| tbl-cap: "The plot of clustering to visualize missing patterns"
+
+
+m3 <- vis_miss(germany_ts, cluster = TRUE, sort_miss = TRUE) +
+  theme(axis.text.x = element_text(size = 8, angle = 45, hjust = 1),
+        axis.text.y = element_text(size = 8))
+
+m3
+```
+
+The initial examination of missing values revealed a relatively low proportion of incomplete data in the dataset. As shown in @fig-missing_clu, the missing value analysis showed that only 0.7% of the total data was missing, while 99.3% of observations were complete. ROA contained between 1% and 1.5% missing values across the dataset, while the current ratio had a slightly higher proportion of missing data, ranging from 2% to 2.5% (@fig-missing_plots).
+
+
+2. Address missingness issues
+
+```{r}
+germany_ts <- germany_ts %>%
+  as_tibble() %>%   # Convert to a normal tibble first
+  # Remove observations with missing ROA or CR
+  filter(!is.na(roa_pct) & !is.na(current_ratio)) %>%
+  # Remove industry-year combinations with too few observations
+  group_by(industry_group, fy_year) %>%
+  filter(n() >= 3) %>%   # At least 3 observations
+  ungroup() %>%
+  # Convert back to tsibble format
+  as_tsibble(key = company_id, index = fy_year) %>%
+  arrange(company_id, fy_year)
+```
 
 
 
