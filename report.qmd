@@ -304,7 +304,7 @@ unmapped_sample <- filtered_germany |>
   select(company_id, year, nace_code, icb_code) |>
   head(15)
 
-# 5)factor order for plots
+#factor order for plots
 ordered_levels <- c(
   "Agriculture, Forestry & Fishing","Mining & Quarrying","Manufacturing",
   "Electricity, Gas, Steam","Water Supply & Waste","Construction",
@@ -321,12 +321,6 @@ ordered_levels <- c(
 filtered_germany <- filtered_germany |>
   mutate(industry_group = factor(industry_group, levels = ordered_levels))
 ```
-
-
-```{r}
-write.csv(filtered_germany, file = "filtered_germany.csv", row.names = FALSE)
-```
-
 
 ### Research Question
 

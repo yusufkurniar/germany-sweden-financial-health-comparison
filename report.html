@@ -2476,7 +2476,7 @@ vertical-align: -.125em;
 <span id="cb7-67"><a href="#cb7-67" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(company_id, year, nace_code, icb_code) <span class="sc">|&gt;</span></span>
 <span id="cb7-68"><a href="#cb7-68" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>(<span class="dv">15</span>)</span>
 <span id="cb7-69"><a href="#cb7-69" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-70"><a href="#cb7-70" aria-hidden="true" tabindex="-1"></a><span class="co"># 5)factor order for plots</span></span>
+<span id="cb7-70"><a href="#cb7-70" aria-hidden="true" tabindex="-1"></a><span class="co">#factor order for plots</span></span>
 <span id="cb7-71"><a href="#cb7-71" aria-hidden="true" tabindex="-1"></a>ordered_levels <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
 <span id="cb7-72"><a href="#cb7-72" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;Agriculture, Forestry &amp; Fishing&quot;</span>,<span class="st">&quot;Mining &amp; Quarrying&quot;</span>,<span class="st">&quot;Manufacturing&quot;</span>,</span>
 <span id="cb7-73"><a href="#cb7-73" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;Electricity, Gas, Steam&quot;</span>,<span class="st">&quot;Water Supply &amp; Waste&quot;</span>,<span class="st">&quot;Construction&quot;</span>,</span>
@@ -2492,9 +2492,6 @@ vertical-align: -.125em;
 <span id="cb7-83"><a href="#cb7-83" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb7-84"><a href="#cb7-84" aria-hidden="true" tabindex="-1"></a>filtered_germany <span class="ot">&lt;-</span> filtered_germany <span class="sc">|&gt;</span></span>
 <span id="cb7-85"><a href="#cb7-85" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">industry_group =</span> <span class="fu">factor</span>(industry_group, <span class="at">levels =</span> ordered_levels))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(filtered_germany, <span class="at">file =</span> <span class="st">&quot;filtered_germany.csv&quot;</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <section id="research-question" class="level3">
 <h3 class="anchored" data-anchor-id="research-question">Research Question</h3>
