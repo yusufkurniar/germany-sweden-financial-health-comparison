@@ -81,6 +81,7 @@ Our analysis focuses on how industries differed in their financial outcomes duri
 ## Data description
 
 
+
 ```{r read-data}
 #define the folder
 data_directory <- "osiris"
@@ -142,6 +143,8 @@ filtered_germany <- combined_germany |>
     country = country_country,
     city = city_city_city, #city/HQ
     consolidation_code = consolidation_code_consol_code, #consolidated vs standalone
+    status = status_status, #company type
+    
     
     #industry codes (Q1, Q2, Q4)
     nace_code = nace_rev_1_core_code_cnacecd, #EU industry code (primary)
@@ -177,15 +180,15 @@ filtered_germany <- combined_germany |>
     shareholders_liq_pct = shareholders_liquidity_ratio_data31305, #shareholder liquidity
     interest_cover = interest_cover_data31115 #interest
   ) |>
-  
+  #rename fiscal year
   mutate(
     fy_end_date = ymd(as.character(company_fiscal_year_end_date_closdate)),
-    fy_year     = year(fy_end_date)
+    fy_year = year(fy_end_date)
   ) |>
   
   #select only relevant columns to answer the questions
   select(
-    company_id, company_name, fy_end_date, fy_year, acct_year, country, city, consolidation_code,
+    company_id, company_name, fy_end_date, fy_year, acct_year, status, country, city, consolidation_code,
     nace_code, icb_code, sic_code,
     total_assets_eur, total_liabilities_eur, total_equity_eur,
     total_revenue_eur, net_sales_eur, gross_sales_eur, net_income_eur,
@@ -326,6 +329,7 @@ ordered_levels <- c(
 filtered_germany <- filtered_germany |>
   mutate(industry_group = factor(industry_group, levels = ordered_levels))
 ```
+
 
 
 ### Research Question
