@@ -228,7 +228,7 @@ missing_by_year <- filtered_germany |>
 
 #sanity checks (optional but recommended)
 dup_firm_year <- filtered_germany |>
-  count(company_id, fy_year) |>
+  count(company_id, fy_year, acct_year) |>
   filter(n > 1)
 
 impossible_assets <- filtered_germany |>
@@ -306,7 +306,7 @@ filtered_germany <- filtered_germany |>
 #check
 unmapped_sample <- filtered_germany |>
   filter(industry_group == "Other / Unmapped") |>
-  select(company_id, fy_year, nace_code, icb_code) |>
+  select(company_id, fy_year, acct_year, nace_code, icb_code) |>
   head(15)
 
 #factor order for plots
@@ -326,6 +326,7 @@ ordered_levels <- c(
 filtered_germany <- filtered_germany |>
   mutate(industry_group = factor(industry_group, levels = ordered_levels))
 ```
+
 
 ### Research Question
 
