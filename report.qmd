@@ -138,59 +138,59 @@ filtered_germany <- combined_germany |>
   clean_names() |>
   
   rename(
-    #IDs / scope (used in all questions)
-    company_name = company_name_name, #label
-    company_id = name_id, #unique firm id
-    acct_year = year, #reporting year
-    country = country_country,
-    city = city_city_city, #city/HQ
-    consolidation_code = consolidation_code_consol_code, #consolidated vs standalone
-    status = status_status, #company type
+    # IDs / scope (used in all questions)
+    company_name       = company_name_name,
+    company_id         = name_id,
+    year               = year,
+    country            = country_country,
+    city               = city_city_city,
+    consolidation_code = consolidation_code_consol_code,
+    status             = status_status,
     
+    # Industry codes (Q1, Q2, Q4)
+    nace_code = nace_rev_1_core_code_cnacecd,
+    icb_code  = industrial_classification_benchmark_icb,
+    sic_code  = us_sic_core_code_csicuscde,
     
-    #industry codes (Q1, Q2, Q4)
-    nace_code = nace_rev_1_core_code_cnacecd, #EU industry code (primary)
-    icb_code = industrial_classification_benchmark_icb, #ICB classification (fallback)
-    sic_code = us_sic_core_code_csicuscde, #SIC code (fallback)
+    # Scale / balance sheet (Q2, Q3)
+    total_assets_eur      = total_assets_data13077,
+    total_liabilities_eur = total_liabilities_and_debt_data14022,
+    total_equity_eur      = total_shareholders_equity_data14041,
     
-    #scale / balance sheet (Q2, Q3)
-    total_assets_eur = total_assets_data13077, #base for ratios
-    total_liabilities_eur = total_liabilities_and_debt_data14022, #debt measure
-    total_equity_eur = total_shareholders_equity_data14041, #equity capital
+    # Revenue & profit (Q1, Q3)
+    total_revenue_eur = total_revenues_data13004,
+    net_sales_eur     = net_sales_data13002,
+    gross_sales_eur   = gross_sales_data13000,
+    net_income_eur    = net_income_starting_line_data15500,
     
-    #revenue & profit (Q1, Q3)
-    total_revenue_eur = total_revenues_data13004, #denominator for margins
-    net_sales_eur = net_sales_data13002, #sales denominator
-    gross_sales_eur = gross_sales_data13000, #top-line revenue
-    net_income_eur = net_income_starting_line_data15500, #used to calculate ROA/ROE
+    # Profitability ratios (Q1, Q4)
+    ebit_margin_pct   = ebit_margin_percent_data31055,
+    ebitda_margin_pct = ebitda_margin_percent_data31060,
+    roa_pct           = return_on_total_assets_percent_data31015,
+    roe_pct           = roe_percent_data31065,
     
-    #profitability ratios (Q1, Q4)
-    ebit_margin_pct = ebit_margin_percent_data31055, #profitability metric (EBIT %)
-    ebitda_margin_pct = ebitda_margin_percent_data31060, #profitability metric (EBITDA %)
-    roa_pct = return_on_total_assets_percent_data31015, #return on assets
-    roe_pct = roe_percent_data31065, #return on equity
+    # Efficiency
+    net_assets_turnover = net_assets_turnover_data31225,
+    stock_turnover      = stock_turnover_data31220,
     
-    #efficiency (supporting for Q1/Q4)
-    net_assets_turnover = net_assets_turnover_data31225, #asset efficiency
-    stock_turnover = stock_turnover_data31220, #inventory management efficiency
-    
-    #leverage, solvency, and liquidity (Q2)
-    solvency_pct = solvency_ratio_percent_data31310, #solvency strength
-    gearing_pct = gearing_percent_data31315, #leverage level
-    current_ratio = current_ratio_data31105, #liquidity ratio (short-term)
-    liquidity_ratio = liquidity_ratio_data31110, #alternate liquidity ratio
-    shareholders_liq_pct = shareholders_liquidity_ratio_data31305, #shareholder liquidity
-    interest_cover = interest_cover_data31115 #interest
-  ) |>
-  #rename fiscal year
-  mutate(
-    fy_end_date = ymd(as.character(company_fiscal_year_end_date_closdate)),
-    fy_year = year(fy_end_date)
+    # Leverage, solvency, and liquidity (Q2)
+    solvency_pct        = solvency_ratio_percent_data31310,
+    gearing_pct         = gearing_percent_data31315,
+    current_ratio       = current_ratio_data31105,
+    liquidity_ratio     = liquidity_ratio_data31110,
+    shareholders_liq_pct= shareholders_liquidity_ratio_data31305,
+    interest_cover      = interest_cover_data31115
   ) |>
   
-  #select only relevant columns to answer the questions
+  # Rename fiscal year
+  mutate(
+    fy_end_date = lubridate::ymd(as.character(company_fiscal_year_end_date_closdate)),
+    fy_year     = year(fy_end_date)
+  ) |>
+  
+  # Select only relevant columns
   select(
-    company_id, company_name, fy_end_date, fy_year, acct_year, status, country, city, consolidation_code,
+    company_id, company_name, fy_end_date, fy_year,  status, country, city, consolidation_code,
     nace_code, icb_code, sic_code,
     total_assets_eur, total_liabilities_eur, total_equity_eur,
     total_revenue_eur, net_sales_eur, gross_sales_eur, net_income_eur,
@@ -199,7 +199,7 @@ filtered_germany <- combined_germany |>
     solvency_pct, gearing_pct, current_ratio, liquidity_ratio,
     shareholders_liq_pct, interest_cover
   )
-  
+
 ```
 
 ```{r table-description}
@@ -287,13 +287,14 @@ missing_overall <- filtered_germany |>
   pivot_longer(everything(), names_to = "variable", values_to = "missing_rate")
 
 missing_by_year <- filtered_germany |>
-  group_by(fy_year) |>
+  group_by(year) |>
   summarise(across(everything(), ~ mean(is.na(.)))) |>
-  pivot_longer(-fy_year, names_to = "variable", values_to = "missing_rate")
+  pivot_longer(-year, names_to = "variable", values_to = "missing_rate")
 
 #sanity checks (optional but recommended)
 dup_firm_year <- filtered_germany |>
   count(company_id, fy_year, acct_year) |>
+  count(company_id, year) |>
   filter(n > 1)
 
 impossible_assets <- filtered_germany |>
@@ -372,6 +373,7 @@ filtered_germany <- filtered_germany |>
 unmapped_sample <- filtered_germany |>
   filter(industry_group == "Other / Unmapped") |>
   select(company_id, fy_year, acct_year, nace_code, icb_code) |>
+  select(company_id, year, nace_code, icb_code) |>
   head(15)
 
 #factor order for plots
