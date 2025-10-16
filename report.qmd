@@ -82,6 +82,8 @@ Our analysis focuses on how industries differed in their financial outcomes duri
 
 ## Data description
 
+The dataset used in this analysis originates from **the Bureau van Dijk OSIRIS database**, a comprehensive source of harmonised financial information for publicly listed and major private firms worldwide. For this study, we extracted firm-level data for **German companies** over the **2018–2021 accounting years**, a period that captures both pre-pandemic and pandemic-era financial performance. Each record represents a firm’s reported financials for a specific accounting year, enabling longitudinal exploration of trends in profitability, liquidity, leverage, and resilience.
+
 ```{r read-data}
 #define the folder
 data_directory <- "osiris"
@@ -240,6 +242,23 @@ data_dictionary |>
   kable(align = "l", booktabs = TRUE) |>
   kable_styling(full_width = FALSE, font_size = 11)
 ```
+
+The selected variables encompass four key dimensions of corporate financial health:
+- **Identification and Location** — company_id, company_name, country, and city provide firm-level identifiers and geographical context.
+- **Balance Sheet Structure** — total_assets_eur, total_liabilities_eur, and total_equity_eur measure firm size and capital composition, reported in euros.
+- **Income and Profitability** — total_revenue_eur, net_sales_eur, and net_income_eur capture income statement outcomes, while ebit_margin_pct, ebitda_margin_pct, roa_pct, and roe_pct reflect operating performance and returns to shareholders.
+- **Solvency and Liquidity** — solvency_pct, gearing_pct, current_ratio, liquidity_ratio, shareholders_liq_pct, and interest_cover assess each firm’s financial stability, leverage, and capacity to meet short-term obligations.
+Industry Classification — industry_nace, industry_icb, and industry_group link firms to their respective economic sectors according to European (NACE) and global (ICB) coding systems.
+
+It is important to note that the **accounting year** variable in **OSIRIS** reflects **two-year reporting periods**. For example, the 2018 accounting year represents financial results spanning 2017–2018, 2019 corresponds to 2018–2019, 2020 covers 2019–2020, and 2021 includes 2020–2021. Throughout this report, each accounting year is interpreted as representing the **endpoint of its reporting cycle**. Consequently, “2021” is treated as capturing firm performance during the height of the **COVID-19 pandemic**, while 2018–2019 represent pre-pandemic benchmarks.
+
+This dataset structure enables a robust exploration of temporal changes in corporate performance and the role of firm characteristics—particularly **firm size**—in shaping **financial resilience** throughout the pandemic period.
+
+### Research Question
+
+**Which German industries showed unexpected financial resilience or vulnerability from 2020 to 2022, and how were these outcomes shaped by profitability, leverage, liquidity, and firm size?**
+
+During 2020–2022, industries such as healthcare, information technology, and utilities demonstrated notable financial resilience, supported by strong liquidity and stable profitability. In contrast, sectors like hospitality, transportation, and manufacturing showed greater vulnerability due to higher leverage and lower profit margins. Overall, firm size and liquidity emerged as key buffers against financial stress, while high debt levels amplified vulnerability across more capital-intensive industries.
 
 ## IDA
 
@@ -458,13 +477,7 @@ p_ratio
 
 According to the table, the profitability ratios (EBIT/EBITDA margins, ROA) cluster near small positives, with wider variation in 2020–2021. ROE has the heaviest tails and many negatives, indicating pressure on equity returns during the pandemic. Solvency is relatively stable with a slight dip around 2020; gearing is more dispersed and somewhat higher in 2020–2021 for some firms. Liquidity (current/quick ratios) is generally low, with some moderate levels, but it shows long right tails, reflecting a few firms with strong buffers. Efficiency (net assets and stock turnover) is broadly stable. Therefore, in EDA, we report median and IQR rather than means, and we cap extreme values in figures only to improve readability while keeping original values for calculations.
 
-### Research Question
 
-
-
-**Which German industries showed unexpected financial resilience or vulnerability from 2020 to 2022, and how were these outcomes shaped by profitability, leverage, liquidity, and firm size?**
-
-During 2020–2022, industries such as healthcare, information technology, and utilities demonstrated notable financial resilience, supported by strong liquidity and stable profitability. In contrast, sectors like hospitality, transportation, and manufacturing showed greater vulnerability due to higher leverage and lower profit margins. Overall, firm size and liquidity emerged as key buffers against financial stress, while high debt levels amplified vulnerability across more capital-intensive industries.
 
 
 ## Conclusions
