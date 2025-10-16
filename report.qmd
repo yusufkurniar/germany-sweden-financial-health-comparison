@@ -241,6 +241,7 @@ data_dictionary |>
   kable_styling(full_width = FALSE, font_size = 11)
 ```
 
+## IDA
 
 ```{r table-checking}
 
@@ -373,18 +374,18 @@ filtered_germany <- filtered_germany |>
 ```
 
 ```{r prepare-IDA}
-# 1) Long data with *original* variable names kept
+#using long data
 ida_germany <- filtered_germany %>%
   select(acct_year, all_of(num_cols)) %>%
   pivot_longer(-acct_year, names_to = "variable_orig", values_to = "value") %>%
   drop_na()
 
-# 2) Split using original names (no label-matching issues)
+#split between scale and ratio
 scale_vars <- c("total_assets_eur","total_liabilities_eur","total_equity_eur",
                 "total_revenue_eur","net_sales_eur","gross_sales_eur","net_income_eur")
 ratio_vars <- setdiff(unique(ida_germany$variable_orig), scale_vars)
 
-# 3) Safe label mapping (unknown names keep themselves)
+#label mapping for the charts
 nice <- c(
   total_assets_eur   = "Total assets (EUR)",
   total_liabilities_eur="Total liabilities (EUR)",
@@ -416,10 +417,10 @@ ida_germany <- ida_germany %>%
 ```
 
 ```{r IDA-scale}
-# 4) SCALE variables (log axis). Do NOT drop rows entirely—only make y NA if <=0
+#chart for scale variables (log axis)
 p_scale <- ida_germany %>%
   filter(variable_orig %in% scale_vars) %>%
-  mutate(y = if_else(value > 0, value, NA_real_)) %>%  # keep rows, drop non-positives from y only
+  mutate(y = if_else(value > 0, value, NA_real_)) %>%
   ggplot(aes(x = factor(acct_year), y = y)) +
   geom_violin(trim = FALSE, fill = NA, linewidth = 0.4, na.rm = TRUE) +
   geom_jitter(width = 0.12, height = 0, alpha = 0.12, size = 0.6, na.rm = TRUE) +
@@ -438,7 +439,7 @@ p_scale
 According to the table, the monetary amounts (EUR) variables are heavily right-skewed: most firms are small to mid-sized, with a long tail from a few very large firms (hence the log scale in figures). From 2018 to 2021, medians are relatively stable, with a slight increase in liabilities relative to assets and sales. Distributions widen in 2020 and 2021, showing more variability in assets, revenues, and especially net income. Net income shows the most significant relative spread, indicating higher volatility in profitability during the pandemic. Therefore, in EDA, the median and IQR are used rather than the mean.
 
 ```{r IDA-ratio}
-# 5) RATIO / % variables (linear axis)
+#chart for ratio variables (linear axis)
 p_ratio <- ida_germany %>%
   filter(variable_orig %in% ratio_vars) %>%
   ggplot(aes(x = factor(acct_year), y = value)) +
@@ -458,6 +459,8 @@ p_ratio
 According to the table, the profitability ratios (EBIT/EBITDA margins, ROA) cluster near small positives, with wider variation in 2020–2021. ROE has the heaviest tails and many negatives, indicating pressure on equity returns during the pandemic. Solvency is relatively stable with a slight dip around 2020; gearing is more dispersed and somewhat higher in 2020–2021 for some firms. Liquidity (current/quick ratios) is generally low, with some moderate levels, but it shows long right tails, reflecting a few firms with strong buffers. Efficiency (net assets and stock turnover) is broadly stable. Therefore, in EDA, we report median and IQR rather than means, and we cap extreme values in figures only to improve readability while keeping original values for calculations.
 
 ### Research Question
+
+
 
 **Which German industries showed unexpected financial resilience or vulnerability from 2020 to 2022, and how were these outcomes shaped by profitability, leverage, liquidity, and firm size?**
 
