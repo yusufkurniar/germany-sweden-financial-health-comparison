@@ -601,7 +601,7 @@ focus_features <- industry_features %>%
 
 ```{r}
 #| label: fig-trend_in
-#| tbl-cap: "Scatter plot visualizing trend strength disruption across industries during the pandemic period. The 0.3 threshold lines demarcate sectors experiencing significant breakdown in ROA (x-axis) and Current Ratio (y-axis) trends, with bubble size representing ROA spikiness as a measure of financial instability."
+#| fig-cap: "Scatter plot visualizing trend strength disruption across industries during the pandemic period. The 0.3 threshold lines demarcate sectors experiencing significant breakdown in ROA (x-axis) and Current Ratio (y-axis) trends, with bubble size representing ROA spikiness as a measure of financial instability."
 
 # Trend strength analysis to identify the hardest-hit sectors
 trend_analysis <- focus_features %>%
@@ -643,6 +643,76 @@ trend_in <- ggplotly(trend_plot, tooltip = c("text", "x", "y", "size")) %>%
 
 trend_in
 ```
+
+
+**Volatility analysis**
+
+
+
+```{r}
+#| label: fig-volatility_in
+#| fig-cap: "Volatility analysis of industry financial metrics during pandemic. Plot displays ROA spikiness (x-axis) against Current Ratio spikiness (y-axis), with industry groups color-coded and bubble sizes indicating ROA trend strength. Median values marked with dashed blue lines. Top-right industries have highest volatility. The ROA spikiness of the Accommodation industry exceeds 20,000 and is not shown in the figure."
+
+# Volatility analysis to identify the sectors with the greatest volatility during the pandemic
+volatility_analysis <- focus_features %>%
+  mutate(
+    high_roa_volatility = roa_spikiness > median(roa_spikiness),
+    high_cr_volatility = cr_spikiness > median(cr_spikiness),
+    overall_volatility = (scale(roa_spikiness) + scale(cr_spikiness)) / 2)
+
+volatility_plot <- focus_features %>%
+  ggplot(aes(x = roa_spikiness, y = cr_spikiness)) +
+  geom_point(aes(color = industry_group, 
+                 size = roa_trend_strength, 
+                 text = industry_group), alpha = 0.7) +
+  geom_hline(yintercept = median(focus_features$cr_spikiness), 
+             linetype = "dashed", color = "blue", alpha = 0.5) +
+  geom_vline(xintercept = median(focus_features$roa_spikiness), 
+             linetype = "dashed", color = "blue", alpha = 0.5) +
+  coord_cartesian(xlim = c(0, quantile(focus_features$roa_spikiness, 0.90))) + # Limit to 90% quantile
+  labs(title = "Industry Volatility Analysis During Pandemic<br><sub>Blue dashed lines represent medians, excluding the extreme values",
+       x = "ROA Spikiness", y = "Current Ratio Spikiness",
+       size = "ROA Trend Strength") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+
+volatility_in <- ggplotly(volatility_plot, tooltip = c("text", "x", "y", "size")) %>%
+  plotly::layout(
+    hoverlabel = list(bgcolor = "white", font = list(size = 12)),
+    annotations = list(
+      list(
+        x = median(focus_features$roa_spikiness),
+        y = 0.9,
+        xref = "x", yref = "paper",
+        text = "Median ROA Spikiness",
+        showarrow = FALSE,
+        font = list(color = "blue", size = 10)
+      ),
+      list(
+        x = 0.8,
+        y = median(focus_features$cr_spikiness),
+        xref = "paper", yref = "y",
+        text = "Median CR Spikiness",
+        showarrow = FALSE,
+        font = list(color = "blue", size = 10)
+      )
+    )
+  )
+
+volatility_in
+```
+
+
+
+
+
+
+
+
+
+
+
 
 
 
