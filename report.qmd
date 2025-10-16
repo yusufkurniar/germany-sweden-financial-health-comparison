@@ -429,7 +429,9 @@ kable(germany_ts %>%
 
 ##### EDA
 
-1. Check for missing value (Tutorial 8)
+1. Data preparation
+
+**Check for missing value (Tutorial 8)**
 
 
 
@@ -473,7 +475,7 @@ m3
 The initial examination of missing values revealed a relatively low proportion of incomplete data in the dataset. As shown in @fig-missing_clu, the missing value analysis showed that only 0.7% of the total data was missing, while 99.3% of observations were complete. ROA contained between 1% and 1.5% missing values across the dataset, while the current ratio had a slightly higher proportion of missing data, ranging from 2% to 2.5% (@fig-missing_plots).
 
 
-2. Address missingness issues
+**Address missingness issues**
 
 ```{r}
 germany_ts <- germany_ts %>%
@@ -489,7 +491,7 @@ germany_ts <- germany_ts %>%
   arrange(company_id, fy_year)
 ```
 
-3. Visualizing Industry Time Series Patterns (Lecture 9, slide 24-26, feasts and tsibbletalk)  
+2. Visualizing Industry Time Series Patterns (Lecture 9, slide 24-26, feasts and tsibbletalk)  
 
 ```{r}
 # Calculate the average ROA and current ratio for each industry each year
@@ -574,8 +576,9 @@ Based on the Current Ratio trends (@fig-CR_ploty), most industries demonstrated 
 
 -  Construction maintained exceptional stability throughout the period.
 
-4. feasts (Lecture 9, slide 24-26, feasts and tsibbletalk)  
+3. Macro-level evidence of anomalous recovery patterns across industries (ROA and liquidity) - feasts (Lecture 9, slide 24-26, feasts and tsibbletalk)  
 
+Now, I will analyze the fundamental relationship between corporate liquidity and profitability across industries during the pandemic period, with particular focus on identifying anomalous recovery patterns.
 
 ```{r}
 # Calculating time series features
@@ -599,9 +602,11 @@ focus_features <- industry_features %>%
 
 **Trend strength analysis**
 
+The trend strength visualization in @fig-trend_in reveals significant disruptions to industry financial fundamentals. Five industries in the bottom-left quadrant, indicating severe deterioration in both ROA and Current Ratio trends. Accommodation & Food has the largest bubble, reflecting extreme volatility and weak performance during pandemic restrictions. This pattern reflects the extreme operational challenges faced by hospitality-related sectors during pandemic restrictions.
+
 ```{r}
 #| label: fig-trend_in
-#| fig-cap: "Scatter plot visualizing trend strength disruption across industries during the pandemic period. The 0.3 threshold lines demarcate sectors experiencing significant breakdown in ROA (x-axis) and Current Ratio (y-axis) trends, with bubble size representing ROA spikiness as a measure of financial instability."
+#| fig-cap: "Scatter plot visualizing trend strength disruption across industries during the pandemic period. The 0.3 threshold lines demarcate sectors experiencing significant breakdown in ROA (x-axis) and Current Ratio (y-axis) trends, with bubble size representing ROA spikiness as a measure of financial instability. Industries in bottom-left corner are most severely impacted."
 
 # Trend strength analysis to identify the hardest-hit sectors
 trend_analysis <- focus_features %>%
@@ -620,7 +625,7 @@ trend_plot <- focus_features %>%
                  text = industry_group), alpha = 0.7) +
   geom_hline(yintercept = 0.3, linetype = "dashed", color = "red", alpha = 0.7) +
   geom_vline(xintercept = 0.3, linetype = "dashed", color = "red", alpha = 0.7) +
-   labs(title = "Impact of Pandemic on Industry Trend Strength<br><sub>Red dashed lines indicate trend strength threshold (0.3). Industries in bottom-left corner are most severely impacted",
+   labs(title = "Impact of Pandemic on Industry Trend Strength<br><sub>Red dashed lines indicate trend strength threshold (0.3).",
        x = "ROA Trend Strength", y = "Current Ratio Trend Strength",
        size = "ROA Spikiness") +
   theme_minimal() +
@@ -647,6 +652,7 @@ trend_in
 
 **Volatility analysis**
 
+After trend strength analysis, the volatility examination in @fig-volatility_in demonstrates divergent patterns in financial metric instability. Six industries show high ROA volatility, but most have moderate Current Ratio spikiness. However, Consumer Services is exceptional with the highest Current Ratio spikiness, suggesting unique liquidity challenges.
 
 
 ```{r}
@@ -703,12 +709,78 @@ volatility_in <- ggplotly(volatility_plot, tooltip = c("text", "x", "y", "size")
 volatility_in
 ```
 
+**Threshold-based industry classification**
+
+Given the exploratory focus of our study and limited emphasis on clustering methods in lectures, we instead used threshold-based segmentation to classify industries into recovery archetypes. This approach categorizes industries based on their ROA trend strength and volatility using the following criteria:
 
 
+- High trend strength (≥0.7) + Low spikiness (≤median) → "Resilient industries"
+
+- Low trend strength (≤0.3) + High spikiness (≥75th percentile) → "K-shaped recovery industries"
+
+- High trend strength (≥0.7) + High spikiness (≥75th percentile) → "Hidden crisis industries"
+
+- All other combinations → "Moderate impact industries"
 
 
+As shown in @fig-classification, the analysis reveals clear patterns of differential recovery across sectors.  The Construction and Financial & Insurance sectors demonstrate resilient characteristics.	Wholesale & Retail Trade, Accommodation & Food Services, and Information & Communication exhibit K-shaped recovery patterns No industry is hidden crisis. No industries fall into the hidden crisis category, suggesting that while some sectors experienced significant disruption, none indicated underlying structural issues. This classification provides valuable insights into how different industries navigated the pandemic's challenges. Next part, we will focus on the anomalous K-shaped recoveries that suggest uneven performance within certain sectors.
 
 
+```{r}
+industry_classes <- focus_features %>%
+  mutate(
+    # Calculate threshold
+    trend_threshold_high = 0.7,
+    trend_threshold_low = 0.3,
+    spikiness_threshold_high = quantile(roa_spikiness, 0.75),
+    
+    # Classification
+    recovery_pattern = case_when(
+      roa_trend_strength >= trend_threshold_high & 
+        roa_spikiness <= median(roa_spikiness) ~ "Resilient",
+      roa_trend_strength <= trend_threshold_low & 
+        roa_spikiness >= spikiness_threshold_high ~ "K-shaped",
+      roa_trend_strength >= trend_threshold_high & 
+        roa_spikiness >= spikiness_threshold_high ~ "Hidden Crisis",
+      TRUE ~ "Moderate Impact"
+    )
+  )
+```
+
+```{r}
+#| label: fig-classification
+#| fig-cap: "Classification of industry recovery patterns based on ROA trend strength and volatility. Four distinct patterns emerge: Resilient (high trend strength, low volatility), K-shaped (low trend strength, high volatility), Hidden Crisis (high trend strength but high volatility), and Moderate Impact (all others). Dashed lines represent classification thresholds."
+
+classification_plot <- industry_classes %>%
+  ggplot(aes(x = roa_trend_strength, y = roa_spikiness, 
+             color = recovery_pattern, 
+             text = paste("Industry:", industry_group,
+                         "<br>Recovery Pattern:", recovery_pattern,
+                         "<br>ROA Trend Strength:", round(roa_trend_strength, 3),
+                         "<br>ROA Spikiness:", round(roa_spikiness, 3)))) +
+  geom_point(size = 2, alpha = 0.7) +
+  geom_vline(xintercept = c(0.3, 0.7), linetype = "dashed", alpha = 0.5) +
+  geom_hline(yintercept = median(industry_classes$roa_spikiness), 
+             linetype = "dashed", alpha = 0.5) +
+  labs(title = "Industry Recovery Patterns Classification",
+       x = "ROA Trend Strength", y = "ROA Spikiness",
+       color = "Recovery Pattern") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+
+classification_plotly <- ggplotly(classification_plot, tooltip = "text") %>%
+  plotly::layout(
+    hoverlabel = list(bgcolor = "white", font = list(size = 12)),
+    title = list(
+      text = "Industry Recovery Patterns Classification<br><sub><i>Based on ROA trend strength and volatility analysis</i></sub>",
+      x = 0.05
+    ),
+    margin = list(t = 100)
+  )
+
+classification_plotly
+```
 
 
 
