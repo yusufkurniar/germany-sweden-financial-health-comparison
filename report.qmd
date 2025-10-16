@@ -538,6 +538,10 @@ outliers_overall |>
 According to the table, the share of extreme values per variable is assessed using two rules: the IQR fence (share_iqr) and a z-score cutoff (share_z). Outliers are most common in net_income_eur (around 25%), EBIT margin (about 19%), and interest_cover (about 18%), while they are infrequent in solvency_pct (around 1%) and less common for turnover and gearing. The z-score method identifies far fewer points because many variables are right-skewed, which makes mean/SD-based detection conservative. The IQR rule provides a more informative screening here.
 
 ```{r character-check}
+```
+
+
+```{r character-check}
 #character variables to check
 char_vars <- c("company_id","company_name","country","city",
                "consolidation_code","nace_code","icb_code","sic_code")
