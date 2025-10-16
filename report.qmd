@@ -400,7 +400,7 @@ germany_q4 <- germany_q4 %>%
   select(company_id, fy_year, roa_pct, current_ratio, industry_group)
 ```
 
-3. Convert data into a tsibble object using the tsibble package
+3. Convert data into a tsibble object using the tsibble package (Lecture 9, slide 5 & Reading week 9)
 
 
 Each company was defined as a key and the financial year as the index. Basic screening was performed to check for missing values, outliers, and duplicates.
@@ -434,10 +434,9 @@ kable(germany_ts %>%
 **Check for missing value (Tutorial 8)**
 
 
-
 ```{r}
 #| label: fig-missing_plots
-#| tbl-cap: "The plots of Missing Value Distribution"
+#| fig-cap: "The plots of Missing Value Distribution"
 
 # Check for missing ROA and CR
 miss_var <- 
@@ -463,7 +462,7 @@ miss_var / miss_industry / miss_case
 
 ```{r}
 #| label: fig-missing_clu
-#| tbl-cap: "The plot of clustering to visualize missing patterns"
+#| fig-cap: "The plot of clustering to visualize missing patterns"
 
 m3 <- vis_miss(germany_ts, cluster = TRUE, sort_miss = TRUE) +
   theme(axis.text.x = element_text(size = 8, angle = 45, hjust = 1),
@@ -477,6 +476,9 @@ The initial examination of missing values revealed a relatively low proportion o
 
 **Address missingness issues**
 
+The 'Other / Unmapped' category was removed from the study as it comprises companies without clear industry classification.
+
+
 ```{r}
 germany_ts <- germany_ts %>%
   as_tibble() %>%   # Convert to a normal tibble
@@ -484,7 +486,8 @@ germany_ts <- germany_ts %>%
   filter(!is.na(roa_pct) & !is.na(current_ratio)) %>%
    # Remove industries that don't have data in 2019-2021
   group_by(industry_group) %>%
-  filter(all(2019:2021 %in% fy_year)) %>%  
+  filter(all(2019:2021 %in% fy_year)) %>%
+  filter(industry_group != "Other / Unmapped") %>%
   ungroup() %>%
   # Convert back to tsibble format
   as_tsibble(key = company_id, index = fy_year) %>%
@@ -509,7 +512,7 @@ industry_ts <- germany_ts %>%
 
 ```{r}
 #| label: fig-ROA_ploty
-#| tbl-cap: "The interactive plot of ROA trends by industry (2017-2021)"
+#| fig-cap: "The interactive plot of ROA trends by industry (2017-2021)"
 
 # ROA
 roa_interactive <- industry_ts %>%
@@ -652,7 +655,7 @@ trend_in
 
 **Volatility analysis**
 
-After trend strength analysis, the volatility examination in @fig-volatility_in demonstrates divergent patterns in financial metric instability. Six industries show high ROA volatility, but most have moderate Current Ratio spikiness. However, Consumer Services is exceptional with the highest Current Ratio spikiness, suggesting unique liquidity challenges.
+After trend strength analysis, the volatility examination in @fig-volatility_in demonstrates divergent patterns in financial metric instability. Five industries show high ROA volatility, but most have moderate Current Ratio spikiness. However, Consumer Services is exceptional with the highest Current Ratio spikiness, suggesting unique liquidity challenges.
 
 
 ```{r}
@@ -675,7 +678,7 @@ volatility_plot <- focus_features %>%
              linetype = "dashed", color = "blue", alpha = 0.5) +
   geom_vline(xintercept = median(focus_features$roa_spikiness), 
              linetype = "dashed", color = "blue", alpha = 0.5) +
-  coord_cartesian(xlim = c(0, quantile(focus_features$roa_spikiness, 0.90))) + # Limit to 90% quantile
+  coord_cartesian(xlim = c(0, quantile(focus_features$roa_spikiness, 0.90))) + # Limit to 75% quantile
   labs(title = "Industry Volatility Analysis During Pandemic<br><sub>Blue dashed lines represent medians, excluding the extreme values",
        x = "ROA Spikiness", y = "Current Ratio Spikiness",
        size = "ROA Trend Strength") +
@@ -696,7 +699,7 @@ volatility_in <- ggplotly(volatility_plot, tooltip = c("text", "x", "y", "size")
         font = list(color = "blue", size = 10)
       ),
       list(
-        x = 0.8,
+        x = 0.5,
         y = median(focus_features$cr_spikiness),
         xref = "paper", yref = "y",
         text = "Median CR Spikiness",
@@ -781,6 +784,9 @@ classification_plotly <- ggplotly(classification_plot, tooltip = "text") %>%
 
 classification_plotly
 ```
+
+
+
 
 
 
