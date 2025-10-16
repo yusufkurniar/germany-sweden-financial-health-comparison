@@ -256,9 +256,15 @@ This dataset structure enables a robust exploration of temporal changes in corpo
 
 ### Research Question
 
-**Which German industries showed unexpected financial resilience or vulnerability from 2020 to 2022, and how were these outcomes shaped by profitability, leverage, liquidity, and firm size?**
+**1. **
+
+**2. Which German industries showed unexpected financial resilience or vulnerability from 2020 to 2022, and how were these outcomes shaped by profitability, leverage, liquidity, and firm size?**
 
 During 2020–2022, industries such as healthcare, information technology, and utilities demonstrated notable financial resilience, supported by strong liquidity and stable profitability. In contrast, sectors like hospitality, transportation, and manufacturing showed greater vulnerability due to higher leverage and lower profit margins. Overall, firm size and liquidity emerged as key buffers against financial stress, while high debt levels amplified vulnerability across more capital-intensive industries.
+
+**3. **
+
+**4. **
 
 ## IDA
 
@@ -538,10 +544,6 @@ outliers_overall |>
 According to the table, the share of extreme values per variable is assessed using two rules: the IQR fence (share_iqr) and a z-score cutoff (share_z). Outliers are most common in net_income_eur (around 25%), EBIT margin (about 19%), and interest_cover (about 18%), while they are infrequent in solvency_pct (around 1%) and less common for turnover and gearing. The z-score method identifies far fewer points because many variables are right-skewed, which makes mean/SD-based detection conservative. The IQR rule provides a more informative screening here.
 
 ```{r character-check}
-```
-
-
-```{r character-check}
 #character variables to check
 char_vars <- c("company_id","company_name","country","city",
                "consolidation_code","nace_code","icb_code","sic_code")
@@ -574,12 +576,11 @@ According to the table, identifiers and locations are complete: company_id, comp
 
 **1.** 
 
-
+**2.**
 
 **3. Which German industries showed unexpected financial resilience or vulnerability from 2020 to 2022, and how were these outcomes shaped by profitability, leverage, liquidity, and firm size?**
 
-During 2020–2022, industries such as healthcare, information technology, and utilities demonstrated notable financial resilience, supported by strong liquidity and stable profitability. In contrast, sectors like hospitality, transportation, and manufacturing showed greater vulnerability due to higher leverage and lower profit margins. Overall, firm size and liquidity emerged as key buffers against financial stress, while high debt levels amplified vulnerability across more capital-intensive industries.
->>>>>>> 5b80aae (check IDA)
+**4.**
 
 
 ## Conclusions
