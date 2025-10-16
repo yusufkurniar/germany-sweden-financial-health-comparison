@@ -480,9 +480,9 @@ germany_ts <- germany_ts %>%
   as_tibble() %>%   # Convert to a normal tibble
   # Remove observations with missing ROA or CR
   filter(!is.na(roa_pct) & !is.na(current_ratio)) %>%
-   # Remove industries that don't have data in 2017-2021
+   # Remove industries that don't have data in 2019-2021
   group_by(industry_group) %>%
-  filter(all(2017:2021 %in% fy_year)) %>%  
+  filter(all(2019:2021 %in% fy_year)) %>%  
   ungroup() %>%
   # Convert back to tsibble format
   as_tsibble(key = company_id, index = fy_year) %>%
@@ -514,7 +514,7 @@ roa_interactive <- industry_ts %>%
   ggplot(aes(x = fy_year, y = industry_roa, group = industry_group)) +
   geom_line(aes(color = industry_group), size = 0.8, alpha = 0.7) +
   geom_vline(xintercept = 2020, linetype = "dashed", color = "red", size = 1) +
-  labs(title = "Interactive ROA Trends by Industry (2017-2021)\nVertical line indicates pandemic start (2020) - Hover for details",
+  labs(title = "Interactive ROA Trends by Industry (2017-2021)<br><sub>Vertical line indicates pandemic start (2020) - Hover for details",
        x = "Year", y = "ROA (%)") +
   theme_minimal() +
   theme(legend.position = "none") 
@@ -539,7 +539,7 @@ cr_interactive <- industry_ts %>%
   ggplot(aes(x = fy_year, y = industry_cr, group = industry_group)) +
   geom_line(aes(color = industry_group), size = 0.8, alpha = 0.7) +
   geom_vline(xintercept = 2020, linetype = "dashed", color = "red", size = 1) +
-  labs(title = "Interactive Current Ratio Trends by Industry (2017-2021) \nVertical line indicates pandemic start (2020) - Hover for details",
+  labs(title = "Interactive Current Ratio Trends by Industry (2017-2021) <br><sub>Vertical line indicates pandemic start (2020) - Hover for details",
        x = "Year", y = "Current Ratio") +
   theme_minimal() +
   theme(legend.position = "none")
@@ -554,7 +554,15 @@ cr_plotly
 ```
 
 
-The interactive ROA trends (@fig-ROA_ploty) reveal distinct pandemic responses across industries. Accommodation & Food surged temporarily in 2020 but declined again in 2021. Industrials showed a persistent decline that accelerated post-2020, while Information & Communication rebounded sharply after an initial dip. Manufacturing and Transport & Storage transformed from negative to positive ROA during the pandemic period. Financial & Insurance maintained the highest ROA with steady growth throughout, demonstrating remarkable sector resilience.
+The interactive ROA trends (@fig-ROA_ploty) reveal distinct pandemic responses across industries:
+
+- Accommodation & Food surged temporarily in 2020 but declined again in 2021.
+
+- Industrials showed a persistent decline that accelerated post-2020, while Information & Communication rebounded sharply after an initial dip. 
+-
+- Manufacturing and Transport & Storage transformed from negative to positive ROA during the pandemic period. 
+
+- Financial & Insurance maintained the highest ROA with steady growth throughout, demonstrating remarkable sector resilience.
 
 Based on the Current Ratio trends (@fig-CR_ploty), most industries demonstrated relative stability throughout the period. However, two sectors exhibited notable deviations: 
 
@@ -566,7 +574,75 @@ Based on the Current Ratio trends (@fig-CR_ploty), most industries demonstrated 
 
 -  Construction maintained exceptional stability throughout the period.
 
-4. feasts
+4. feasts (Lecture 9, slide 24-26, feasts and tsibbletalk)  
+
+
+```{r}
+# Calculating time series features
+industry_features <- industry_ts %>%
+  features(industry_roa, feat_stl) %>%
+  rename_with(~ paste0("roa_", .), -industry_group) %>%
+  left_join(
+    industry_ts %>%
+      features(industry_cr, features = feat_stl) %>%
+      rename_with(~ paste0("cr_", .), -industry_group),
+    by = "industry_group"
+  )
+
+# Focus on trend_strength and spikiness
+focus_features <- industry_features %>%
+  select(industry_group, 
+         roa_trend_strength, roa_spikiness,
+         cr_trend_strength, cr_spikiness)
+ 
+```
+
+**Trend strength analysis**
+
+```{r}
+#| label: fig-trend_in
+#| tbl-cap: "Scatter plot visualizing trend strength disruption across industries during the pandemic period. The 0.3 threshold lines demarcate sectors experiencing significant breakdown in ROA (x-axis) and Current Ratio (y-axis) trends, with bubble size representing ROA spikiness as a measure of financial instability."
+
+# Trend strength analysis to identify the hardest-hit sectors
+trend_analysis <- focus_features %>%
+  mutate(
+    # Identify sectors where trends are broken (low trend strength)
+    roa_trend_disrupted = roa_trend_strength < 0.3,
+    cr_trend_disrupted = cr_trend_strength < 0.3,
+    overall_trend_impact = (roa_trend_strength + cr_trend_strength) / 2
+  )
+
+# Create plot
+trend_plot <- focus_features %>%
+  ggplot(aes(x = roa_trend_strength, y = cr_trend_strength)) +
+  geom_point(aes(size = roa_spikiness, 
+                 color = industry_group, 
+                 text = industry_group), alpha = 0.7) +
+  geom_hline(yintercept = 0.3, linetype = "dashed", color = "red", alpha = 0.7) +
+  geom_vline(xintercept = 0.3, linetype = "dashed", color = "red", alpha = 0.7) +
+   labs(title = "Impact of Pandemic on Industry Trend Strength<br><sub>Red dashed lines indicate trend strength threshold (0.3). Industries in bottom-left corner are most severely impacted",
+       x = "ROA Trend Strength", y = "Current Ratio Trend Strength",
+       size = "ROA Spikiness") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+# Convert to interactive plotly
+trend_in <- ggplotly(trend_plot, tooltip = c("text", "x", "y", "size")) %>%
+  plotly::layout(
+    hoverlabel = list(bgcolor = "white", font = list(size = 12)),
+    annotations = list(
+      list(
+        x = 0.3, y = 1,
+        xref = "x", yref = "y",
+        text = "Threshold (0.3)",
+        showarrow = FALSE,
+        font = list(color = "red", size = 10)
+      )
+    )
+  )
+
+trend_in
+```
 
 
 
