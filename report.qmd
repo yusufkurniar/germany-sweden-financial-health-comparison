@@ -256,15 +256,15 @@ This dataset structure enables a robust exploration of temporal changes in corpo
 
 ### Research Question
 
-**1. **
+**1. How did profitability change across industries?**
 
-**2. Which German industries showed unexpected financial resilience or vulnerability from 2020 to 2022, and how were these outcomes shaped by profitability, leverage, liquidity, and firm size?**
+**2. How did leverage (debt-to-assets) and liquidity (current ratio) evolve during pandemic?**
+
+**3. Which German industries showed unexpected financial resilience or vulnerability from 2020 to 2022, and how were these outcomes shaped by profitability, leverage, liquidity, and firm size?**
 
 During 2020–2022, industries such as healthcare, information technology, and utilities demonstrated notable financial resilience, supported by strong liquidity and stable profitability. In contrast, sectors like hospitality, transportation, and manufacturing showed greater vulnerability due to higher leverage and lower profit margins. Overall, firm size and liquidity emerged as key buffers against financial stress, while high debt levels amplified vulnerability across more capital-intensive industries.
 
-**3. **
-
-**4. **
+**4. How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic?**
 
 ## IDA
 
@@ -574,14 +574,13 @@ According to the table, identifiers and locations are complete: company_id, comp
 
 ### EDA
 
-**1.** 
+**1. How did profitability change across industries?**
 
-**2.**
+**2. How did leverage (debt-to-assets) and liquidity (current ratio) evolve during pandemic?**
 
 **3. Which German industries showed unexpected financial resilience or vulnerability from 2020 to 2022, and how were these outcomes shaped by profitability, leverage, liquidity, and firm size?**
 
-**4.**
-
+**4. How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic?**
 
 ## Conclusions
 
