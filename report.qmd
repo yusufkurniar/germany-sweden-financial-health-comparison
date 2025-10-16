@@ -66,6 +66,8 @@ library(dplyr)
 library(stringr)
 library(janitor)
 library(skimr)
+library(knitr)
+library(kableExtra)
 ```
 
 
@@ -80,6 +82,7 @@ Our analysis focuses on how industries differed in their financial outcomes duri
 
 ## Data description
 
+The dataset used in this analysis originates from **the Bureau van Dijk OSIRIS database**, a comprehensive source of harmonised financial information for publicly listed and major private firms worldwide. For this study, we extracted firm-level data for **German companies** over the **2018–2021 accounting years**, a period that captures both pre-pandemic and pandemic-era financial performance. Each record represents a firm’s reported financials for a specific accounting year, enabling longitudinal exploration of trends in profitability, liquidity, leverage, and resilience.
 
 ```{r read-data}
 #define the folder
@@ -135,52 +138,59 @@ filtered_germany <- combined_germany |>
   clean_names() |>
   
   rename(
-    #IDs / scope (used in all questions)
-    company_name = company_name_name, #label
-    company_id = name_id, #unique firm id
-    year = year, #reporting year
-    country = country_country,
-    city = city_city_city, #city/HQ
-    consolidation_code = consolidation_code_consol_code, #consolidated vs standalone
+    # IDs / scope (used in all questions)
+    company_name       = company_name_name,
+    company_id         = name_id,
+    year               = year,
+    country            = country_country,
+    city               = city_city_city,
+    consolidation_code = consolidation_code_consol_code,
+    status             = status_status,
     
-    #industry codes (Q1, Q2, Q4)
-    nace_code = nace_rev_1_core_code_cnacecd, #EU industry code (primary)
-    icb_code = industrial_classification_benchmark_icb, #ICB classification (fallback)
-    sic_code = us_sic_core_code_csicuscde, #SIC code (fallback)
+    # Industry codes (Q1, Q2, Q4)
+    nace_code = nace_rev_1_core_code_cnacecd,
+    icb_code  = industrial_classification_benchmark_icb,
+    sic_code  = us_sic_core_code_csicuscde,
     
-    #scale / balance sheet (Q2, Q3)
-    total_assets_eur = total_assets_data13077, #base for ratios
-    total_liabilities_eur = total_liabilities_and_debt_data14022, #debt measure
-    total_equity_eur = total_shareholders_equity_data14041, #equity capital
+    # Scale / balance sheet (Q2, Q3)
+    total_assets_eur      = total_assets_data13077,
+    total_liabilities_eur = total_liabilities_and_debt_data14022,
+    total_equity_eur      = total_shareholders_equity_data14041,
     
-    #revenue & profit (Q1, Q3)
-    total_revenue_eur = total_revenues_data13004, #denominator for margins
-    net_sales_eur = net_sales_data13002, #sales denominator
-    gross_sales_eur = gross_sales_data13000, #top-line revenue
-    net_income_eur = net_income_starting_line_data15500, #used to calculate ROA/ROE
+    # Revenue & profit (Q1, Q3)
+    total_revenue_eur = total_revenues_data13004,
+    net_sales_eur     = net_sales_data13002,
+    gross_sales_eur   = gross_sales_data13000,
+    net_income_eur    = net_income_starting_line_data15500,
     
-    #profitability ratios (Q1, Q4)
-    ebit_margin_pct = ebit_margin_percent_data31055, #profitability metric (EBIT %)
-    ebitda_margin_pct = ebitda_margin_percent_data31060, #profitability metric (EBITDA %)
-    roa_pct = return_on_total_assets_percent_data31015, #return on assets
-    roe_pct = roe_percent_data31065, #return on equity
+    # Profitability ratios (Q1, Q4)
+    ebit_margin_pct   = ebit_margin_percent_data31055,
+    ebitda_margin_pct = ebitda_margin_percent_data31060,
+    roa_pct           = return_on_total_assets_percent_data31015,
+    roe_pct           = roe_percent_data31065,
     
-    #efficiency (supporting for Q1/Q4)
-    net_assets_turnover = net_assets_turnover_data31225, #asset efficiency
-    stock_turnover = stock_turnover_data31220, #inventory management efficiency
+    # Efficiency
+    net_assets_turnover = net_assets_turnover_data31225,
+    stock_turnover      = stock_turnover_data31220,
     
-    #leverage, solvency, and liquidity (Q2)
-    solvency_pct = solvency_ratio_percent_data31310, #solvency strength
-    gearing_pct = gearing_percent_data31315, #leverage level
-    current_ratio = current_ratio_data31105, #liquidity ratio (short-term)
-    liquidity_ratio = liquidity_ratio_data31110, #alternate liquidity ratio
-    shareholders_liq_pct = shareholders_liquidity_ratio_data31305, #shareholder liquidity
-    interest_cover = interest_cover_data31115 #interest
+    # Leverage, solvency, and liquidity (Q2)
+    solvency_pct        = solvency_ratio_percent_data31310,
+    gearing_pct         = gearing_percent_data31315,
+    current_ratio       = current_ratio_data31105,
+    liquidity_ratio     = liquidity_ratio_data31110,
+    shareholders_liq_pct= shareholders_liquidity_ratio_data31305,
+    interest_cover      = interest_cover_data31115
   ) |>
   
-  #select only relevant columns to answer the questions
+  # Rename fiscal year
+  mutate(
+    fy_end_date = lubridate::ymd(as.character(company_fiscal_year_end_date_closdate)),
+    fy_year     = year(fy_end_date)
+  ) |>
+  
+  # Select only relevant columns
   select(
-    company_id, company_name, year, country, city, consolidation_code,
+    company_id, company_name, fy_end_date, fy_year,  status, country, city, consolidation_code,
     nace_code, icb_code, sic_code,
     total_assets_eur, total_liabilities_eur, total_equity_eur,
     total_revenue_eur, net_sales_eur, gross_sales_eur, net_income_eur,
@@ -189,8 +199,68 @@ filtered_germany <- combined_germany |>
     solvency_pct, gearing_pct, current_ratio, liquidity_ratio,
     shareholders_liq_pct, interest_cover
   )
-  
+
 ```
+
+```{r table-description}
+data_dictionary <- tribble(
+  ~`Column Name`,           ~Description,                                                                    ~`Data Type`, ~`Original Name`,
+  "company_id",             "Unique company identifier (Bureau van Dijk ID).",                               "character", "BvD ID Number (os_id_number)",
+  "company_name",           "Registered company name (label).",                                               "character", "Company Name (name)",
+  "fy_end_date",            "Company fiscal year-end date for the account.",                                  "date",      "Company Fiscal Year End Date (closdate)",
+  "fy_year",                "Year extracted from fiscal year-end date.",                                      "integer",   "derived from Company Fiscal Year End Date (closdate)",
+  "acct_year",              "Reporting year label carried from file name/field.",                             "integer",   "year",
+  "country",                "Country of head office.",                                                         "character", "Country (country)",
+  "city",                   "City of head office.",                                                            "character", "CITY - City (city)",
+  "consolidation_code",     "Consolidation scope of the accounts (e.g., C1/C2/U1/U2).",                        "character", "Consolidation Code (consol_code)",
+  "nace_code",              "NACE core code (EU industry classification).",                                    "character", "NACE Rev 1, Core Code (cnacecd)",
+  "icb_code",               "ICB industry classification code.",                                               "character", "Industrial Classification Benchmark (icb)",
+  "sic_code",               "US SIC core code.",                                                               "character", "US SIC, Core Code (csicuscde)",
+  "total_assets_eur",       "Total assets (EUR).",                                                              "numeric",   "Total Assets (data13077)",
+  "total_liabilities_eur",  "Total liabilities and debt (EUR).",                                               "numeric",   "Total Liabilities and Debt (data14022)",
+  "total_equity_eur",       "Total shareholders’ equity (EUR).",                                               "numeric",   "Total Shareholders Equity (data14041)",
+  "total_revenue_eur",      "Total revenues / operating revenue (EUR).",                                       "numeric",   "Total revenues (data13004)",
+  "net_sales_eur",          "Net sales (EUR).",                                                                 "numeric",   "Net sales (data13002)",
+  "gross_sales_eur",        "Gross sales (EUR).",                                                               "numeric",   "Gross sales (data13000)",
+  "net_income_eur",         "Net income (EUR).",                                                                "numeric",   "Net Income / Starting Line (data15500)",
+  "ebit_margin_pct",        "EBIT margin (% of sales/revenue).",                                               "numeric",   "EBIT Margin (%) (data31055)",
+  "ebitda_margin_pct",      "EBITDA margin (% of sales/revenue).",                                             "numeric",   "EBITDA Margin (%) (data31060)",
+  "roa_pct",                "Return on total assets (%).",                                                     "numeric",   "Return on Total Assets (%) (data31015)",
+  "roe_pct",                "Return on equity (%).",                                                           "numeric",   "ROE (%) (data31065)",
+  "net_assets_turnover",    "Net assets turnover (times).",                                                    "numeric",   "Net Assets Turnover (data31225)",
+  "stock_turnover",         "Stock / inventory turnover (times).",                                             "numeric",   "Stock Turnover (data31220)",
+  "solvency_pct",           "Solvency ratio (%).",                                                             "numeric",   "Solvency ratio (%) (data31310)",
+  "gearing_pct",            "Gearing ratio (%).",                                                              "numeric",   "Gearing (%) (data31315)",
+  "current_ratio",          "Current ratio (times).",                                                          "numeric",   "Current ratio (data31105)",
+  "liquidity_ratio",        "Liquidity / quick ratio (times).",                                                "numeric",   "Liquidity ratio (data31110)",
+  "shareholders_liq_pct",   "Shareholders’ liquidity ratio (%).",                                              "numeric",   "Shareholders Liquidity ratio (data31305)",
+  "interest_cover",         "Interest cover (times).",                                                         "numeric",   "Interest Cover (data31115)"
+)
+
+#show table
+data_dictionary |>
+  kable(align = "l", booktabs = TRUE) |>
+  kable_styling(full_width = FALSE, font_size = 11)
+```
+
+The selected variables encompass four key dimensions of corporate financial health:
+- **Identification and Location** — company_id, company_name, country, and city provide firm-level identifiers and geographical context.
+- **Balance Sheet Structure** — total_assets_eur, total_liabilities_eur, and total_equity_eur measure firm size and capital composition, reported in euros.
+- **Income and Profitability** — total_revenue_eur, net_sales_eur, and net_income_eur capture income statement outcomes, while ebit_margin_pct, ebitda_margin_pct, roa_pct, and roe_pct reflect operating performance and returns to shareholders.
+- **Solvency and Liquidity** — solvency_pct, gearing_pct, current_ratio, liquidity_ratio, shareholders_liq_pct, and interest_cover assess each firm’s financial stability, leverage, and capacity to meet short-term obligations.
+Industry Classification — industry_nace, industry_icb, and industry_group link firms to their respective economic sectors according to European (NACE) and global (ICB) coding systems.
+
+It is important to note that the **accounting year** variable in **OSIRIS** reflects **two-year reporting periods**. For example, the 2018 accounting year represents financial results spanning 2017–2018, 2019 corresponds to 2018–2019, 2020 covers 2019–2020, and 2021 includes 2020–2021. Throughout this report, each accounting year is interpreted as representing the **endpoint of its reporting cycle**. Consequently, “2021” is treated as capturing firm performance during the height of the **COVID-19 pandemic**, while 2018–2019 represent pre-pandemic benchmarks.
+
+This dataset structure enables a robust exploration of temporal changes in corporate performance and the role of firm characteristics—particularly **firm size**—in shaping **financial resilience** throughout the pandemic period.
+
+### Research Question
+
+**Which German industries showed unexpected financial resilience or vulnerability from 2020 to 2022, and how were these outcomes shaped by profitability, leverage, liquidity, and firm size?**
+
+During 2020–2022, industries such as healthcare, information technology, and utilities demonstrated notable financial resilience, supported by strong liquidity and stable profitability. In contrast, sectors like hospitality, transportation, and manufacturing showed greater vulnerability due to higher leverage and lower profit margins. Overall, firm size and liquidity emerged as key buffers against financial stress, while high debt levels amplified vulnerability across more capital-intensive industries.
+
+## IDA
 
 ```{r table-checking}
 
@@ -223,6 +293,7 @@ missing_by_year <- filtered_germany |>
 
 #sanity checks (optional but recommended)
 dup_firm_year <- filtered_germany |>
+  count(company_id, fy_year, acct_year) |>
   count(company_id, year) |>
   filter(n > 1)
 
@@ -301,6 +372,7 @@ filtered_germany <- filtered_germany |>
 #check
 unmapped_sample <- filtered_germany |>
   filter(industry_group == "Other / Unmapped") |>
+  select(company_id, fy_year, acct_year, nace_code, icb_code) |>
   select(company_id, year, nace_code, icb_code) |>
   head(15)
 
@@ -322,11 +394,90 @@ filtered_germany <- filtered_germany |>
   mutate(industry_group = factor(industry_group, levels = ordered_levels))
 ```
 
-### Research Question
+```{r prepare-IDA}
+#using long data
+ida_germany <- filtered_germany %>%
+  select(acct_year, all_of(num_cols)) %>%
+  pivot_longer(-acct_year, names_to = "variable_orig", values_to = "value") %>%
+  drop_na()
 
-**Which German industries showed unexpected financial resilience or vulnerability from 2020 to 2022, and how were these outcomes shaped by profitability, leverage, liquidity, and firm size?**
+#split between scale and ratio
+scale_vars <- c("total_assets_eur","total_liabilities_eur","total_equity_eur",
+                "total_revenue_eur","net_sales_eur","gross_sales_eur","net_income_eur")
+ratio_vars <- setdiff(unique(ida_germany$variable_orig), scale_vars)
 
-During 2020–2022, industries such as healthcare, information technology, and utilities demonstrated notable financial resilience, supported by strong liquidity and stable profitability. In contrast, sectors like hospitality, transportation, and manufacturing showed greater vulnerability due to higher leverage and lower profit margins. Overall, firm size and liquidity emerged as key buffers against financial stress, while high debt levels amplified vulnerability across more capital-intensive industries.
+#label mapping for the charts
+nice <- c(
+  total_assets_eur   = "Total assets (EUR)",
+  total_liabilities_eur="Total liabilities (EUR)",
+  total_equity_eur   = "Equity (EUR)",
+  total_revenue_eur  = "Total revenue (EUR)",
+  net_sales_eur      = "Net sales (EUR)",
+  gross_sales_eur    = "Gross sales (EUR)",
+  net_income_eur     = "Net income (EUR)",
+  ebit_margin_pct    = "EBIT margin (%)",
+  ebitda_margin_pct  = "EBITDA margin (%)",
+  roa_pct            = "ROA (%)",
+  roe_pct            = "ROE (%)",
+  net_assets_turnover= "Net assets turnover (x)",
+  stock_turnover     = "Stock turnover (x)",
+  solvency_pct       = "Solvency (%)",
+  gearing_pct        = "Gearing (%)",
+  current_ratio      = "Current ratio (x)",
+  liquidity_ratio    = "Liquidity ratio (x)",
+  shareholders_liq_pct = "Shareholders’ liquidity (%)",
+  interest_cover     = "Interest cover (x)"
+)
+
+pretty_var <- function(x) ifelse(x %in% names(nice), nice[x], x)
+
+ida_germany <- ida_germany %>%
+  mutate(variable = pretty_var(variable_orig),
+         variable = factor(variable, levels = unique(variable)))
+
+```
+
+```{r IDA-scale}
+#chart for scale variables (log axis)
+p_scale <- ida_germany %>%
+  filter(variable_orig %in% scale_vars) %>%
+  mutate(y = if_else(value > 0, value, NA_real_)) %>%
+  ggplot(aes(x = factor(acct_year), y = y)) +
+  geom_violin(trim = FALSE, fill = NA, linewidth = 0.4, na.rm = TRUE) +
+  geom_jitter(width = 0.12, height = 0, alpha = 0.12, size = 0.6, na.rm = TRUE) +
+  stat_summary(fun = median, geom = "point", shape = 95, size = 6, na.rm = TRUE) +
+  scale_y_log10(labels = scales::label_number(scale_cut = scales::cut_short_scale())) +
+  facet_wrap(~ variable, scales = "free_y", ncol = 3) +
+  labs(x = "Year", y = NULL, title = "Violin + Jitter by Year (log scale for Monetary Variables)") +
+  theme_minimal(base_size = 11) +
+  theme(axis.text.x = element_text(size = 10),
+        strip.text  = element_text(face = "bold"),
+        panel.grid.minor = element_blank())
+
+p_scale
+```
+
+According to the table, the monetary amounts (EUR) variables are heavily right-skewed: most firms are small to mid-sized, with a long tail from a few very large firms (hence the log scale in figures). From 2018 to 2021, medians are relatively stable, with a slight increase in liabilities relative to assets and sales. Distributions widen in 2020 and 2021, showing more variability in assets, revenues, and especially net income. Net income shows the most significant relative spread, indicating higher volatility in profitability during the pandemic. Therefore, in EDA, the median and IQR are used rather than the mean.
+
+```{r IDA-ratio}
+#chart for ratio variables (linear axis)
+p_ratio <- ida_germany %>%
+  filter(variable_orig %in% ratio_vars) %>%
+  ggplot(aes(x = factor(acct_year), y = value)) +
+  geom_violin(trim = FALSE, fill = NA, linewidth = 0.4) +
+  geom_jitter(width = 0.12, height = 0, alpha = 0.12, size = 0.6) +
+  stat_summary(fun = median, geom = "point", shape = 95, size = 6) +
+  facet_wrap(~ variable, scales = "free_y", ncol = 3) +
+  labs(x = "Year", y = NULL, title = "Violin + Jitter by Year (Ratios & % on Linear Scale)") +
+  theme_minimal(base_size = 11) +
+  theme(axis.text.x = element_text(size = 10),
+        strip.text  = element_text(face = "bold"),
+        panel.grid.minor = element_blank())
+
+p_ratio
+```
+
+According to the table, the profitability ratios (EBIT/EBITDA margins, ROA) cluster near small positives, with wider variation in 2020–2021. ROE has the heaviest tails and many negatives, indicating pressure on equity returns during the pandemic. Solvency is relatively stable with a slight dip around 2020; gearing is more dispersed and somewhat higher in 2020–2021 for some firms. Liquidity (current/quick ratios) is generally low, with some moderate levels, but it shows long right tails, reflecting a few firms with strong buffers. Efficiency (net assets and stock turnover) is broadly stable. Therefore, in EDA, we report median and IQR rather than means, and we cap extreme values in figures only to improve readability while keeping original values for calculations.
 
 
 ## Conclusions
