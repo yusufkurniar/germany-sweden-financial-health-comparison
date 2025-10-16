@@ -372,7 +372,90 @@ filtered_germany <- filtered_germany |>
   mutate(industry_group = factor(industry_group, levels = ordered_levels))
 ```
 
+```{r prepare-IDA}
+# 1) Long data with *original* variable names kept
+ida_germany <- filtered_germany %>%
+  select(acct_year, all_of(num_cols)) %>%
+  pivot_longer(-acct_year, names_to = "variable_orig", values_to = "value") %>%
+  drop_na()
 
+# 2) Split using original names (no label-matching issues)
+scale_vars <- c("total_assets_eur","total_liabilities_eur","total_equity_eur",
+                "total_revenue_eur","net_sales_eur","gross_sales_eur","net_income_eur")
+ratio_vars <- setdiff(unique(ida_germany$variable_orig), scale_vars)
+
+# 3) Safe label mapping (unknown names keep themselves)
+nice <- c(
+  total_assets_eur   = "Total assets (EUR)",
+  total_liabilities_eur="Total liabilities (EUR)",
+  total_equity_eur   = "Equity (EUR)",
+  total_revenue_eur  = "Total revenue (EUR)",
+  net_sales_eur      = "Net sales (EUR)",
+  gross_sales_eur    = "Gross sales (EUR)",
+  net_income_eur     = "Net income (EUR)",
+  ebit_margin_pct    = "EBIT margin (%)",
+  ebitda_margin_pct  = "EBITDA margin (%)",
+  roa_pct            = "ROA (%)",
+  roe_pct            = "ROE (%)",
+  net_assets_turnover= "Net assets turnover (x)",
+  stock_turnover     = "Stock turnover (x)",
+  solvency_pct       = "Solvency (%)",
+  gearing_pct        = "Gearing (%)",
+  current_ratio      = "Current ratio (x)",
+  liquidity_ratio    = "Liquidity ratio (x)",
+  shareholders_liq_pct = "Shareholders’ liquidity (%)",
+  interest_cover     = "Interest cover (x)"
+)
+
+pretty_var <- function(x) ifelse(x %in% names(nice), nice[x], x)
+
+ida_germany <- ida_germany %>%
+  mutate(variable = pretty_var(variable_orig),
+         variable = factor(variable, levels = unique(variable)))
+
+```
+
+```{r IDA-scale}
+# 4) SCALE variables (log axis). Do NOT drop rows entirely—only make y NA if <=0
+p_scale <- ida_germany %>%
+  filter(variable_orig %in% scale_vars) %>%
+  mutate(y = if_else(value > 0, value, NA_real_)) %>%  # keep rows, drop non-positives from y only
+  ggplot(aes(x = factor(acct_year), y = y)) +
+  geom_violin(trim = FALSE, fill = NA, linewidth = 0.4, na.rm = TRUE) +
+  geom_jitter(width = 0.12, height = 0, alpha = 0.12, size = 0.6, na.rm = TRUE) +
+  stat_summary(fun = median, geom = "point", shape = 95, size = 6, na.rm = TRUE) +
+  scale_y_log10(labels = scales::label_number(scale_cut = scales::cut_short_scale())) +
+  facet_wrap(~ variable, scales = "free_y", ncol = 3) +
+  labs(x = "Year", y = NULL, title = "Violin + Jitter by Year (log scale for Monetary Variables)") +
+  theme_minimal(base_size = 11) +
+  theme(axis.text.x = element_text(size = 10),
+        strip.text  = element_text(face = "bold"),
+        panel.grid.minor = element_blank())
+
+p_scale
+```
+
+According to the table, the monetary amounts (EUR) variables are heavily right-skewed: most firms are small to mid-sized, with a long tail from a few very large firms (hence the log scale in figures). From 2018 to 2021, medians are relatively stable, with a slight increase in liabilities relative to assets and sales. Distributions widen in 2020 and 2021, showing more variability in assets, revenues, and especially net income. Net income shows the most significant relative spread, indicating higher volatility in profitability during the pandemic. Therefore, in EDA, the median and IQR are used rather than the mean.
+
+```{r IDA-ratio}
+# 5) RATIO / % variables (linear axis)
+p_ratio <- ida_germany %>%
+  filter(variable_orig %in% ratio_vars) %>%
+  ggplot(aes(x = factor(acct_year), y = value)) +
+  geom_violin(trim = FALSE, fill = NA, linewidth = 0.4) +
+  geom_jitter(width = 0.12, height = 0, alpha = 0.12, size = 0.6) +
+  stat_summary(fun = median, geom = "point", shape = 95, size = 6) +
+  facet_wrap(~ variable, scales = "free_y", ncol = 3) +
+  labs(x = "Year", y = NULL, title = "Violin + Jitter by Year (Ratios & % on Linear Scale)") +
+  theme_minimal(base_size = 11) +
+  theme(axis.text.x = element_text(size = 10),
+        strip.text  = element_text(face = "bold"),
+        panel.grid.minor = element_blank())
+
+p_ratio
+```
+
+According to the table, the profitability ratios (EBIT/EBITDA margins, ROA) cluster near small positives, with wider variation in 2020–2021. ROE has the heaviest tails and many negatives, indicating pressure on equity returns during the pandemic. Solvency is relatively stable with a slight dip around 2020; gearing is more dispersed and somewhat higher in 2020–2021 for some firms. Liquidity (current/quick ratios) is generally low, with some moderate levels, but it shows long right tails, reflecting a few firms with strong buffers. Efficiency (net assets and stock turnover) is broadly stable. Therefore, in EDA, we report median and IQR rather than means, and we cap extreme values in figures only to improve readability while keeping original values for calculations.
 
 ### Research Question
 
