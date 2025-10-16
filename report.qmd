@@ -70,6 +70,9 @@ library(tsibble)
 library(knitr)
 library(naniar)
 library(patchwork)
+library(plotly)
+library(tsibbletalk)
+library(feasts)
 ```
 
 
@@ -405,7 +408,6 @@ Each company was defined as a key and the financial year as the index. Basic scr
 
 ```{r}
 germany_ts <- germany_q4 %>%
-  mutate(fy_year = as.integer(fy_year)) %>%
   as_tsibble(key = company_id, index = fy_year) %>%
   arrange(company_id, fy_year)
 ```
@@ -429,10 +431,11 @@ kable(germany_ts %>%
 
 1. Check for missing value (Tutorial 8)
 
+
+
 ```{r}
 #| label: fig-missing_plots
 #| tbl-cap: "The plots of Missing Value Distribution"
-
 
 # Check for missing ROA and CR
 miss_var <- 
@@ -452,7 +455,6 @@ miss_industry <- germany_ts |>
 miss_case <- gg_miss_case(germany_ts, show_pct = TRUE) + 
   labs(title = "Distribution of Missing Case Pattern")
   
-
 miss_var / miss_industry / miss_case
 ```
 
@@ -460,7 +462,6 @@ miss_var / miss_industry / miss_case
 ```{r}
 #| label: fig-missing_clu
 #| tbl-cap: "The plot of clustering to visualize missing patterns"
-
 
 m3 <- vis_miss(germany_ts, cluster = TRUE, sort_miss = TRUE) +
   theme(axis.text.x = element_text(size = 8, angle = 45, hjust = 1),
@@ -476,17 +477,96 @@ The initial examination of missing values revealed a relatively low proportion o
 
 ```{r}
 germany_ts <- germany_ts %>%
-  as_tibble() %>%   # Convert to a normal tibble first
+  as_tibble() %>%   # Convert to a normal tibble
   # Remove observations with missing ROA or CR
   filter(!is.na(roa_pct) & !is.na(current_ratio)) %>%
-  # Remove industry-year combinations with too few observations
-  group_by(industry_group, fy_year) %>%
-  filter(n() >= 3) %>%   # At least 3 observations
+   # Remove industries that don't have data in 2017-2021
+  group_by(industry_group) %>%
+  filter(all(2017:2021 %in% fy_year)) %>%  
   ungroup() %>%
   # Convert back to tsibble format
   as_tsibble(key = company_id, index = fy_year) %>%
   arrange(company_id, fy_year)
 ```
+
+3. Visualizing Industry Time Series Patterns (Lecture 9, slide 24-26, feasts and tsibbletalk)  
+
+```{r}
+# Calculate the average ROA and current ratio for each industry each year
+industry_ts <- germany_ts %>%
+  group_by(industry_group) %>%
+  index_by(fy_year) %>%
+  summarise(
+    industry_roa = mean(roa_pct, na.rm = TRUE),
+    industry_cr = mean(current_ratio, na.rm = TRUE),
+    n_companies = n()  
+  )
+
+```
+
+
+```{r}
+#| label: fig-ROA_ploty
+#| tbl-cap: "The interactive plot of ROA trends by industry (2017-2021)"
+
+# ROA
+roa_interactive <- industry_ts %>%
+  ggplot(aes(x = fy_year, y = industry_roa, group = industry_group)) +
+  geom_line(aes(color = industry_group), size = 0.8, alpha = 0.7) +
+  geom_vline(xintercept = 2020, linetype = "dashed", color = "red", size = 1) +
+  labs(title = "Interactive ROA Trends by Industry (2017-2021)\nVertical line indicates pandemic start (2020) - Hover for details",
+       x = "Year", y = "ROA (%)") +
+  theme_minimal() +
+  theme(legend.position = "none") 
+
+# Plotly interactive charts -ROA
+roa_plotly <- 
+  ggplotly(roa_interactive, tooltip = c("industry_group", "fy_year", "industry_roa")) %>%
+  plotly::layout(hoverlabel = list(bgcolor = "white", font = list(size = 12)))
+
+roa_plotly
+```
+
+
+
+
+```{r}
+#| label: fig-CR_ploty
+#| tbl-cap: "The interactive plot of Current Ratio trends by industry (2017-2021)"
+
+# Current ratio
+cr_interactive <- industry_ts %>%
+  ggplot(aes(x = fy_year, y = industry_cr, group = industry_group)) +
+  geom_line(aes(color = industry_group), size = 0.8, alpha = 0.7) +
+  geom_vline(xintercept = 2020, linetype = "dashed", color = "red", size = 1) +
+  labs(title = "Interactive Current Ratio Trends by Industry (2017-2021) \nVertical line indicates pandemic start (2020) - Hover for details",
+       x = "Year", y = "Current Ratio") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+
+cr_plotly <- 
+  ggplotly(cr_interactive, tooltip = c("industry_group", "fy_year", "industry_cr")) %>%
+  plotly::layout(hoverlabel = list(bgcolor = "white", font = list(size = 12)))
+
+
+cr_plotly
+```
+
+
+The interactive ROA trends (@fig-ROA_ploty) reveal distinct pandemic responses across industries. Accommodation & Food surged temporarily in 2020 but declined again in 2021. Industrials showed a persistent decline that accelerated post-2020, while Information & Communication rebounded sharply after an initial dip. Manufacturing and Transport & Storage transformed from negative to positive ROA during the pandemic period. Financial & Insurance maintained the highest ROA with steady growth throughout, demonstrating remarkable sector resilience.
+
+Based on the Current Ratio trends (@fig-CR_ploty), most industries demonstrated relative stability throughout the period. However, two sectors exhibited notable deviations: 
+
+- Consumer Services peaked at 8.14 in 2020 then plummeted to 0.21.
+
+- Arts, Entertainment & Recreation showed a significant upward trend in liquidity, which appears counterintuitive given pandemic constraints. 
+
+- Financials experienced a substantial decline from 7.8 in 2020 to 4.2 in 2021, indicating a sharp contraction in liquidity buffers during the post-pandemic recovery phase.
+
+-  Construction maintained exceptional stability throughout the period.
+
+4. feasts
 
 
 
