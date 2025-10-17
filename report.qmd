@@ -638,6 +638,73 @@ This bubble chart shows the financial resilience of German industries from 2020�
 
 **4. How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic?**
 
+This question investigates how the relationship between corporate liquidity and profitability evolved across German firms from 2018 to 2021, with particular attention to the structural changes that occurred during the COVID-19 pandemic. Understanding this relationship is important because liquidity represents firms short-term financial flexibility, while profitability reflects their ability to generate returns from assets. During periods of economic uncertainty, such as the pandemic, firms often adjust their liquidity positions to mitigate risk, which may in turn affect profitability. The analysis therefore examines how this balance shifted over time and whether the traditional positive association between liquidity and profitability held during the pandemic years.
+
+```{r Q4 IDA}
+# Focus variables for liquidity–profitability analysis
+liq_prof_data <- filtered_germany |>
+  filter(acct_year %in% 2018:2021, status == "Active") |>
+  select(acct_year, industry_group, company_id, company_name, 
+         current_ratio, liquidity_ratio, roa_pct, roe_pct) |>
+  drop_na(current_ratio, roa_pct)
+
+# Summary statistics
+liq_prof_summary <- liq_prof_data |>
+  group_by(acct_year) |>
+  summarise(
+    median_liquidity = median(current_ratio, na.rm = TRUE),
+    iqr_liquidity = IQR(current_ratio, na.rm = TRUE),
+    median_roa = median(roa_pct, na.rm = TRUE),
+    iqr_roa = IQR(roa_pct, na.rm = TRUE)
+  )
+
+liq_prof_summary |>
+  knitr::kable(digits = 2, caption = "Liquidity and Profitability Summary (2018–2021)") |>
+  kableExtra::kable_styling(full_width = FALSE, font_size = 11)
+```
+The summary statistics show that firms’ liquidity positions remained relatively stable throughout 2018–2021, with median current ratios hovering around 1.8–1.9× and a consistent spread (IQR ≈ 2.5). In contrast, profitability (measured by ROA) dropped sharply during the pandemic—from 4.1% in 2018 to just 2.3% in 2020—before showing a slight recovery in 2021. The increasing IQR for ROA suggests that profitability outcomes became more dispersed, indicating uneven recovery across firms and industries.
+
+```{r Q4 EDA}
+#| label: fig-liquidity-profitability
+#| fig-cap: "Median Profitability (ROA) Across Liquidity Levels, 2018–2021."
+# Trim to reasonable display range (avoid extreme outliers)
+liq_prof_trimmed <- liq_prof_data |>
+  filter(current_ratio > 0.1, current_ratio < 50,
+         roa_pct > -50, roa_pct < 50)
+
+# Bin liquidity levels (log scale bins for even spread)
+binned_liq <- liq_prof_trimmed |>
+  mutate(liq_bin = cut(current_ratio,
+                       breaks = c(0, 0.5, 1, 2, 3.5, 5, 10, 20, 50, Inf),
+                       include.lowest = TRUE)) |>
+  group_by(acct_year, liq_bin) |>
+  summarise(median_roa = median(roa_pct, na.rm = TRUE), .groups = "drop")
+
+ggplot(binned_liq, aes(x = liq_bin, y = median_roa, colour = factor(acct_year), group = acct_year)) +
+  geom_line(linewidth = 1.2) +
+  geom_point(size = 2) +
+  labs(
+    title = "Median Profitability (ROA) Across Liquidity Levels",
+    subtitle = "Binned view of liquidity–profitability relationship, 2018–2021",
+    x = "Liquidity Level (Current Ratio, binned)",
+    y = "Median ROA (%)",
+    colour = "Accounting Year"
+  ) +
+  geom_hline(yintercept = 0, colour = "grey70", linetype = "dashed") +
+  annotate("text", x = 7.5, y = 0.5, label = "ROA = 0 threshold", size = 3.5, colour = "grey40") +
+  theme_minimal(base_size = 13) +
+  theme(
+    legend.position = "top",
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(face = "bold", size = 15),
+    plot.subtitle = element_text(size = 12)
+  )
+```
+The line chart illustrates how median profitability (ROA) varies across different liquidity levels for German firms between 2018 and 2021.
+In the pre-pandemic years (2018–2019), profitability increased steadily with higher liquidity up to around a current ratio of 3–4, reflecting an efficient balance between liquidity and asset use.
+However, this positive relationship weakened during 2020, when firms with higher liquidity did not achieve correspondingly higher returns.
+The 2021 pattern shows partial recovery but remains flatter than before, suggesting that while firms regained some profitability, the traditional liquidity–profitability link fractured under pandemic-related financial constraints.
+
 ## Conclusions
 
 
