@@ -444,8 +444,8 @@ ida_germany <- ida_germany %>%
 ```{r IDA-scale}
 #chart for scale variables (log axis)
 p_scale <- ida_germany %>%
-  filter(variable_orig %in% scale_vars) %>%
-  mutate(y = if_else(value > 0, value, NA_real_)) %>%
+  filter(variable_orig %in% scale_vars) |>
+  mutate(y = if_else(value > 0, value, NA_real_)) |>
   ggplot(aes(x = factor(acct_year), y = y)) +
   geom_violin(trim = FALSE, fill = NA, linewidth = 0.4, na.rm = TRUE) +
   geom_jitter(width = 0.12, height = 0, alpha = 0.12, size = 0.6, na.rm = TRUE) +
@@ -465,8 +465,8 @@ According to the table, the monetary amounts (EUR) variables are heavily right-s
 
 ```{r IDA-ratio}
 #chart for ratio variables (linear axis)
-p_ratio <- ida_germany %>%
-  filter(variable_orig %in% ratio_vars) %>%
+p_ratio <- ida_germany |>
+  filter(variable_orig %in% ratio_vars) |>
   ggplot(aes(x = factor(acct_year), y = value)) +
   geom_violin(trim = FALSE, fill = NA, linewidth = 0.4) +
   geom_jitter(width = 0.12, height = 0, alpha = 0.12, size = 0.6) +
@@ -571,6 +571,196 @@ char_missing |>
 ```
 
 According to the table, identifiers and locations are complete: company_id, company_name, country, city, and consolidation_code show no missing data. Industry codes are mostly available: NACE has about 2.0% missing, ICB around 6.2%, and SIC approximately 0.1%. This indicates that while a small number of firms cannot be classified by NACE alone, most can be identified using the ICB/SIC fallbacks, which are categorised as industrial_group.
+
+### IDA for Question 1
+
+```{r}
+stopifnot("net_income_eur" %in% names(filtered_germany))
+
+filtered_germany_1 <- filtered_germany |>
+  mutate(
+    # period flag
+    period = if_else(acct_year >= 2020, "Pandemic (2020–2021)", "Pre-pandemic (2018–2019)"),
+    # transform for visuals (handles negatives)
+    net_income_eur_asinh = asinh(as.numeric(net_income_eur)),
+    # recompute ROA / ROE (fallbacks)
+    roa_calc = 100 * (net_income_eur / total_assets_eur),
+    roe_calc = if_else(total_equity_eur > 0,
+                       100 * (net_income_eur / total_equity_eur),
+                       NA_real_),
+    roa_use = coalesce(roa_pct, roa_calc),
+    roe_use = coalesce(roe_pct, roe_calc),
+    roa_src = case_when(
+      !is.na(roa_pct) ~ "reported",
+      !is.na(roa_calc) ~ "recomputed",
+      TRUE ~ NA_character_
+    ),
+    roe_src = case_when(
+      !is.na(roe_pct) ~ "reported",
+      !is.na(roe_calc) ~ "recomputed",
+      TRUE ~ NA_character_
+    )
+  )
+
+```
+
+```{r}
+#Firm “one-gap” fill within the same period only
+
+fill_one_gap <- function(x){
+  f <- dplyr::lag(x); b <- dplyr::lead(x)
+  ifelse(is.na(x) & !is.na(f) & !is.na(b) & (f == b), f, x)
+}
+
+filtered_germany_1 <- filtered_germany_1 |>
+  arrange(company_id, acct_year) |>
+  group_by(company_id, period) |>  #period boundary blocks carryover
+  mutate(
+    ebit_step1   = fill_one_gap(ebit_margin_pct),
+    ebitda_step1 = fill_one_gap(ebitda_margin_pct),
+    roa_step1    = fill_one_gap(roa_use),
+    roe_step1    = fill_one_gap(roe_use)
+  ) |>
+  ungroup() |>
+  mutate(
+    ebit_step1   = coalesce(ebit_margin_pct,   ebit_step1),
+    ebitda_step1 = coalesce(ebitda_margin_pct, ebitda_step1),
+    roa_step1    = coalesce(roa_use,           roa_step1),
+    roe_step1    = coalesce(roe_use,           roe_step1)
+  )
+```
+
+```{r}
+#median fills in strict order (no cross-period borrowing)
+#industry × year medians
+med_ixy <- filtered_germany_1 |>
+  group_by(industry_group, acct_year) |>
+  summarise(
+    med_ebit   = median(ebit_step1,   na.rm=TRUE),
+    med_ebitda = median(ebitda_step1, na.rm=TRUE),
+    med_roa    = median(roa_step1,    na.rm=TRUE),
+    med_roe    = median(roe_step1,    na.rm=TRUE),
+    .groups="drop"
+  )
+
+#industry × period medians
+med_ip <- filtered_germany_1 |>
+  group_by(industry_group, period) |>
+  summarise(
+    med_ebit_ip   = median(ebit_step1,   na.rm=TRUE),
+    med_ebitda_ip = median(ebitda_step1, na.rm=TRUE),
+    med_roa_ip    = median(roa_step1,    na.rm=TRUE),
+    med_roe_ip    = median(roe_step1,    na.rm=TRUE),
+    .groups="drop"
+  )
+
+#period medians
+med_p <- filtered_germany_1 |>
+  group_by(period) |>
+  summarise(
+    med_ebit_p   = median(ebit_step1,   na.rm=TRUE),
+    med_ebitda_p = median(ebitda_step1, na.rm=TRUE),
+    med_roa_p    = median(roa_step1,    na.rm=TRUE),
+    med_roe_p    = median(roe_step1,    na.rm=TRUE),
+    .groups="drop"
+  )
+
+#join and impute with precedence, also explicit source flags
+filtered_germany_1 <- filtered_germany_1 |>
+  left_join(med_ixy, by = c("industry_group","acct_year")) |>
+  left_join(med_ip,  by = c("industry_group","period")) |>
+  left_join(med_p,   by = "period") |>
+  mutate(
+    #final values, using your precedence
+    ebit_margin_q1   = if_else(is.na(ebitda_step1), ebit_step1, ebit_step1),
+    ebit_margin_q1   = if_else(is.na(ebit_step1),   coalesce(med_ebit,   med_ebit_ip,   med_ebit_p),   ebit_step1),
+    ebitda_margin_q1 = if_else(is.na(ebitda_step1), coalesce(med_ebitda, med_ebitda_ip, med_ebitda_p), ebitda_step1),
+    roa_q1           = if_else(is.na(roa_step1),    coalesce(med_roa,    med_roa_ip,    med_roa_p),    roa_step1),
+    roe_q1           = if_else(is.na(roe_step1),    coalesce(med_roe,    med_roe_ip,    med_roe_p),    roe_step1),
+
+    #provenance for EBIT/EBITDA margins
+    ebit_src = dplyr::case_when(
+      !is.na(ebit_margin_pct) ~ "reported",
+      is.na(ebit_margin_pct) & !is.na(ebit_step1) ~ "firm-1gap(period)",
+      is.na(ebit_step1) & !is.na(med_ebit) ~ "ind×year",
+      is.na(ebit_step1) & is.na(med_ebit) & !is.na(med_ebit_ip) ~ "ind×period",
+      TRUE ~ "period"
+    ),
+    ebitda_src = dplyr::case_when(
+      !is.na(ebitda_margin_pct) ~ "reported",
+      is.na(ebitda_margin_pct) & !is.na(ebitda_step1) ~ "firm-1gap(period)",
+      is.na(ebitda_step1) & !is.na(med_ebitda) ~ "ind×year",
+      is.na(ebitda_step1) & is.na(med_ebitda) & !is.na(med_ebitda_ip) ~ "ind×period",
+      TRUE ~ "period"
+    ),
+
+    #ROA/ROE provenance
+    roa_src = dplyr::case_when(
+      !is.na(roa_src) ~ roa_src,
+      is.na(roa_src) & !is.na(roa_step1) ~ "firm-1gap(period)",
+      is.na(roa_step1) & !is.na(med_roa) ~ "ind×year",
+      is.na(roa_step1) & is.na(med_roa) & !is.na(med_roa_ip) ~ "ind×period",
+      TRUE ~ "period"
+    ),
+    roe_src = dplyr::case_when(
+      !is.na(roe_src) ~ roe_src,
+      is.na(roe_src) & !is.na(roe_step1) ~ "firm-1gap(period)",
+      is.na(roe_step1) & !is.na(med_roe) ~ "ind×year",
+      is.na(roe_step1) & is.na(med_roe) & !is.na(med_roe_ip) ~ "ind×period",
+      TRUE ~ "period"
+    )
+  ) |>
+  select(-ends_with("_step1"))
+```
+
+```{r}
+impute_summary_q1 <- filtered_germany_1 |>
+  summarise(
+    .by = period,
+    n_rows = n(),
+    ebit_reported   = sum(ebit_src   == "reported",            na.rm=TRUE),
+    ebit_firmgap    = sum(ebit_src   == "firm-1gap(period)",   na.rm=TRUE),
+    ebit_ind_year   = sum(ebit_src   == "ind×year",            na.rm=TRUE),
+    ebit_ind_period = sum(ebit_src   == "ind×period",          na.rm=TRUE),
+    ebit_period     = sum(ebit_src   == "period",              na.rm=TRUE),
+
+    ebitda_reported   = sum(ebitda_src   == "reported",          na.rm=TRUE),
+    ebitda_firmgap    = sum(ebitda_src   == "firm-1gap(period)", na.rm=TRUE),
+    ebitda_ind_year   = sum(ebitda_src   == "ind×year",          na.rm=TRUE),
+    ebitda_ind_period = sum(ebitda_src   == "ind×period",        na.rm=TRUE),
+    ebitda_period     = sum(ebitda_src   == "period",            na.rm=TRUE),
+
+    roa_reported    = sum(roa_src == "reported",            na.rm=TRUE),
+    roa_recomputed  = sum(roa_src == "recomputed",          na.rm=TRUE),
+    roa_firmgap     = sum(roa_src == "firm-1gap(period)",   na.rm=TRUE),
+    roa_ind_year    = sum(roa_src == "ind×year",            na.rm=TRUE),
+    roa_ind_period  = sum(roa_src == "ind×period",          na.rm=TRUE),
+    roa_period      = sum(roa_src == "period",              na.rm=TRUE),
+
+    roe_reported    = sum(roe_src == "reported",            na.rm=TRUE),
+    roe_recomputed  = sum(roe_src == "recomputed",          na.rm=TRUE),
+    roe_firmgap     = sum(roe_src == "firm-1gap(period)",   na.rm=TRUE),
+    roe_ind_year    = sum(roe_src == "ind×year",            na.rm=TRUE),
+    roe_ind_period  = sum(roe_src == "ind×period",          na.rm=TRUE),
+    roe_period      = sum(roe_src == "period",              na.rm=TRUE)
+  )
+
+impute_summary_q1
+```
+
+
+### IDA for Question 2
+
+AAA
+
+### IDA for Question 3
+
+AAA
+
+### IDA for Question 4
+
+AAA
+
 
 ### EDA
 
