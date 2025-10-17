@@ -888,7 +888,12 @@ AAA
 **1. How did profitability change across industries?**
 
 ```{r}
-#build long data for plotting
+#recode period to short labels
+filtered_germany_1 <- filtered_germany_1 |>
+  mutate(period = if_else(acct_year >= 2020, "Pandemic (2020–21)", "Pre (2018–19)"),
+         period = factor(period, levels = c("Pre (2018–19)", "Pandemic (2020–21)")))
+
+#build long data
 q1_vars <- c("ebit_margin_q1","ebitda_margin_q1","roa_q1","roe_q1","net_income_eur_asinh")
 
 plot_long <- filtered_germany_1 |>
@@ -902,46 +907,90 @@ plot_long <- filtered_germany_1 |>
   ) |>
   tidyr::drop_na(value)
 
-filtered_germany_1 <- filtered_germany_1 |>
-  mutate(
-    period = if_else(acct_year >= 2020, "Pandemic (2020–2021)", "Pre-pandemic (2018–2019)"),
-    period = factor(period,
-      levels = c("Pre-pandemic (2018–2019)", "Pandemic (2020–2021)"),
-      labels = c("Pre (2018–19)", "Pandemic (2020–21)")
-    )
-  )
-
-#helper for IQR error bar
-iqr_bar <- function(y){
-  data.frame(y    = median(y, na.rm=TRUE),
-             ymin = quantile(y, 0.25, na.rm=TRUE),
-             ymax = quantile(y, 0.75, na.rm=TRUE))
-}
-
-#facet chart (all metrics)
+iqr_bar <- function(y) data.frame(
+  y    = median(y, na.rm=TRUE),
+  ymin = quantile(y, 0.25, na.rm=TRUE),
+  ymax = quantile(y, 0.75, na.rm=TRUE)
+)
 
 p_q1_all <- ggplot(plot_long, aes(x = period, y = value)) +
-  geom_violin(trim = FALSE, fill = NA, linewidth = 0.45) +
-  geom_jitter(width = 0.08, height = 0, alpha = 0.10, size = 0.55) +
-  stat_summary(fun.data = iqr_bar, geom = "errorbar", width = 0.12, linewidth = 0.5) +
-  stat_summary(fun = median, geom = "point", shape = 95, size = 8) +
+  geom_violin(trim = FALSE, fill = NA, color = "grey60", linewidth = 0.45, show.legend = FALSE) +
+  geom_jitter(aes(color = "Data"), width = 0.08, height = 0, alpha = 0.10, size = 0.55, show.legend = TRUE) +
+  stat_summary(aes(color = "IQR"), fun.data = iqr_bar, geom = "errorbar",
+               width = 0.12, linewidth = 0.6, show.legend = TRUE) +
+  stat_summary(aes(color = "Median"), fun = median, geom = "point",
+               shape = 95, size = 8, show.legend = TRUE) +
   facet_wrap(~ metric, scales = "free_y", ncol = 2) +
-  scale_x_discrete(drop = FALSE) +
+  scale_x_discrete(labels = c(
+    `Pre (2018–19)`      = "Pre\n(2018 – 2019)",
+    `Pandemic (2020–21)` = "Pandemic\n(2020 – 2021)"
+  )) +
+  scale_color_manual(
+    name = NULL,
+    values = c("Data" = "grey35", "IQR" = "firebrick", "Median" = "black")
+  ) +
+  guides(color = guide_legend(override.aes = list(
+    shape    = c(16, NA, 95),   # point for Data, line for IQR, thick tick for Median
+    linetype = c(0, 1, 0),
+    size     = c(2, 1, 6),
+    alpha    = 1
+  ))) +
+  coord_cartesian(clip = "off") +
   labs(x = NULL, y = NULL,
-       title = "Pre vs Pandemic: Profitability Distributions by Metric (Median + IQR)") +
+       title = "Pre vs Pandemic: Profitability Distributions by Metric\n(Median + IQR)") +
   theme_minimal(base_size = 11) +
   theme(
     strip.text  = element_text(face = "bold"),
-    axis.text.x = element_text(size = 10, margin = margin(t = 4)),
-    plot.margin = margin(6, 8, 6, 8)
+    axis.text.x = element_text(size = 10, margin = margin(t = 8), lineheight = 0.95),
+    plot.margin = margin(10, 15, 24, 10),
+    legend.position = "top"
   )
 
 p_q1_all
 ```
 
-The chart compares profitability before (2018–19) and during the pandemic (2020–21) for all firms.
-Across EBIT and EBITDA margins, the medians remain largely unchanged, but the spreads widen in 2020–21, indicating increased dispersion in operating performance. ROA and especially ROE show many more extreme negatives in 2020–21, indicating that a greater share of firms reported losses or equity write-downs, even though the median stayed near zero. Net income (asinh) also becomes more dispersed in 2020–21, with a heavier lower tail, confirming higher volatility. A key insight is that central tendencies barely moved while tail risk increased.
+The chart compares profitability before (2018–19) and during the pandemic (2020 – 2021) for all firms.
+Across EBIT and EBITDA margins, the medians remain largely unchanged, but the spreads widen in 2020 – 2021, indicating increased dispersion in operating performance. ROA and especially ROE show many more extreme negatives in 2020 – 2021, indicating that a greater share of firms reported losses or equity write-downs, even though the median stayed near zero. Net income (asinh) also becomes more dispersed in 2020 –21, with a heavier lower tail, confirming higher volatility. A key insight is that central tendencies barely moved while tail risk increased.
 
+```{r}
+#keep only mapped industry
+germ_mapped <- filtered_germany_1 |>
+  filter(!is.na(ebitda_margin_q1),
+         !is.na(industry_group),
+         industry_group != "Other / Unmapped") |>
+  droplevels()
+
+#build medians & delta (Pandemic – Pre)
+eb_med <- germ_mapped %>%
+  mutate(period = if_else(acct_year >= 2020, "Pandemic", "Pre"),
+         period = factor(period, levels = c("Pre","Pandemic"))) |>
+  group_by(industry_group, period) %>%
+  summarise(med = median(ebitda_margin_q1, na.rm = TRUE), .groups = "drop") |>
+  pivot_wider(names_from = period, values_from = med) %>%
+  drop_na(Pre, Pandemic) |> #keep industries with both periods
+  mutate(
+    delta     = Pandemic - Pre,
+    direction = factor(if_else(delta >= 0, "Increase", "Decrease"),
+                       levels = c("Increase","Decrease"))
+  ) |>
+  arrange(delta)
+
+#create and colored dumbbell
+ggplot(eb_med, aes(y = reorder(industry_group, delta))) +
+  geom_segment(aes(x = Pre, xend = Pandemic, yend = industry_group, color = direction),
+               linewidth = 1) +
+  geom_point(aes(x = Pre),      color = "#4E79A7", size = 2) +  #pre (blue)
+  geom_point(aes(x = Pandemic), color = "#E15759", size = 2) +  #pandemic (red)
+  geom_vline(xintercept = 0, linetype = "dashed", colour = "grey70") +
+  scale_color_manual(values = c("Increase" = "#2CA02C", "Decrease" = "#D62728")) +
+  guides(color = guide_legend(title = NULL, override.aes = list(linewidth = 3))) +
+  labs(title = "Change in Median EBITDA Margin\n(Pandemic – Pre)",
+       x = "Median EBITDA Margin (%)", y = NULL) +
+  theme_minimal(base_size = 11)
+
+```
+
+This dumbbell chart compares the median EBITDA margin (%) in each industry before and during the pandemic. It shows the direction and magnitude of profitability changes across sectors on a single axis. Overall, most industries moved only slightly, but a few stand out: Accommodation & Food shows the biggest improvement, bouncing from slightly negative to positive margins, and Technology also saw an increase. The largest drop is in Health Care, which fell sharply from a high pre-pandemic median to a much lower level. Cyclical sectors like Industrials, Construction, Arts & Entertainment, and Financials experienced small to moderate decreases, while Utilities and Education remain near flat. Using medians (rather than means) makes the comparison more robust to outliers and highlights typical firms within each industry.
 
 ### Question 2
 
