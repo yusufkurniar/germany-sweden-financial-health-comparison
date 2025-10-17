@@ -1077,7 +1077,15 @@ AAA
 
 ## Conclusions
 
+**Question 1**
 
+Median profitability remained broadly stable across all firms (EBIT/EBITDA medians barely changed), but industry patterns varied. The largest median improvements in EBITDA margin were seen in Technology and Accommodation & Food, while Administrative & Support, Financials, Construction, and parts of Consumer Services experienced clear median declines. Health Care continued as a structurally high-margin outlier with little change in its median. Although typical profitability (medians) stayed relatively stable, the distribution widened: ROA/ROE and net income showed more firms with losses or very low returns in 2020 – 2021. In short, the pandemic increased downside risk and variation, creating winners and losers by industry, even though the overall profitability for the average firm remained roughly the same.
+
+**Question 2**
+
+**Question 3**
+
+**Question 4**
 
 ## Resources
 
