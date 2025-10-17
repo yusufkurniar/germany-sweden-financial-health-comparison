@@ -816,15 +816,83 @@ AAA
 
 
 
-### EDA
+## EDA
+
+### Question 1
 
 **1. How did profitability change across industries?**
 
+```{r}
+#build long data for plotting
+q1_vars <- c("ebit_margin_q1","ebitda_margin_q1","roa_q1","roe_q1","net_income_eur_asinh")
+
+plot_long <- filtered_germany_1 |>
+  dplyr::select(company_id, period, dplyr::all_of(q1_vars)) |>
+  tidyr::pivot_longer(-c(company_id, period),
+                      names_to = "metric", values_to = "value") |>
+  dplyr::mutate(
+    metric = factor(metric, levels = q1_vars,
+                    labels = c("EBIT margin (%)","EBITDA margin (%)",
+                               "ROA (%)","ROE (%)","Net income (asinh)"))
+  ) |>
+  tidyr::drop_na(value)
+
+filtered_germany_1 <- filtered_germany_1 |>
+  mutate(
+    period = if_else(acct_year >= 2020, "Pandemic (2020–2021)", "Pre-pandemic (2018–2019)"),
+    period = factor(period,
+      levels = c("Pre-pandemic (2018–2019)", "Pandemic (2020–2021)"),
+      labels = c("Pre (2018–19)", "Pandemic (2020–21)")
+    )
+  )
+
+#helper for IQR error bar
+iqr_bar <- function(y){
+  data.frame(y    = median(y, na.rm=TRUE),
+             ymin = quantile(y, 0.25, na.rm=TRUE),
+             ymax = quantile(y, 0.75, na.rm=TRUE))
+}
+
+#facet chart (all metrics)
+
+p_q1_all <- ggplot(plot_long, aes(x = period, y = value)) +
+  geom_violin(trim = FALSE, fill = NA, linewidth = 0.45) +
+  geom_jitter(width = 0.08, height = 0, alpha = 0.10, size = 0.55) +
+  stat_summary(fun.data = iqr_bar, geom = "errorbar", width = 0.12, linewidth = 0.5) +
+  stat_summary(fun = median, geom = "point", shape = 95, size = 8) +
+  facet_wrap(~ metric, scales = "free_y", ncol = 2) +
+  scale_x_discrete(drop = FALSE) +
+  labs(x = NULL, y = NULL,
+       title = "Pre vs Pandemic: Profitability Distributions by Metric (Median + IQR)") +
+  theme_minimal(base_size = 11) +
+  theme(
+    strip.text  = element_text(face = "bold"),
+    axis.text.x = element_text(size = 10, margin = margin(t = 4)),
+    plot.margin = margin(6, 8, 6, 8)
+  )
+
+p_q1_all
+```
+
+The chart compares profitability before (2018–19) and during the pandemic (2020–21) for all firms.
+Across EBIT and EBITDA margins, the medians remain largely unchanged, but the spreads widen in 2020–21, indicating increased dispersion in operating performance. ROA and especially ROE show many more extreme negatives in 2020–21, indicating that a greater share of firms reported losses or equity write-downs, even though the median stayed near zero. Net income (asinh) also becomes more dispersed in 2020–21, with a heavier lower tail, confirming higher volatility. A key insight is that central tendencies barely moved while tail risk increased.
+
+
+### Question 2
+
 **2. How did leverage (debt-to-assets) and liquidity (current ratio) evolve during pandemic?**
 
+AAA
+
+### Question 3
 **3. Which German industries showed unexpected financial resilience or vulnerability from 2020 to 2022, and how were these outcomes shaped by profitability, leverage, liquidity, and firm size?**
 
+AAA
+
+### Question 4
 **4. How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic?**
+
+AAA
 
 ## Conclusions
 
