@@ -8,6 +8,9 @@ format:
         output-file: report.html
         css: "assignment.css"
         embed-resources: true
+editor: 
+  markdown: 
+    wrap: sentence
 ---
 
 ```{r}
@@ -74,19 +77,27 @@ library(tidyr)
 library(ggrepel)
 ```
 
+## Introduction
 
-## Introduction 
+The COVID-19 pandemic caused significant disruptions across global markets, testing the financial resilience of firms in every sector.
+In Germany, the first confirmed case was recorded on 27 January 2020.
+Nationwide contact restrictions began on 22 March 2020.
+Most nationwide measures were lifted between 20 March and 2 April 2022, and the final federal provisions expired on 7 April 2023.
 
-The COVID-19 pandemic caused significant disruptions across global markets, testing the financial resilience of firms in every sector. In Germany, the first confirmed case was recorded on 27 January 2020. Nationwide contact restrictions began on 22 March 2020. Most nationwide measures were lifted between 20 March and 2 April 2022, and the final federal provisions expired on 7 April 2023.
+This project examines how German companies responded to these shocks during 2020 – 2021, using financial data from the Bureau van Dijk OSIRIS Database — a reliable global source of harmonised corporate information.
+The dataset available for this study covers 2018 – 2021.
+The period from 2018–2019 provides the pre-pandemic baseline, while 2020 – 2021 captures the pandemic period.
+Data for 2022 are not available in this extract.
 
-This project examines how German companies responded to these shocks during 2020 – 2021, using financial data from the Bureau van Dijk OSIRIS Database — a reliable global source of harmonised corporate information. The dataset available for this study covers 2018 – 2021. The period from 2018–2019 provides the pre-pandemic baseline, while 2020 – 2021 captures the pandemic period. Data for 2022 are not available in this extract.
-
-Our analysis focuses on how industries differed in their financial outcomes during this period, investigating changes in profitability, leverage, liquidity, and firm size. By identifying which sectors showed unexpected resilience or vulnerability, we aim to understand how structural and strategic differences shaped recovery from the pandemic’s economic impacts. All analytical procedures follow the ETC5521 workflow, ensuring reproducibility, transparency, and alignment with the course framework for exploratory data analysis.
-
+Our analysis focuses on how industries differed in their financial outcomes during this period, investigating changes in profitability, leverage, liquidity, and firm size.
+By identifying which sectors showed unexpected resilience or vulnerability, we aim to understand how structural and strategic differences shaped recovery from the pandemic’s economic impacts.
+All analytical procedures follow the ETC5521 workflow, ensuring reproducibility, transparency, and alignment with the course framework for exploratory data analysis.
 
 ## Data description
 
-The dataset used in this analysis originates from **the Bureau van Dijk OSIRIS database**, a comprehensive source of harmonised financial information for publicly listed and major private firms worldwide. For this study, we extracted firm-level data for **German companies** over the **2018–2021 accounting years**, a period that captures both pre-pandemic and pandemic-era financial performance. Each record represents a firm’s reported financials for a specific accounting year, enabling longitudinal exploration of trends in profitability, liquidity, leverage, and resilience.
+The dataset used in this analysis originates from **the Bureau van Dijk OSIRIS database**, a comprehensive source of harmonised financial information for publicly listed and major private firms worldwide.
+For this study, we extracted firm-level data for **German companies** over the **2018–2021 accounting years**, a period that captures both pre-pandemic and pandemic-era financial performance.
+Each record represents a firm’s reported financials for a specific accounting year, enabling longitudinal exploration of trends in profitability, liquidity, leverage, and resilience.
 
 ```{r read-data}
 #define the folder
@@ -247,14 +258,16 @@ data_dictionary |>
   kable_styling(full_width = FALSE, font_size = 11)
 ```
 
-The selected variables encompass four key dimensions of corporate financial health:
-- **Identification and Location** — company_id, company_name, country, and city provide firm-level identifiers and geographical context.
+The selected variables encompass four key dimensions of corporate financial health: - **Identification and Location** — company_id, company_name, country, and city provide firm-level identifiers and geographical context.
 - **Balance Sheet Structure** — total_assets_eur, total_liabilities_eur, and total_equity_eur measure firm size and capital composition, reported in euros.
 - **Income and Profitability** — total_revenue_eur, net_sales_eur, and net_income_eur capture income statement outcomes, while ebit_margin_pct, ebitda_margin_pct, roa_pct, and roe_pct reflect operating performance and returns to shareholders.
 - **Solvency and Liquidity** — solvency_pct, gearing_pct, current_ratio, liquidity_ratio, shareholders_liq_pct, and interest_cover assess each firm’s financial stability, leverage, and capacity to meet short-term obligations.
 Industry Classification — industry_nace, industry_icb, and industry_group link firms to their respective economic sectors according to European (NACE) and global (ICB) coding systems.
 
-It is important to note that the **accounting year** variable in **OSIRIS** reflects **two-year reporting periods**. For example, the 2018 accounting year represents financial results spanning 2017–2018, 2019 corresponds to 2018–2019, 2020 covers 2019–2020, and 2021 includes 2020–2021. Throughout this report, each accounting year is interpreted as representing the **endpoint of its reporting cycle**. Consequently, “2021” is treated as capturing firm performance during the height of the **COVID-19 pandemic**, while 2018–2019 represent pre-pandemic benchmarks.
+It is important to note that the **accounting year** variable in **OSIRIS** reflects **two-year reporting periods**.
+For example, the 2018 accounting year represents financial results spanning 2017–2018, 2019 corresponds to 2018–2019, 2020 covers 2019–2020, and 2021 includes 2020–2021.
+Throughout this report, each accounting year is interpreted as representing the **endpoint of its reporting cycle**.
+Consequently, “2021” is treated as capturing firm performance during the height of the **COVID-19 pandemic**, while 2018–2019 represent pre-pandemic benchmarks.
 
 This dataset structure enables a robust exploration of temporal changes in corporate performance and the role of firm characteristics—particularly **firm size**—in shaping **financial resilience** throughout the pandemic period.
 
@@ -266,7 +279,9 @@ This dataset structure enables a robust exploration of temporal changes in corpo
 
 **3. Which German industries showed unexpected financial resilience or vulnerability from 2020 to 2022, and how were these outcomes shaped by profitability, leverage, liquidity, and firm size?**
 
-During 2020–2022, industries such as healthcare, information technology, and utilities demonstrated notable financial resilience, supported by strong liquidity and stable profitability. In contrast, sectors like hospitality, transportation, and manufacturing showed greater vulnerability due to higher leverage and lower profit margins. Overall, firm size and liquidity emerged as key buffers against financial stress, while high debt levels amplified vulnerability across more capital-intensive industries.
+During 2020–2022, industries such as healthcare, information technology, and utilities demonstrated notable financial resilience, supported by strong liquidity and stable profitability.
+In contrast, sectors like hospitality, transportation, and manufacturing showed greater vulnerability due to higher leverage and lower profit margins.
+Overall, firm size and liquidity emerged as key buffers against financial stress, while high debt levels amplified vulnerability across more capital-intensive industries.
 
 **4. How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic?**
 
@@ -465,7 +480,11 @@ p_scale <- ida_germany %>%
 p_scale
 ```
 
-According to the table, the monetary amounts (EUR) variables are heavily right-skewed: most firms are small to mid-sized, with a long tail from a few very large firms (hence the log scale in figures). From 2018 to 2021, medians are relatively stable, with a slight increase in liabilities relative to assets and sales. Distributions widen in 2020 and 2021, showing more variability in assets, revenues, and especially net income. Net income shows the most significant relative spread, indicating higher volatility in profitability during the pandemic. Therefore, in EDA, the median and IQR are used rather than the mean.
+According to the table, the monetary amounts (EUR) variables are heavily right-skewed: most firms are small to mid-sized, with a long tail from a few very large firms (hence the log scale in figures).
+From 2018 to 2021, medians are relatively stable, with a slight increase in liabilities relative to assets and sales.
+Distributions widen in 2020 and 2021, showing more variability in assets, revenues, and especially net income.
+Net income shows the most significant relative spread, indicating higher volatility in profitability during the pandemic.
+Therefore, in EDA, the median and IQR are used rather than the mean.
 
 ```{r IDA-ratio}
 #chart for ratio variables (linear axis)
@@ -485,7 +504,12 @@ p_ratio <- ida_germany |>
 p_ratio
 ```
 
-According to the table, the profitability ratios (EBIT/EBITDA margins, ROA) cluster near small positives, with wider variation in 2020–2021. ROE has the heaviest tails and many negatives, indicating pressure on equity returns during the pandemic. Solvency is relatively stable with a slight dip around 2020; gearing is more dispersed and somewhat higher in 2020–2021 for some firms. Liquidity (current/quick ratios) is generally low, with some moderate levels, but it shows long right tails, reflecting a few firms with strong buffers. Efficiency (net assets and stock turnover) is broadly stable. Therefore, in EDA, we report median and IQR rather than means, and we cap extreme values in figures only to improve readability while keeping original values for calculations.
+According to the table, the profitability ratios (EBIT/EBITDA margins, ROA) cluster near small positives, with wider variation in 2020–2021.
+ROE has the heaviest tails and many negatives, indicating pressure on equity returns during the pandemic.
+Solvency is relatively stable with a slight dip around 2020; gearing is more dispersed and somewhat higher in 2020–2021 for some firms.
+Liquidity (current/quick ratios) is generally low, with some moderate levels, but it shows long right tails, reflecting a few firms with strong buffers.
+Efficiency (net assets and stock turnover) is broadly stable.
+Therefore, in EDA, we report median and IQR rather than means, and we cap extreme values in figures only to improve readability while keeping original values for calculations.
 
 ```{r numeric-missingness-check}
 key_vars <- c("total_assets_eur","total_liabilities_eur","total_equity_eur",
@@ -512,7 +536,10 @@ ggplot(missing_heat, aes(variable, factor(acct_year), fill = missing_rate)) +
   theme_minimal() + theme(axis.text.x=element_text(angle=45, hjust=1))
 ```
 
-According to the heatmap, missingness is concentrated in the gearing_pct and liquidity_ratio fields with around 20 – 25%, moderate for ebit_margin_pct/ebitda_margin_pct with around 10 – 15%, and low for net_income_eur/ROA/ROE. The balance-sheet totals and revenue are essentially complete. The pattern is stable across 2018 – 2021, with no pandemic-specific spike. This means ratio analyses will have smaller sample sizes than level variables.
+According to the heatmap, missingness is concentrated in the gearing_pct and liquidity_ratio fields with around 20 – 25%, moderate for ebit_margin_pct/ebitda_margin_pct with around 10 – 15%, and low for net_income_eur/ROA/ROE.
+The balance-sheet totals and revenue are essentially complete.
+The pattern is stable across 2018 – 2021, with no pandemic-specific spike.
+This means ratio analyses will have smaller sample sizes than level variables.
 
 ```{r outliers-check}
 num_cols <- c("total_assets_eur","total_liabilities_eur","total_equity_eur",
@@ -544,8 +571,10 @@ outliers_overall |>
   kable_styling(full_width = FALSE, font_size = 11)
 ```
 
-
-According to the table, the share of extreme values per variable is assessed using two rules: the IQR fence (share_iqr) and a z-score cutoff (share_z). Outliers are most common in net_income_eur (around 25%), EBIT margin (about 19%), and interest_cover (about 18%), while they are infrequent in solvency_pct (around 1%) and less common for turnover and gearing. The z-score method identifies far fewer points because many variables are right-skewed, which makes mean/SD-based detection conservative. The IQR rule provides a more informative screening here.
+According to the table, the share of extreme values per variable is assessed using two rules: the IQR fence (share_iqr) and a z-score cutoff (share_z).
+Outliers are most common in net_income_eur (around 25%), EBIT margin (about 19%), and interest_cover (about 18%), while they are infrequent in solvency_pct (around 1%) and less common for turnover and gearing.
+The z-score method identifies far fewer points because many variables are right-skewed, which makes mean/SD-based detection conservative.
+The IQR rule provides a more informative screening here.
 
 ```{r character-check}
 #character variables to check
@@ -574,8 +603,9 @@ char_missing |>
   kable_styling(full_width = FALSE, font_size = 11)
 ```
 
-According to the table, identifiers and locations are complete: company_id, company_name, country, city, and consolidation_code show no missing data. Industry codes are mostly available: NACE has about 2.0% missing, ICB around 6.2%, and SIC approximately 0.1%. This indicates that while a small number of firms cannot be classified by NACE alone, most can be identified using the ICB/SIC fallbacks, which are categorised as industrial_group.
-
+According to the table, identifiers and locations are complete: company_id, company_name, country, city, and consolidation_code show no missing data.
+Industry codes are mostly available: NACE has about 2.0% missing, ICB around 6.2%, and SIC approximately 0.1%.
+This indicates that while a small number of firms cannot be classified by NACE alone, most can be identified using the ICB/SIC fallbacks, which are categorised as industrial_group.
 
 ### IDA for Question 1
 
@@ -607,7 +637,6 @@ filtered_germany_1 <- filtered_germany |>
     )
   )
 ```
-    
 
 ```{r}
 #Firm “one-gap” fill within the same period only
@@ -751,13 +780,46 @@ impute_summary_q1 <- filtered_germany_1 |>
   )
 ```
 
-
 ### IDA for Question 2
 
-AAA
+The analysis focuses on leverage and liquidity indicators for active German firms between 2018 and 2021.
+Key derived variables include debt-to-assets and equity ratio, along with reported measures of gearing, solvency, and current ratio.
+Missing and extreme values were excluded to maintain consistency in year-to-year comparisons.
+
+```{r}
+# Create leverage and liquidity indicators
+lev_liq_data <- filtered_germany |>
+  filter(acct_year %in% 2018:2021, status == "Active") |>
+  mutate(
+    debt_to_assets = total_liabilities_eur / total_assets_eur,
+    equity_ratio   = total_equity_eur / total_assets_eur
+  ) |>
+  select(acct_year, industry_group, company_id, company_name,
+         debt_to_assets, equity_ratio, gearing_pct, solvency_pct, current_ratio) |>
+  drop_na(debt_to_assets, current_ratio)
+
+# Summary statistics by year
+lev_liq_summary <- lev_liq_data |>
+  group_by(acct_year) |>
+  summarise(
+    median_debt_assets = median(debt_to_assets, na.rm = TRUE),
+    iqr_debt_assets    = IQR(debt_to_assets, na.rm = TRUE),
+    median_liquidity   = median(current_ratio, na.rm = TRUE),
+    iqr_liquidity      = IQR(current_ratio, na.rm = TRUE),
+    median_gearing     = median(gearing_pct, na.rm = TRUE),
+    median_solvency    = median(solvency_pct, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+lev_liq_summary |>
+  knitr::kable(digits = 2, caption = "Leverage and Liquidity Summary (2018–2021)") |>
+  kableExtra::kable_styling(full_width = FALSE, font_size = 11)
+```
+
+From 2018 to 2021, the median debt-to-assets ratio remained steady at around 0.50–0.51, while the median current ratio stayed near 1.8×, indicating stable leverage and liquidity levels through the pandemic period.
+A slight rise in gearing (from 62% to 66%) alongside a modest decline in solvency (from 50% to 49%) suggests firms gradually relied more on debt financing but maintained short-term financial health.
 
 ### IDA for Question 3
-
 
 ```{r financial indicators}
 industry_summary <- filtered_germany  |> 
@@ -772,9 +834,11 @@ industry_summary <- filtered_germany  |>
   )
 ```
 
-
-This code calculates summary financial indicators for German industries during the pandemic years 2020–2022. First, it filters the dataset to include only accounting years 2020, 2021, and 2022. Then, it groups the data by `nace_num2` (industry code) and accounting year. For each industry-year combination, it computes the median EBIT margin (`median_profitability`) as a measure of profitability, the median gearing ratio (`median_leverage`) as a measure of financial leverage, the median current ratio (`median_liquidity`) as a measure of short-term liquidity, and the median total assets (`median_firm_size`) as a proxy for firm size. The resulting `industry_summary` dataset provides a concise overview of how different industries performed financially across these key dimensions during the pandemic period.
-
+This code calculates summary financial indicators for German industries during the pandemic years 2020–2022.
+First, it filters the dataset to include only accounting years 2020, 2021, and 2022.
+Then, it groups the data by `nace_num2` (industry code) and accounting year.
+For each industry-year combination, it computes the median EBIT margin (`median_profitability`) as a measure of profitability, the median gearing ratio (`median_leverage`) as a measure of financial leverage, the median current ratio (`median_liquidity`) as a measure of short-term liquidity, and the median total assets (`median_firm_size`) as a proxy for firm size.
+The resulting `industry_summary` dataset provides a concise overview of how different industries performed financially across these key dimensions during the pandemic period.
 
 ```{r Plot}
 
@@ -826,7 +890,10 @@ panel.grid.minor = element_blank()
 )
 ```
 
-This bubble chart shows the financial resilience of German industries from 2020–2022. Median profitability (EBIT margin) is on the x-axis, median leverage (gearing) on the y-axis, bubble size represents firm size, and color indicates liquidity. Each point is labeled by its NACE code. Industries with high profitability, low leverage, and strong liquidity appear as financially resilient, while those with low profitability, high leverage, or weak liquidity are more vulnerable.
+This bubble chart shows the financial resilience of German industries from 2020–2022.
+Median profitability (EBIT margin) is on the x-axis, median leverage (gearing) on the y-axis, bubble size represents firm size, and color indicates liquidity.
+Each point is labeled by its NACE code.
+Industries with high profitability, low leverage, and strong liquidity appear as financially resilient, while those with low profitability, high leverage, or weak liquidity are more vulnerable.
 
 ```{r Distribution Plot}
 #| label: fig-financial_resilience_distribution
@@ -866,7 +933,12 @@ ggplot(top_bottom_resilience,
 
 ```
 
-This horizontal bar chart visualizes the distribution of average financial resilience scores across German industries from 2020 to 2022. Each bar represents a NACE Level 2 industry, ordered from highest to lowest average resilience score. The resilience score integrates key financial metrics—profitability, leverage, and liquidity—to assess how well industries managed financial stability during the pandemic. Industries with higher scores demonstrated stronger ability to maintain earnings, control debt levels, and preserve liquidity, indicating greater financial robustness. The color gradient emphasizes this ranking, with brighter colors reflecting more resilient sectors. This visualization clearly highlights sectors that were comparatively vulnerable or resilient in navigating the economic challenges posed by COVID-19.
+This horizontal bar chart visualizes the distribution of average financial resilience scores across German industries from 2020 to 2022.
+Each bar represents a NACE Level 2 industry, ordered from highest to lowest average resilience score.
+The resilience score integrates key financial metrics—profitability, leverage, and liquidity—to assess how well industries managed financial stability during the pandemic.
+Industries with higher scores demonstrated stronger ability to maintain earnings, control debt levels, and preserve liquidity, indicating greater financial robustness.
+The color gradient emphasizes this ranking, with brighter colors reflecting more resilient sectors.
+This visualization clearly highlights sectors that were comparatively vulnerable or resilient in navigating the economic challenges posed by COVID-19.
 
 ```{r}
 
@@ -898,8 +970,11 @@ top_bottom_resilience |>
 
 ```
 
-This table ranks German industries by their **financial resilience from 2020 to 2022**, combining profitability, leverage, and liquidity into a composite resilience score. Higher scores indicate industries that sustained earnings while keeping debt manageable and maintaining strong cash positions during the pandemic. The ranking shows that **healthcare, technology, and utilities** were the most resilient sectors, benefitting from steady demand and robust balance sheets. In contrast, **hospitality, retail, and manufacturing** were the least resilient, as lockdowns, supply disruptions, and high fixed costs eroded profitability and liquidity. Overall, the results highlight how structural factors—such as firm size, capital intensity, and sectoral exposure—shaped the uneven financial recovery of German industries during COVID-19.
-
+This table ranks German industries by their **financial resilience from 2020 to 2022**, combining profitability, leverage, and liquidity into a composite resilience score.
+Higher scores indicate industries that sustained earnings while keeping debt manageable and maintaining strong cash positions during the pandemic.
+The ranking shows that **healthcare, technology, and utilities** were the most resilient sectors, benefitting from steady demand and robust balance sheets.
+In contrast, **hospitality, retail, and manufacturing** were the least resilient, as lockdowns, supply disruptions, and high fixed costs eroded profitability and liquidity.
+Overall, the results highlight how structural factors—such as firm size, capital intensity, and sectoral exposure—shaped the uneven financial recovery of German industries during COVID-19.
 
 ```{r Time Trend}
 key_industries <- c("Human Health & Social Work", "Manufacturing", "Accommodation & Food", "Information & Communication")
@@ -941,7 +1016,11 @@ ggplot(plot_data, aes(x = acct_year, y = median_ebit, color = industry_group)) +
   )
 ```
 
-This plot shows the trends in median EBIT margin from 2018 to 2021 for key German industries. It highlights how profitability evolved through the pre-pandemic and pandemic periods, with each line representing an industry. Clear labels mark the industries on the right, making it easy to compare their performance trajectories. The visualization reveals that sectors like healthcare and information & communication maintained or improved profitability, while industries such as accommodation & food faced more volatility and declines during the pandemic. This comparison underscores varying financial resilience across industries amid COVID-19 challenges.
+This plot shows the trends in median EBIT margin from 2018 to 2021 for key German industries.
+It highlights how profitability evolved through the pre-pandemic and pandemic periods, with each line representing an industry.
+Clear labels mark the industries on the right, making it easy to compare their performance trajectories.
+The visualization reveals that sectors like healthcare and information & communication maintained or improved profitability, while industries such as accommodation & food faced more volatility and declines during the pandemic.
+This comparison underscores varying financial resilience across industries amid COVID-19 challenges.
 
 ### IDA for Question 4
 
@@ -967,7 +1046,10 @@ liq_prof_summary |>
   knitr::kable(digits = 2, caption = "Liquidity and Profitability Summary (2018–2021)") |>
   kableExtra::kable_styling(full_width = FALSE, font_size = 11)
 ```
-The summary statistics show that firms’ liquidity positions remained relatively stable throughout 2018–2021, with median current ratios hovering around 1.8–1.9× and a consistent spread (IQR ≈ 2.5). In contrast, profitability (measured by ROA) dropped sharply during the pandemic—from 4.1% in 2018 to just 2.3% in 2020—before showing a slight recovery in 2021. The increasing IQR for ROA suggests that profitability outcomes became more dispersed, indicating uneven recovery across firms and industries.
+
+The summary statistics show that firms’ liquidity positions remained relatively stable throughout 2018–2021, with median current ratios hovering around 1.8–1.9× and a consistent spread (IQR ≈ 2.5).
+In contrast, profitability (measured by ROA) dropped sharply during the pandemic—from 4.1% in 2018 to just 2.3% in 2020—before showing a slight recovery in 2021.
+The increasing IQR for ROA suggests that profitability outcomes became more dispersed, indicating uneven recovery across firms and industries.
 
 ## EDA
 
@@ -1038,7 +1120,10 @@ p_q1_all
 ```
 
 The chart compares profitability before (2018–19) and during the pandemic (2020 – 2021) for all firms.
-Across EBIT and EBITDA margins, the medians remain largely unchanged, but the spreads widen in 2020 – 2021, indicating increased dispersion in operating performance. ROA and especially ROE show many more extreme negatives in 2020 – 2021, indicating that a greater share of firms reported losses or equity write-downs, even though the median stayed near zero. Net income (asinh) also becomes more dispersed in 2020 –21, with a heavier lower tail, confirming higher volatility. A key insight is that central tendencies barely moved while tail risk increased.
+Across EBIT and EBITDA margins, the medians remain largely unchanged, but the spreads widen in 2020 – 2021, indicating increased dispersion in operating performance.
+ROA and especially ROE show many more extreme negatives in 2020 – 2021, indicating that a greater share of firms reported losses or equity write-downs, even though the median stayed near zero.
+Net income (asinh) also becomes more dispersed in 2020 –21, with a heavier lower tail, confirming higher volatility.
+A key insight is that central tendencies barely moved while tail risk increased.
 
 ```{r}
 #keep only mapped industry
@@ -1078,20 +1163,123 @@ ggplot(eb_med, aes(y = reorder(industry_group, delta))) +
 
 ```
 
-This dumbbell chart compares the median EBITDA margin (%) in each industry before and during the pandemic. It shows the direction and magnitude of profitability changes across sectors on a single axis. Overall, most industries moved only slightly, but a few stand out: Accommodation & Food shows the biggest improvement, bouncing from slightly negative to positive margins, and Technology also saw an increase. The largest drop is in Health Care, which fell sharply from a high pre-pandemic median to a much lower level. Cyclical sectors like Industrials, Construction, Arts & Entertainment, and Financials experienced small to moderate decreases, while Utilities and Education remain near flat. Using medians (rather than means) makes the comparison more robust to outliers and highlights typical firms within each industry.
+This dumbbell chart compares the median EBITDA margin (%) in each industry before and during the pandemic.
+It shows the direction and magnitude of profitability changes across sectors on a single axis.
+Overall, most industries moved only slightly, but a few stand out: Accommodation & Food shows the biggest improvement, bouncing from slightly negative to positive margins, and Technology also saw an increase.
+The largest drop is in Health Care, which fell sharply from a high pre-pandemic median to a much lower level.
+Cyclical sectors like Industrials, Construction, Arts & Entertainment, and Financials experienced small to moderate decreases, while Utilities and Education remain near flat.
+Using medians (rather than means) makes the comparison more robust to outliers and highlights typical firms within each industry.
 
 ### Question 2
 
 **2. How did leverage (debt-to-assets) and liquidity (current ratio) evolve during pandemic?**
 
-AAA
+This question examines whether German firms altered their capital structure or short-term liquidity positions in response to the COVID-19 shock.The analysis proceeds in three parts:
+
+1.  Time trends of leverage and liquidity
+
+```{r}
+#| label: fig-leverage-liquidity-trend
+lev_liq_long <- lev_liq_summary |>
+  select(acct_year, median_debt_assets, median_liquidity) |>
+  pivot_longer(-acct_year, names_to = "indicator", values_to = "value")
+
+ggplot(lev_liq_long, aes(x = acct_year, y = value, colour = indicator, group = indicator)) +
+  geom_line(linewidth = 1.1) +
+  geom_point(size = 3) +
+  facet_wrap(~ indicator, scales = "free_y",
+             labeller = as_labeller(c(median_debt_assets="Debt-to-Assets", median_liquidity="Current Ratio"))) +
+  labs(title = "Trends in Leverage and Liquidity, 2018–2021",
+       x = "Accounting Year", y = "Median Value", colour = NULL) +
+  theme_minimal(base_size = 13) +
+  theme(legend.position = "none",
+        strip.text = element_text(face = "bold"),
+        plot.title = element_text(face = "bold", size = 15))
+```
+
+The trend plot shows that liquidity (current ratio) remained remarkably **stable** between 2018 and 2021, hovering around **1.8**.
+In contrast, leverage (debt-to-assets) **increased slightly** from **0.50 to 0.51**, indicating a **gradual rise** in firms’ reliance on debt financing through the pandemic period.
+Overall, German firms appear to have maintained adequate liquidity buffers despite modestly higher leverage, suggesting a cautious but resilient financial posture during economic uncertainty.
+
+2.  Leverage vs Solvency (are highly levered firms less solvent?)
+
+```{r}
+#| label: fig-leverage-solvency
+lev_liq_plot <- lev_liq_data |>
+  filter(is.finite(debt_to_assets),
+         debt_to_assets >= 0, debt_to_assets <= 1.5,   # 0–150%
+         solvency_pct >= -50, solvency_pct <= 100)
+
+ggplot(lev_liq_plot, aes(x = debt_to_assets, y = solvency_pct)) +
+  geom_point(alpha = 0.35, colour = "#0072B2") +
+  geom_smooth(method = "lm", se = FALSE, colour = "#E69", linewidth = 0.9) +
+  geom_hline(yintercept = 50, linetype = "dotted", colour = "grey") +
+  facet_wrap(~ acct_year, ncol = 2) +
+  scale_x_continuous(labels = scales::percent_format(accuracy = 1), limits = c(0, 1.5)) +
+  scale_y_continuous(limits = c(-50, 100)) +
+  labs(
+    title = "Leverage–Solvency Relationship by Year",
+    subtitle = "Filtered to 0–150% debt-to-assets to avoid scale distortion from extreme values",
+    x = "Debt-to-Assets",
+    y = "Solvency Ratio (%)"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(strip.text = element_text(face = "bold"),
+        plot.title = element_text(face = "bold"))
+```
+
+The scatterplots show a **strong and consistent negative relationship** between leverage (debt-to-assets) and solvency (ability to meet long-term obligations) across all years from 2018 to 2021.
+Each panel demonstrates a clear downward slope: as firms take on more debt, solvency ratios decline.
+This pattern holds consistently over time, implying that highly leveraged firms are structurally less solvent, and that the pandemic did not materially alter this trade-off.
+The persistence of this relationship suggests that balance-sheet fragility scales proportionally with debt exposure, independent of year-specific shocks.
+
+3.  Debt-to-assets by industry, faceted by year
+
+```{r}
+#| label: fig-leverage-industry-facet
+#| fig-width: 10
+#| fig-height: 12
+
+lev_liq_industry <- lev_liq_data |>
+  filter(debt_to_assets >= 0, debt_to_assets <= 1.5) |>
+  drop_na(industry_group)
+
+ggplot(lev_liq_industry, aes(x = debt_to_assets, y = reorder(industry_group, debt_to_assets), fill = factor(acct_year))) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.7, width = 0.6) +
+  facet_wrap(~ acct_year, ncol = 2, scales = "free_x") +
+  scale_x_continuous(labels = scales::percent_format(accuracy = 1), limits = c(0, 1.5)) +
+  scale_fill_brewer(palette = "Set2", name = "Accounting Year") +
+  labs(
+    title = "Distribution of Leverage (Debt-to-Assets) by Industry, 2018–2021",
+    subtitle = "Faceted view highlights stability in industry leverage patterns through the pandemic period",
+    x = "Debt-to-Assets Ratio",
+    y = NULL
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    strip.text = element_text(face = "bold", size = 13),
+    plot.title = element_text(face = "bold", size = 17, hjust = 0.5),
+    plot.subtitle = element_text(size = 12, hjust = 0.5),
+    legend.position = "top",
+    axis.text.y = element_text(size = 10),
+    panel.grid.minor = element_blank(),
+    panel.spacing.y = unit(1, "lines")  # increases vertical space between facets
+  )
+```
+
+According to the faceted boxplot, the distribution of leverage (debt-to-assets) across industries remained broadly stable from 2018 to 2021.
+Capital-intensive sectors such as Manufacturing, Construction, and Transport & Storage consistently exhibit higher leverage, while service-based industries like Information & Communication and Professional & Technical Services maintain comparatively lower ratios.
+The slight widening of the distributions in 2020–2021 suggests that some firms increased borrowing during the pandemic to support liquidity, while others remained conservative.
+Overall, the median leverage levels changed little across years, indicating that industry structure rather than pandemic-specific effects primarily determined leverage patterns in German firms.
 
 ### Question 3
+
 **3. Which German industries showed unexpected financial resilience or vulnerability from 2020 to 2022, and how were these outcomes shaped by profitability, leverage, liquidity, and firm size?**
 
 AAA
 
 ### Question 4
+
 **4. How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic?**
 
 ```{r Q4 EDA}
@@ -1130,6 +1318,7 @@ ggplot(binned_liq, aes(x = liq_bin, y = median_roa, colour = factor(acct_year), 
     plot.subtitle = element_text(size = 12)
   )
 ```
+
 The line chart illustrates how median profitability (ROA) varies across different liquidity levels for German firms between 2018 and 2021.
 In the pre-pandemic years (2018–2019), profitability increased steadily with higher liquidity up to around a current ratio of 3–4, reflecting an efficient balance between liquidity and asset use.
 However, this positive relationship weakened during 2020, when firms with higher liquidity did not achieve correspondingly higher returns.
@@ -1139,9 +1328,19 @@ The 2021 pattern shows partial recovery but remains flatter than before, suggest
 
 **Question 1**
 
-Median profitability remained broadly stable across all firms (EBIT/EBITDA medians barely changed), but industry patterns varied. The largest median improvements in EBITDA margin were seen in Technology and Accommodation & Food, while Administrative & Support, Financials, Construction, and parts of Consumer Services experienced clear median declines. Health Care continued as a structurally high-margin outlier with little change in its median. Although typical profitability (medians) stayed relatively stable, the distribution widened: ROA/ROE and net income showed more firms with losses or very low returns in 2020 – 2021. In short, the pandemic increased downside risk and variation, creating winners and losers by industry, even though the overall profitability for the average firm remained roughly the same.
+Median profitability remained broadly stable across all firms (EBIT/EBITDA medians barely changed), but industry patterns varied.
+The largest median improvements in EBITDA margin were seen in Technology and Accommodation & Food, while Administrative & Support, Financials, Construction, and parts of Consumer Services experienced clear median declines.
+Health Care continued as a structurally high-margin outlier with little change in its median.
+Although typical profitability (medians) stayed relatively stable, the distribution widened: ROA/ROE and net income showed more firms with losses or very low returns in 2020 – 2021.
+In short, the pandemic increased downside risk and variation, creating winners and losers by industry, even though the overall profitability for the average firm remained roughly the same.
 
 **Question 2**
+
+Overall, the results suggest that German firms’ leverage and liquidity positions remained largely stable throughout 2018–2021.
+Median liquidity ratios changed little, while leverage increased only marginally, indicating a cautious approach to debt financing during the pandemic.
+The consistent negative association between leverage and solvency highlights that higher debt levels continued to correspond with weaker financial stability, yet this relationship did not materially shift over time.
+Across industries, leverage patterns were persistent, with capital-intensive sectors maintaining higher debt ratios and service-based sectors remaining more conservative.
+Taken together, these findings indicate that the pandemic did not fundamentally alter firms’ capital structures, but rather reinforced existing financial behaviours and industry norms.
 
 **Question 3**
 
@@ -1151,14 +1350,10 @@ Median profitability remained broadly stable across all firms (EBIT/EBITDA media
 
 The materials used for this report are:
 
-Wickham H, Averick M, Bryan J, Chang W, McGowan LD, François R,
-  Grolemund G, Hayes A, Henry L, Hester J, Kuhn M, Pedersen TL,
-  Miller E, Bache SM, Müller K, Ooms J, Robinson D, Seidel DP, Spinu
-  V, Takahashi K, Vaughan D, Wilke C, Woo K, Yutani H (2019).
-  "Welcome to the tidyverse." _Journal of Open Source Software_,
-  *4*(43), 1686. [doi:10.21105/joss.01686](https://doi.org/10.21105/joss.01686).
+Wickham H, Averick M, Bryan J, Chang W, McGowan LD, François R, Grolemund G, Hayes A, Henry L, Hester J, Kuhn M, Pedersen TL, Miller E, Bache SM, Müller K, Ooms J, Robinson D, Seidel DP, Spinu V, Takahashi K, Vaughan D, Wilke C, Woo K, Yutani H (2019).
+"Welcome to the tidyverse." *Journal of Open Source Software*, *4*(43), 1686.
+[doi:10.21105/joss.01686](https://doi.org/10.21105/joss.01686).
 
 The links to my use of ChatGPT for help on this assignment are:
 
-- [https://chatgpt.com/share/68857a22-debc-8001-bfcc-10552befba4c]() helped to XXX.
-
+-   [https://chatgpt.com/share/68857a22-debc-8001-bfcc-10552befba4c]() helped to XXX.
