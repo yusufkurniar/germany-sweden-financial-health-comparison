@@ -71,6 +71,7 @@ library(kableExtra)
 library(ggplot2)
 library(scales)
 library(tidyr)
+library(ggrepel)
 ```
 
 
@@ -447,8 +448,8 @@ ida_germany <- ida_germany %>%
 ```{r IDA-scale}
 #chart for scale variables (log axis)
 p_scale <- ida_germany %>%
-  filter(variable_orig %in% scale_vars) %>%
-  mutate(y = if_else(value > 0, value, NA_real_)) %>%
+  filter(variable_orig %in% scale_vars) |>
+  mutate(y = if_else(value > 0, value, NA_real_)) |>
   ggplot(aes(x = factor(acct_year), y = y)) +
   geom_violin(trim = FALSE, fill = NA, linewidth = 0.4, na.rm = TRUE) +
   geom_jitter(width = 0.12, height = 0, alpha = 0.12, size = 0.6, na.rm = TRUE) +
@@ -468,8 +469,8 @@ According to the table, the monetary amounts (EUR) variables are heavily right-s
 
 ```{r IDA-ratio}
 #chart for ratio variables (linear axis)
-p_ratio <- ida_germany %>%
-  filter(variable_orig %in% ratio_vars) %>%
+p_ratio <- ida_germany |>
+  filter(variable_orig %in% ratio_vars) |>
   ggplot(aes(x = factor(acct_year), y = value)) +
   geom_violin(trim = FALSE, fill = NA, linewidth = 0.4) +
   geom_jitter(width = 0.12, height = 0, alpha = 0.12, size = 0.6) +
@@ -575,6 +576,189 @@ char_missing |>
 
 According to the table, identifiers and locations are complete: company_id, company_name, country, city, and consolidation_code show no missing data. Industry codes are mostly available: NACE has about 2.0% missing, ICB around 6.2%, and SIC approximately 0.1%. This indicates that while a small number of firms cannot be classified by NACE alone, most can be identified using the ICB/SIC fallbacks, which are categorised as industrial_group.
 
+
+### IDA for Question 1
+
+```{r}
+stopifnot("net_income_eur" %in% names(filtered_germany))
+
+filtered_germany_1 <- filtered_germany |>
+  mutate(
+    # period flag
+    period = if_else(acct_year >= 2020, "Pandemic (2020–2021)", "Pre-pandemic (2018–2019)"),
+    # transform for visuals (handles negatives)
+    net_income_eur_asinh = asinh(as.numeric(net_income_eur)),
+    # recompute ROA / ROE (fallbacks)
+    roa_calc = 100 * (net_income_eur / total_assets_eur),
+    roe_calc = if_else(total_equity_eur > 0,
+                       100 * (net_income_eur / total_equity_eur),
+                       NA_real_),
+    roa_use = coalesce(roa_pct, roa_calc),
+    roe_use = coalesce(roe_pct, roe_calc),
+    roa_src = case_when(
+      !is.na(roa_pct) ~ "reported",
+      !is.na(roa_calc) ~ "recomputed",
+      TRUE ~ NA_character_
+    ),
+    roe_src = case_when(
+      !is.na(roe_pct) ~ "reported",
+      !is.na(roe_calc) ~ "recomputed",
+      TRUE ~ NA_character_
+    )
+  )
+```
+    
+
+```{r}
+#Firm “one-gap” fill within the same period only
+
+fill_one_gap <- function(x){
+  f <- dplyr::lag(x); b <- dplyr::lead(x)
+  ifelse(is.na(x) & !is.na(f) & !is.na(b) & (f == b), f, x)
+}
+
+filtered_germany_1 <- filtered_germany_1 |>
+  arrange(company_id, acct_year) |>
+  group_by(company_id, period) |>  #period boundary blocks carryover
+  mutate(
+    ebit_step1   = fill_one_gap(ebit_margin_pct),
+    ebitda_step1 = fill_one_gap(ebitda_margin_pct),
+    roa_step1    = fill_one_gap(roa_use),
+    roe_step1    = fill_one_gap(roe_use)
+  ) |>
+  ungroup() |>
+  mutate(
+    ebit_step1   = coalesce(ebit_margin_pct,   ebit_step1),
+    ebitda_step1 = coalesce(ebitda_margin_pct, ebitda_step1),
+    roa_step1    = coalesce(roa_use,           roa_step1),
+    roe_step1    = coalesce(roe_use,           roe_step1)
+  )
+```
+
+```{r}
+#median fills in strict order (no cross-period borrowing)
+#industry × year medians
+med_ixy <- filtered_germany_1 |>
+  group_by(industry_group, acct_year) |>
+  summarise(
+    med_ebit   = median(ebit_step1,   na.rm=TRUE),
+    med_ebitda = median(ebitda_step1, na.rm=TRUE),
+    med_roa    = median(roa_step1,    na.rm=TRUE),
+    med_roe    = median(roe_step1,    na.rm=TRUE),
+    .groups="drop"
+  )
+
+#industry × period medians
+med_ip <- filtered_germany_1 |>
+  group_by(industry_group, period) |>
+  summarise(
+    med_ebit_ip   = median(ebit_step1,   na.rm=TRUE),
+    med_ebitda_ip = median(ebitda_step1, na.rm=TRUE),
+    med_roa_ip    = median(roa_step1,    na.rm=TRUE),
+    med_roe_ip    = median(roe_step1,    na.rm=TRUE),
+    .groups="drop"
+  )
+
+#period medians
+med_p <- filtered_germany_1 |>
+  group_by(period) |>
+  summarise(
+    med_ebit_p   = median(ebit_step1,   na.rm=TRUE),
+    med_ebitda_p = median(ebitda_step1, na.rm=TRUE),
+    med_roa_p    = median(roa_step1,    na.rm=TRUE),
+    med_roe_p    = median(roe_step1,    na.rm=TRUE),
+    .groups="drop"
+  )
+
+#join and impute with precedence, also explicit source flags
+filtered_germany_1 <- filtered_germany_1 |>
+  left_join(med_ixy, by = c("industry_group","acct_year")) |>
+  left_join(med_ip,  by = c("industry_group","period")) |>
+  left_join(med_p,   by = "period") |>
+  mutate(
+    #final values, using your precedence
+    ebit_margin_q1   = if_else(is.na(ebitda_step1), ebit_step1, ebit_step1),
+    ebit_margin_q1   = if_else(is.na(ebit_step1),   coalesce(med_ebit,   med_ebit_ip,   med_ebit_p),   ebit_step1),
+    ebitda_margin_q1 = if_else(is.na(ebitda_step1), coalesce(med_ebitda, med_ebitda_ip, med_ebitda_p), ebitda_step1),
+    roa_q1           = if_else(is.na(roa_step1),    coalesce(med_roa,    med_roa_ip,    med_roa_p),    roa_step1),
+    roe_q1           = if_else(is.na(roe_step1),    coalesce(med_roe,    med_roe_ip,    med_roe_p),    roe_step1),
+
+    #provenance for EBIT/EBITDA margins
+    ebit_src = dplyr::case_when(
+      !is.na(ebit_margin_pct) ~ "reported",
+      is.na(ebit_margin_pct) & !is.na(ebit_step1) ~ "firm-1gap(period)",
+      is.na(ebit_step1) & !is.na(med_ebit) ~ "ind×year",
+      is.na(ebit_step1) & is.na(med_ebit) & !is.na(med_ebit_ip) ~ "ind×period",
+      TRUE ~ "period"
+    ),
+    ebitda_src = dplyr::case_when(
+      !is.na(ebitda_margin_pct) ~ "reported",
+      is.na(ebitda_margin_pct) & !is.na(ebitda_step1) ~ "firm-1gap(period)",
+      is.na(ebitda_step1) & !is.na(med_ebitda) ~ "ind×year",
+      is.na(ebitda_step1) & is.na(med_ebitda) & !is.na(med_ebitda_ip) ~ "ind×period",
+      TRUE ~ "period"
+    ),
+
+    #ROA/ROE provenance
+    roa_src = dplyr::case_when(
+      !is.na(roa_src) ~ roa_src,
+      is.na(roa_src) & !is.na(roa_step1) ~ "firm-1gap(period)",
+      is.na(roa_step1) & !is.na(med_roa) ~ "ind×year",
+      is.na(roa_step1) & is.na(med_roa) & !is.na(med_roa_ip) ~ "ind×period",
+      TRUE ~ "period"
+    ),
+    roe_src = dplyr::case_when(
+      !is.na(roe_src) ~ roe_src,
+      is.na(roe_src) & !is.na(roe_step1) ~ "firm-1gap(period)",
+      is.na(roe_step1) & !is.na(med_roe) ~ "ind×year",
+      is.na(roe_step1) & is.na(med_roe) & !is.na(med_roe_ip) ~ "ind×period",
+      TRUE ~ "period"
+    )
+  ) |>
+  select(-ends_with("_step1"))
+```
+
+```{r}
+impute_summary_q1 <- filtered_germany_1 |>
+  summarise(
+    .by = period,
+    n_rows = n(),
+    ebit_reported   = sum(ebit_src   == "reported",            na.rm=TRUE),
+    ebit_firmgap    = sum(ebit_src   == "firm-1gap(period)",   na.rm=TRUE),
+    ebit_ind_year   = sum(ebit_src   == "ind×year",            na.rm=TRUE),
+    ebit_ind_period = sum(ebit_src   == "ind×period",          na.rm=TRUE),
+    ebit_period     = sum(ebit_src   == "period",              na.rm=TRUE),
+
+    ebitda_reported   = sum(ebitda_src   == "reported",          na.rm=TRUE),
+    ebitda_firmgap    = sum(ebitda_src   == "firm-1gap(period)", na.rm=TRUE),
+    ebitda_ind_year   = sum(ebitda_src   == "ind×year",          na.rm=TRUE),
+    ebitda_ind_period = sum(ebitda_src   == "ind×period",        na.rm=TRUE),
+    ebitda_period     = sum(ebitda_src   == "period",            na.rm=TRUE),
+
+    roa_reported    = sum(roa_src == "reported",            na.rm=TRUE),
+    roa_recomputed  = sum(roa_src == "recomputed",          na.rm=TRUE),
+    roa_firmgap     = sum(roa_src == "firm-1gap(period)",   na.rm=TRUE),
+    roa_ind_year    = sum(roa_src == "ind×year",            na.rm=TRUE),
+    roa_ind_period  = sum(roa_src == "ind×period",          na.rm=TRUE),
+    roa_period      = sum(roa_src == "period",              na.rm=TRUE),
+
+    roe_reported    = sum(roe_src == "reported",            na.rm=TRUE),
+    roe_recomputed  = sum(roe_src == "recomputed",          na.rm=TRUE),
+    roe_firmgap     = sum(roe_src == "firm-1gap(period)",   na.rm=TRUE),
+    roe_ind_year    = sum(roe_src == "ind×year",            na.rm=TRUE),
+    roe_ind_period  = sum(roe_src == "ind×period",          na.rm=TRUE),
+    roe_period      = sum(roe_src == "period",              na.rm=TRUE)
+  )
+```
+
+
+### IDA for Question 2
+
+AAA
+
+### IDA for Question 3
+
+
 ```{r financial indicators}
 industry_summary <- filtered_germany  |> 
   filter(acct_year >= 2020, acct_year <= 2022)  |> 
@@ -594,51 +778,172 @@ This code calculates summary financial indicators for German industries during t
 
 ```{r Plot}
 
-industry_summary <- industry_summary |> 
+industry_summary <- industry_summary |>
   mutate(resilience_score = median_profitability / median_leverage * median_liquidity)
 
-# Plot
-ggplot(industry_summary, aes(
-    x = median_profitability,
-    y = median_leverage,
-    size = median_firm_size,
-    color = median_liquidity
-)) +
-  geom_point(alpha = 0.8) +
-  geom_text(aes(label = nace_num2), vjust = -1, size = 3) +
-  scale_size_continuous(range = c(3, 15), labels = scales::comma) +
-  scale_color_viridis_c(option = "plasma", direction = -1) +
-  labs(
-    title = "Financial Resilience of German Industries (2020–2022)",
-    subtitle = "EBIT Margin vs Gearing, sized by Firm Size, colored by Liquidity",
-    x = "Median EBIT Margin (%)",
-    y = "Median Gearing (%)",
-    color = "Median Liquidity Ratio",
-    size = "Median Total Assets (€)"
-  ) +
-  theme_bw(base_size = 14) +
-  theme(
-    legend.position = "right",
-    plot.title = element_text(face = "bold", size = 18),
-    plot.subtitle = element_text(size = 12)
+# Label only top/bottom 5 by resilience score (edit n as needed)
+labels_df <- industry_summary |>
+  arrange(desc(resilience_score)) |>
+  slice_head(n = 5) |>
+  bind_rows(
+    industry_summary |>
+      arrange(resilience_score) |>
+      slice_head(n = 5)
   )
 
+ggplot(industry_summary, aes(
+x = median_profitability,
+y = median_leverage,
+size = median_firm_size,
+color = median_liquidity
+)) +
+geom_point(alpha = 0.75) +
+geom_text_repel(
+data = labels_df,
+aes(label = nace_num2),
+color = "black",
+size = 4,
+box.padding = 0.5,
+min.segment.length = 0,
+seed = 42,
+fontface = "bold"
+) +
+scale_size_continuous(range = c(5, 18), labels = scales::comma) +
+scale_color_viridis_c(option = "plasma", direction = -1) +
+labs(
+title = "Financial Resilience of German Industries (2020–2022)",
+subtitle = "EBIT Margin vs Gearing, sized by Firm Size, colored by Liquidity",
+x = "Median EBIT Margin (%)",
+y = "Median Gearing (%)",
+color = "Median Liquidity Ratio",
+size = "Median Total Assets (€)"
+) +
+theme_bw(base_size = 16) +
+theme(
+plot.title = element_text(face = "bold", size = 18),
+plot.subtitle = element_text(size = 12),
+panel.grid.minor = element_blank()
+)
 ```
 
 This bubble chart shows the financial resilience of German industries from 2020–2022. Median profitability (EBIT margin) is on the x-axis, median leverage (gearing) on the y-axis, bubble size represents firm size, and color indicates liquidity. Each point is labeled by its NACE code. Industries with high profitability, low leverage, and strong liquidity appear as financially resilient, while those with low profitability, high leverage, or weak liquidity are more vulnerable.
 
+```{r Distribution Plot}
+#| label: fig-financial_resilience_distribution
+#| fig-cap: "Distribution of Financial Resilience Scores Across Industries (2020–2022)"
 
-### EDA
+filtered_germany <- filtered_germany  |> 
+  filter(status == "Active")
 
-**1. How did profitability change across industries?**
+# Aggregate by industry for overall resilience comparison
+resilience_summary <- industry_summary  |> 
+  group_by(nace_num2) %>%
+  summarise(avg_resilience = mean(resilience_score, na.rm = TRUE))  |> 
+  arrange(desc(avg_resilience))
 
-**2. How did leverage (debt-to-assets) and liquidity (current ratio) evolve during pandemic?**
+# Get top and bottom 10
+top_bottom_resilience <- resilience_summary  |> 
+  slice_head(n = 10)  |> 
+  bind_rows(resilience_summary %>% slice_tail(n = 10))
 
-**3. Which German industries showed unexpected financial resilience or vulnerability from 2020 to 2022, and how were these outcomes shaped by profitability, leverage, liquidity, and firm size?**
+ggplot(top_bottom_resilience, 
+       aes(x = reorder(nace_num2, avg_resilience), 
+           y = avg_resilience, fill = avg_resilience)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  scale_fill_viridis_c(option = "plasma", direction = -1) +
+  labs(
+    title = "Distribution of Financial Resilience Scores: Top and Bottom 10 Industries (2020–2022)",
+    subtitle = "Only the highest and lowest resilience scores shown for clarity",
+    x = "Industry (NACE Level 2)",
+    y = "Average Resilience Score"
+  ) +
+  theme_bw(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(size = 11)
+  )
 
-**4. How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic?**
+```
 
-This question investigates how the relationship between corporate liquidity and profitability evolved across German firms from 2018 to 2021, with particular attention to the structural changes that occurred during the COVID-19 pandemic. Understanding this relationship is important because liquidity represents firms short-term financial flexibility, while profitability reflects their ability to generate returns from assets. During periods of economic uncertainty, such as the pandemic, firms often adjust their liquidity positions to mitigate risk, which may in turn affect profitability. The analysis therefore examines how this balance shifted over time and whether the traditional positive association between liquidity and profitability held during the pandemic years.
+This horizontal bar chart visualizes the distribution of average financial resilience scores across German industries from 2020 to 2022. Each bar represents a NACE Level 2 industry, ordered from highest to lowest average resilience score. The resilience score integrates key financial metrics—profitability, leverage, and liquidity—to assess how well industries managed financial stability during the pandemic. Industries with higher scores demonstrated stronger ability to maintain earnings, control debt levels, and preserve liquidity, indicating greater financial robustness. The color gradient emphasizes this ranking, with brighter colors reflecting more resilient sectors. This visualization clearly highlights sectors that were comparatively vulnerable or resilient in navigating the economic challenges posed by COVID-19.
+
+```{r}
+
+top_bottom_resilience <- resilience_summary |>
+  mutate(rank = rank(-avg_resilience)) |>
+  filter(rank <= 5 | rank > max(rank) - 5) |>
+  arrange(rank)
+
+top_bottom_resilience |>
+  rename(
+    `NACE Code` = nace_num2,
+    `Average Resilience Score` = avg_resilience,
+    `Rank` = rank
+  ) |>
+  kable(
+    caption = "Top and Bottom 5 German Industries by Financial Resilience (2020–2022)",
+    digits = 2,
+    col.names = c("NACE Code", "Average Resilience Score", "Rank")
+  ) |>
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+    full_width = FALSE,
+    position = "center",
+    font_size = 12
+  ) |>
+  row_spec(0, bold = TRUE, background = "#f2f2f2") |>
+  column_spec(2, color = "darkgreen") |>
+  column_spec(3, bold = TRUE, color = "darkblue")
+
+```
+
+This table ranks German industries by their **financial resilience from 2020 to 2022**, combining profitability, leverage, and liquidity into a composite resilience score. Higher scores indicate industries that sustained earnings while keeping debt manageable and maintaining strong cash positions during the pandemic. The ranking shows that **healthcare, technology, and utilities** were the most resilient sectors, benefitting from steady demand and robust balance sheets. In contrast, **hospitality, retail, and manufacturing** were the least resilient, as lockdowns, supply disruptions, and high fixed costs eroded profitability and liquidity. Overall, the results highlight how structural factors—such as firm size, capital intensity, and sectoral exposure—shaped the uneven financial recovery of German industries during COVID-19.
+
+
+```{r Time Trend}
+key_industries <- c("Human Health & Social Work", "Manufacturing", "Accommodation & Food", "Information & Communication")
+
+plot_data <- filtered_germany  |> 
+  filter(industry_group %in% key_industries, acct_year %in% 2018:2021)  |> 
+  group_by(industry_group, acct_year) %>%
+  summarise(median_ebit = median(ebit_margin_pct, na.rm = TRUE), .groups = "drop")
+
+ggplot(plot_data, aes(x = acct_year, y = median_ebit, color = industry_group)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 3) +
+  geom_text_repel(
+    data = plot_data %>% filter(acct_year == max(acct_year)),
+    aes(label = industry_group),
+    nudge_x = 0.3,
+    direction = "y",
+    hjust = 0,
+    segment.size = 0.25,
+    show.legend = FALSE,
+    size = 4
+  ) +
+  scale_x_continuous(breaks = 2018:2021, limits = c(2018, 2022)) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(
+    title = "Median EBIT Margin Trends by Key Industries (2018–2021)",
+    x = "Accounting Year",
+    y = "Median EBIT Margin (%)",
+    color = "Industry"
+  ) +
+  theme_bw(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
+    axis.text = element_text(color = "black"),
+    axis.title = element_text(face = "bold"),
+    legend.position = "none",
+    panel.grid.minor = element_blank(),
+    plot.margin = margin(10, 30, 10, 10)
+  )
+```
+
+This plot shows the trends in median EBIT margin from 2018 to 2021 for key German industries. It highlights how profitability evolved through the pre-pandemic and pandemic periods, with each line representing an industry. Clear labels mark the industries on the right, making it easy to compare their performance trajectories. The visualization reveals that sectors like healthcare and information & communication maintained or improved profitability, while industries such as accommodation & food faced more volatility and declines during the pandemic. This comparison underscores varying financial resilience across industries amid COVID-19 challenges.
+
+### IDA for Question 4
 
 ```{r Q4 IDA}
 # Focus variables for liquidity–profitability analysis
@@ -663,6 +968,131 @@ liq_prof_summary |>
   kableExtra::kable_styling(full_width = FALSE, font_size = 11)
 ```
 The summary statistics show that firms’ liquidity positions remained relatively stable throughout 2018–2021, with median current ratios hovering around 1.8–1.9× and a consistent spread (IQR ≈ 2.5). In contrast, profitability (measured by ROA) dropped sharply during the pandemic—from 4.1% in 2018 to just 2.3% in 2020—before showing a slight recovery in 2021. The increasing IQR for ROA suggests that profitability outcomes became more dispersed, indicating uneven recovery across firms and industries.
+
+## EDA
+
+### Question 1
+
+**1. How did profitability change across industries?**
+
+```{r}
+#recode period to short labels
+filtered_germany_1 <- filtered_germany_1 |>
+  mutate(period = if_else(acct_year >= 2020, "Pandemic (2020–21)", "Pre (2018–19)"),
+         period = factor(period, levels = c("Pre (2018–19)", "Pandemic (2020–21)")))
+
+#build long data
+q1_vars <- c("ebit_margin_q1","ebitda_margin_q1","roa_q1","roe_q1","net_income_eur_asinh")
+
+plot_long <- filtered_germany_1 |>
+  dplyr::select(company_id, period, dplyr::all_of(q1_vars)) |>
+  tidyr::pivot_longer(-c(company_id, period),
+                      names_to = "metric", values_to = "value") |>
+  dplyr::mutate(
+    metric = factor(metric, levels = q1_vars,
+                    labels = c("EBIT margin (%)","EBITDA margin (%)",
+                               "ROA (%)","ROE (%)","Net income (asinh)"))
+  ) |>
+  tidyr::drop_na(value)
+
+iqr_bar <- function(y) data.frame(
+  y    = median(y, na.rm=TRUE),
+  ymin = quantile(y, 0.25, na.rm=TRUE),
+  ymax = quantile(y, 0.75, na.rm=TRUE)
+)
+
+p_q1_all <- ggplot(plot_long, aes(x = period, y = value)) +
+  geom_violin(trim = FALSE, fill = NA, color = "grey60", linewidth = 0.45, show.legend = FALSE) +
+  geom_jitter(aes(color = "Data"), width = 0.08, height = 0, alpha = 0.10, size = 0.55, show.legend = TRUE) +
+  stat_summary(aes(color = "IQR"), fun.data = iqr_bar, geom = "errorbar",
+               width = 0.12, linewidth = 0.6, show.legend = TRUE) +
+  stat_summary(aes(color = "Median"), fun = median, geom = "point",
+               shape = 95, size = 8, show.legend = TRUE) +
+  facet_wrap(~ metric, scales = "free_y", ncol = 2) +
+  scale_x_discrete(labels = c(
+    `Pre (2018–19)`      = "Pre\n(2018 – 2019)",
+    `Pandemic (2020–21)` = "Pandemic\n(2020 – 2021)"
+  )) +
+  scale_color_manual(
+    name = NULL,
+    values = c("Data" = "grey35", "IQR" = "firebrick", "Median" = "black")
+  ) +
+  guides(color = guide_legend(override.aes = list(
+    shape    = c(16, NA, 95),   # point for Data, line for IQR, thick tick for Median
+    linetype = c(0, 1, 0),
+    size     = c(2, 1, 6),
+    alpha    = 1
+  ))) +
+  coord_cartesian(clip = "off") +
+  labs(x = NULL, y = NULL,
+       title = "Pre vs Pandemic: Profitability Distributions by Metric\n(Median + IQR)") +
+  theme_minimal(base_size = 11) +
+  theme(
+    strip.text  = element_text(face = "bold"),
+    axis.text.x = element_text(size = 10, margin = margin(t = 8), lineheight = 0.95),
+    plot.margin = margin(10, 15, 24, 10),
+    legend.position = "top"
+  )
+
+p_q1_all
+```
+
+The chart compares profitability before (2018–19) and during the pandemic (2020 – 2021) for all firms.
+Across EBIT and EBITDA margins, the medians remain largely unchanged, but the spreads widen in 2020 – 2021, indicating increased dispersion in operating performance. ROA and especially ROE show many more extreme negatives in 2020 – 2021, indicating that a greater share of firms reported losses or equity write-downs, even though the median stayed near zero. Net income (asinh) also becomes more dispersed in 2020 –21, with a heavier lower tail, confirming higher volatility. A key insight is that central tendencies barely moved while tail risk increased.
+
+```{r}
+#keep only mapped industry
+germ_mapped <- filtered_germany_1 |>
+  filter(!is.na(ebitda_margin_q1),
+         !is.na(industry_group),
+         industry_group != "Other / Unmapped") |>
+  droplevels()
+
+#build medians & delta (Pandemic – Pre)
+eb_med <- germ_mapped %>%
+  mutate(period = if_else(acct_year >= 2020, "Pandemic", "Pre"),
+         period = factor(period, levels = c("Pre","Pandemic"))) |>
+  group_by(industry_group, period) %>%
+  summarise(med = median(ebitda_margin_q1, na.rm = TRUE), .groups = "drop") |>
+  pivot_wider(names_from = period, values_from = med) %>%
+  drop_na(Pre, Pandemic) |> #keep industries with both periods
+  mutate(
+    delta     = Pandemic - Pre,
+    direction = factor(if_else(delta >= 0, "Increase", "Decrease"),
+                       levels = c("Increase","Decrease"))
+  ) |>
+  arrange(delta)
+
+#create and colored dumbbell
+ggplot(eb_med, aes(y = reorder(industry_group, delta))) +
+  geom_segment(aes(x = Pre, xend = Pandemic, yend = industry_group, color = direction),
+               linewidth = 1) +
+  geom_point(aes(x = Pre),      color = "#4E79A7", size = 2) +  #pre (blue)
+  geom_point(aes(x = Pandemic), color = "#E15759", size = 2) +  #pandemic (red)
+  geom_vline(xintercept = 0, linetype = "dashed", colour = "grey70") +
+  scale_color_manual(values = c("Increase" = "#2CA02C", "Decrease" = "#D62728")) +
+  guides(color = guide_legend(title = NULL, override.aes = list(linewidth = 3))) +
+  labs(title = "Change in Median EBITDA Margin\n(Pandemic – Pre)",
+       x = "Median EBITDA Margin (%)", y = NULL) +
+  theme_minimal(base_size = 11)
+
+```
+
+This dumbbell chart compares the median EBITDA margin (%) in each industry before and during the pandemic. It shows the direction and magnitude of profitability changes across sectors on a single axis. Overall, most industries moved only slightly, but a few stand out: Accommodation & Food shows the biggest improvement, bouncing from slightly negative to positive margins, and Technology also saw an increase. The largest drop is in Health Care, which fell sharply from a high pre-pandemic median to a much lower level. Cyclical sectors like Industrials, Construction, Arts & Entertainment, and Financials experienced small to moderate decreases, while Utilities and Education remain near flat. Using medians (rather than means) makes the comparison more robust to outliers and highlights typical firms within each industry.
+
+### Question 2
+
+**2. How did leverage (debt-to-assets) and liquidity (current ratio) evolve during pandemic?**
+
+AAA
+
+### Question 3
+**3. Which German industries showed unexpected financial resilience or vulnerability from 2020 to 2022, and how were these outcomes shaped by profitability, leverage, liquidity, and firm size?**
+
+AAA
+
+### Question 4
+**4. How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic?**
 
 ```{r Q4 EDA}
 #| label: fig-liquidity-profitability
@@ -707,7 +1137,15 @@ The 2021 pattern shows partial recovery but remains flatter than before, suggest
 
 ## Conclusions
 
+**Question 1**
 
+Median profitability remained broadly stable across all firms (EBIT/EBITDA medians barely changed), but industry patterns varied. The largest median improvements in EBITDA margin were seen in Technology and Accommodation & Food, while Administrative & Support, Financials, Construction, and parts of Consumer Services experienced clear median declines. Health Care continued as a structurally high-margin outlier with little change in its median. Although typical profitability (medians) stayed relatively stable, the distribution widened: ROA/ROE and net income showed more firms with losses or very low returns in 2020 – 2021. In short, the pandemic increased downside risk and variation, creating winners and losers by industry, even though the overall profitability for the average firm remained roughly the same.
+
+**Question 2**
+
+**Question 3**
+
+**Question 4**
 
 ## Resources
 
