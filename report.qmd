@@ -778,35 +778,52 @@ This code calculates summary financial indicators for German industries during t
 
 ```{r Plot}
 
-industry_summary <- industry_summary |> 
+industry_summary <- industry_summary |>
   mutate(resilience_score = median_profitability / median_leverage * median_liquidity)
 
-# Plot
-ggplot(industry_summary, aes(
-    x = median_profitability,
-    y = median_leverage,
-    size = median_firm_size,
-    color = median_liquidity
-)) +
-  geom_point(alpha = 0.8) +
-  geom_text(aes(label = nace_num2), vjust = -1, size = 3) +
-  scale_size_continuous(range = c(3, 15), labels = scales::comma) +
-  scale_color_viridis_c(option = "plasma", direction = -1) +
-  labs(
-    title = "Financial Resilience of German Industries (2020–2022)",
-    subtitle = "EBIT Margin vs Gearing, sized by Firm Size, colored by Liquidity",
-    x = "Median EBIT Margin (%)",
-    y = "Median Gearing (%)",
-    color = "Median Liquidity Ratio",
-    size = "Median Total Assets (€)"
-  ) +
-  theme_bw(base_size = 14) +
-  theme(
-    legend.position = "right",
-    plot.title = element_text(face = "bold", size = 18),
-    plot.subtitle = element_text(size = 12)
+# Label only top/bottom 5 by resilience score (edit n as needed)
+labels_df <- industry_summary |>
+  arrange(desc(resilience_score)) |>
+  slice_head(n = 5) |>
+  bind_rows(
+    industry_summary |>
+      arrange(resilience_score) |>
+      slice_head(n = 5)
   )
 
+ggplot(industry_summary, aes(
+x = median_profitability,
+y = median_leverage,
+size = median_firm_size,
+color = median_liquidity
+)) +
+geom_point(alpha = 0.75) +
+geom_text_repel(
+data = labels_df,
+aes(label = nace_num2),
+color = "black",
+size = 4,
+box.padding = 0.5,
+min.segment.length = 0,
+seed = 42,
+fontface = "bold"
+) +
+scale_size_continuous(range = c(5, 18), labels = scales::comma) +
+scale_color_viridis_c(option = "plasma", direction = -1) +
+labs(
+title = "Financial Resilience of German Industries (2020–2022)",
+subtitle = "EBIT Margin vs Gearing, sized by Firm Size, colored by Liquidity",
+x = "Median EBIT Margin (%)",
+y = "Median Gearing (%)",
+color = "Median Liquidity Ratio",
+size = "Median Total Assets (€)"
+) +
+theme_bw(base_size = 16) +
+theme(
+plot.title = element_text(face = "bold", size = 18),
+plot.subtitle = element_text(size = 12),
+panel.grid.minor = element_blank()
+)
 ```
 
 This bubble chart shows the financial resilience of German industries from 2020–2022. Median profitability (EBIT margin) is on the x-axis, median leverage (gearing) on the y-axis, bubble size represents firm size, and color indicates liquidity. Each point is labeled by its NACE code. Industries with high profitability, low leverage, and strong liquidity appear as financially resilient, while those with low profitability, high leverage, or weak liquidity are more vulnerable.
@@ -824,22 +841,29 @@ resilience_summary <- industry_summary  |>
   summarise(avg_resilience = mean(resilience_score, na.rm = TRUE))  |> 
   arrange(desc(avg_resilience))
 
-# Plot: horizontal bar chart to compare industries
-ggplot(resilience_summary, aes(x = reorder(nace_num2, avg_resilience), y = avg_resilience, fill = avg_resilience)) +
+# Get top and bottom 10
+top_bottom_resilience <- resilience_summary  |> 
+  slice_head(n = 10)  |> 
+  bind_rows(resilience_summary %>% slice_tail(n = 10))
+
+ggplot(top_bottom_resilience, 
+       aes(x = reorder(nace_num2, avg_resilience), 
+           y = avg_resilience, fill = avg_resilience)) +
   geom_col(show.legend = FALSE) +
   coord_flip() +
   scale_fill_viridis_c(option = "plasma", direction = -1) +
   labs(
-    title = "Distribution of Financial Resilience Across German Industries (2020–2022)",
-    subtitle = "Average resilience scores based on profitability, leverage, and liquidity",
+    title = "Distribution of Financial Resilience Scores: Top and Bottom 10 Industries (2020–2022)",
+    subtitle = "Only the highest and lowest resilience scores shown for clarity",
     x = "Industry (NACE Level 2)",
     y = "Average Resilience Score"
   ) +
-  theme_bw(base_size = 12) +
+  theme_bw(base_size = 14) +
   theme(
-    plot.title = element_text(face = "bold", size = 12),
-    plot.subtitle = element_text(size = 10)
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(size = 11)
   )
+
 ```
 
 This horizontal bar chart visualizes the distribution of average financial resilience scores across German industries from 2020 to 2022. Each bar represents a NACE Level 2 industry, ordered from highest to lowest average resilience score. The resilience score integrates key financial metrics—profitability, leverage, and liquidity—to assess how well industries managed financial stability during the pandemic. Industries with higher scores demonstrated stronger ability to maintain earnings, control debt levels, and preserve liquidity, indicating greater financial robustness. The color gradient emphasizes this ranking, with brighter colors reflecting more resilient sectors. This visualization clearly highlights sectors that were comparatively vulnerable or resilient in navigating the economic challenges posed by COVID-19.
@@ -880,8 +904,8 @@ This table ranks German industries by their **financial resilience from 2020 to 
 ```{r Time Trend}
 key_industries <- c("Human Health & Social Work", "Manufacturing", "Accommodation & Food", "Information & Communication")
 
-plot_data <- filtered_germany %>%
-  filter(industry_group %in% key_industries, acct_year %in% 2018:2021) %>%
+plot_data <- filtered_germany  |> 
+  filter(industry_group %in% key_industries, acct_year %in% 2018:2021)  |> 
   group_by(industry_group, acct_year) %>%
   summarise(median_ebit = median(ebit_margin_pct, na.rm = TRUE), .groups = "drop")
 
