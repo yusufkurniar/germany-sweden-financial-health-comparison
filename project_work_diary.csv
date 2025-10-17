@@ -6,8 +6,8 @@ date, time start, time end, activity, team member(s)
 10/10/2025,11:00,12:00,Discussion and start implementing the project plan,All
 10/10/2025,23:00,23:30,Edit the report.qmd format and read the data,Yusuf
 10/14/2025,13:00,14:00,"Group discussion about the introduction, questions, IDA, and EDA",All
-10/14/2025,14:00,17:00,Working on sub-question: How did profitability change across industries (2020–2022)?,Yusuf
-10/14/2025,14:00,17:00,Working on sub-question: How did leverage (debt-to-assets) and liquidity (current ratio) evolve during 2020–2022?,Bhuvana
+10/14/2025,14:00,17:00,Working on sub-question: How did profitability change across industries (2020?2022)?,Yusuf
+10/14/2025,14:00,17:00,Working on sub-question: How did leverage (debt-to-assets) and liquidity (current ratio) evolve during 2020?2022?,Bhuvana
 10/14/2025,14:00,17:00,Working on sub-question: Did firm size influence financial resilience during the pandemic period?,Rimlan
 10/14/2025,14:00,17:00,Working on sub-question: How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic?,Jingyi
 10/14/2025,17:00,19:00,Working on Introduction based on sub-questions discussion,Rimlan
@@ -17,3 +17,9 @@ date, time start, time end, activity, team member(s)
 10/15/2025,14:00,14:30,Adding timeline in the introduction,Yusuf
 10/15/2025,14:00,15:30,"Creating industrial category column, missing value check, and sanity check",Yusuf
 10/15/2025,16:00,16:15,Differentiate between fiscal year and accounting year,Yusuf
+10/15/2025,16:30,16:40,Creating branch and Writing the motivation,Jingyi
+10/15/2025,16:30,16:45,Sorting out firm duplicate to 0,Yusuf
+10/16/2025,5:45,6:00,Adding company status to the filtered_germany data,Yusuf
+10/16/2025,10:30,11:00,Creating data description table,Yusuf
+10/16/2025,11:00,13:15,Conducting IDA analysis using violin and jitter,Yusuf
+10/16/2025,13:15,13:30,Update wording and add IDA title,Yusuf
