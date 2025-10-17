@@ -841,11 +841,44 @@ ggplot(resilience_summary, aes(x = reorder(nace_num2, avg_resilience), y = avg_r
   )
 ```
 
+This horizontal bar chart visualizes the distribution of average financial resilience scores across German industries from 2020 to 2022. Each bar represents a NACE Level 2 industry, ordered from highest to lowest average resilience score. The resilience score integrates key financial metrics—profitability, leverage, and liquidity—to assess how well industries managed financial stability during the pandemic. Industries with higher scores demonstrated stronger ability to maintain earnings, control debt levels, and preserve liquidity, indicating greater financial robustness. The color gradient emphasizes this ranking, with brighter colors reflecting more resilient sectors. This visualization clearly highlights sectors that were comparatively vulnerable or resilient in navigating the economic challenges posed by COVID-19.
+
+```{r}
+
+top_bottom_resilience <- resilience_summary |>
+  mutate(rank = rank(-avg_resilience)) |>
+  filter(rank <= 5 | rank > max(rank) - 5) |>
+  arrange(rank)
+
+top_bottom_resilience |>
+  rename(
+    `NACE Code` = nace_num2,
+    `Average Resilience Score` = avg_resilience,
+    `Rank` = rank
+  ) |>
+  kable(
+    caption = "Top and Bottom 5 German Industries by Financial Resilience (2020–2022)",
+    digits = 2,
+    col.names = c("NACE Code", "Average Resilience Score", "Rank")
+  ) |>
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+    full_width = FALSE,
+    position = "center",
+    font_size = 12
+  ) |>
+  row_spec(0, bold = TRUE, background = "#f2f2f2") |>
+  column_spec(2, color = "darkgreen") |>
+  column_spec(3, bold = TRUE, color = "darkblue")
+
+```
+
+This table ranks German industries by their **financial resilience from 2020 to 2022**, combining profitability, leverage, and liquidity into a composite resilience score. Higher scores indicate industries that sustained earnings while keeping debt manageable and maintaining strong cash positions during the pandemic. The ranking shows that **healthcare, technology, and utilities** were the most resilient sectors, benefitting from steady demand and robust balance sheets. In contrast, **hospitality, retail, and manufacturing** were the least resilient, as lockdowns, supply disruptions, and high fixed costs eroded profitability and liquidity. Overall, the results highlight how structural factors—such as firm size, capital intensity, and sectoral exposure—shaped the uneven financial recovery of German industries during COVID-19.
+
 
 ### IDA for Question 4
 
 AAA
-
 
 
 ### EDA
