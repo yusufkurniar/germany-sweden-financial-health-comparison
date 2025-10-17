@@ -68,6 +68,9 @@ library(janitor)
 library(skimr)
 library(knitr)
 library(kableExtra)
+library(ggplot2)
+library(scales)
+library(tidyr)
 ```
 
 
@@ -571,6 +574,59 @@ char_missing |>
 ```
 
 According to the table, identifiers and locations are complete: company_id, company_name, country, city, and consolidation_code show no missing data. Industry codes are mostly available: NACE has about 2.0% missing, ICB around 6.2%, and SIC approximately 0.1%. This indicates that while a small number of firms cannot be classified by NACE alone, most can be identified using the ICB/SIC fallbacks, which are categorised as industrial_group.
+
+```{r financial indicators}
+industry_summary <- filtered_germany  |> 
+  filter(acct_year >= 2020, acct_year <= 2022)  |> 
+  group_by(nace_num2, acct_year) |> 
+  summarise(
+    median_profitability = median(ebit_margin_pct, na.rm = TRUE),
+    median_leverage = median(gearing_pct, na.rm = TRUE),
+    median_liquidity = median(current_ratio, na.rm = TRUE),
+    median_firm_size = median(total_assets_eur, na.rm = TRUE),
+    .groups = "drop"
+  )
+```
+
+
+This code calculates summary financial indicators for German industries during the pandemic years 2020–2022. First, it filters the dataset to include only accounting years 2020, 2021, and 2022. Then, it groups the data by `nace_num2` (industry code) and accounting year. For each industry-year combination, it computes the median EBIT margin (`median_profitability`) as a measure of profitability, the median gearing ratio (`median_leverage`) as a measure of financial leverage, the median current ratio (`median_liquidity`) as a measure of short-term liquidity, and the median total assets (`median_firm_size`) as a proxy for firm size. The resulting `industry_summary` dataset provides a concise overview of how different industries performed financially across these key dimensions during the pandemic period.
+
+
+```{r Plot}
+
+industry_summary <- industry_summary |> 
+  mutate(resilience_score = median_profitability / median_leverage * median_liquidity)
+
+# Plot
+ggplot(industry_summary, aes(
+    x = median_profitability,
+    y = median_leverage,
+    size = median_firm_size,
+    color = median_liquidity
+)) +
+  geom_point(alpha = 0.8) +
+  geom_text(aes(label = nace_num2), vjust = -1, size = 3) +
+  scale_size_continuous(range = c(3, 15), labels = scales::comma) +
+  scale_color_viridis_c(option = "plasma", direction = -1) +
+  labs(
+    title = "Financial Resilience of German Industries (2020–2022)",
+    subtitle = "EBIT Margin vs Gearing, sized by Firm Size, colored by Liquidity",
+    x = "Median EBIT Margin (%)",
+    y = "Median Gearing (%)",
+    color = "Median Liquidity Ratio",
+    size = "Median Total Assets (€)"
+  ) +
+  theme_bw(base_size = 14) +
+  theme(
+    legend.position = "right",
+    plot.title = element_text(face = "bold", size = 18),
+    plot.subtitle = element_text(size = 12)
+  )
+
+```
+
+This bubble chart shows the financial resilience of German industries from 2020–2022. Median profitability (EBIT margin) is on the x-axis, median leverage (gearing) on the y-axis, bubble size represents firm size, and color indicates liquidity. Each point is labeled by its NACE code. Industries with high profitability, low leverage, and strong liquidity appear as financially resilient, while those with low profitability, high leverage, or weak liquidity are more vulnerable.
+
 
 ### EDA
 
