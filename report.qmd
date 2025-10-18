@@ -2026,6 +2026,10 @@ Taken together, these findings indicate that the pandemic did not fundamentally 
 
 **Question 3**
 
+The initial data analysis carefully prepared the dataset for question 3 by filtering for the pandemic years 2020 to 2022 and active firms. Key financial indicators—profitability, leverage, liquidity, and firm size—were inspected for completeness and outliers, ensuring data integrity. Summary statistics and visualizations of missingness confirmed data suitability for further analysis. These steps established a robust foundation for evaluating financial resilience across German industries.
+
+The exploratory data analysis then computed a composite resilience score combining these financial dimensions and used clear visualizations such as bubble charts and bar plots to identify which industries were most and least resilient. Healthcare, technology, and utilities emerged as strong performers, supported by high profitability and liquidity alongside moderate leverage and larger firm size, while hospitality, retail, and manufacturing sectors showed relative vulnerability. Time trend analyses of median EBIT margins further contextualized these findings, illustrating how different sectors navigated the pandemic’s economic shocks. Together, the analyses demonstrate that structural financial characteristics shaped industry-specific outcomes, providing valuable insights for economic recovery strategies.
+
 **Question 4**
 
 We explored how the relationship between corporate liquidity and profitability changed and fractured across industries during the COVID-19 pandemic. By combining time-series feature analysis and scagnostic techniques, we examined both macro- and micro-level financial dynamics among Australian industries. At the macro level, industries did not recover equally. At the micro level, the scagnostic measures confirmed these differences. 
