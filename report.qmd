@@ -843,234 +843,65 @@ A slight rise in gearing (from 62% to 66%) alongside a modest decline in solvenc
 
 ### IDA for Question 3
 
-**Outlier Summary for Key Indicators**
+1. Filter relevant years and active firms for pandemic analysis
 
-```{r outlier summary}
+This code filters the dataset **filtered_germany** to keep only the records relevant for the **pandemic period (2020–2022)** and only **active firms.**
+
+```{r Filtering relevant data}
+filtered_germany_q3 <- filtered_germany  |> 
+  filter(acct_year >= 2020, acct_year <= 2022, status == "Active")
+```
+
+
+2. Summary checks on key financial variables for completeness and basic stats
+```{r Summary checks}
+financial_vars <- c("ebit_margin_pct", "gearing_pct", "current_ratio", "total_assets_eur")
+
+summary_stats <- filtered_germany_q3  |> 
+  summarise(across(all_of(financial_vars),
+                   list(
+                     missing = ~sum(is.na(.)),
+                     mean = ~mean(., na.rm = TRUE),
+                     median = ~median(., na.rm = TRUE),
+                     sd = ~sd(., na.rm = TRUE),
+                     min = ~min(., na.rm = TRUE),
+                     max = ~max(., na.rm = TRUE)
+                   )
+                   )) %>%
+  pivot_longer(everything(),
+               names_to = c("variable", "stat"),
+               names_sep = "_",
+               values_to = "value")  |> 
+  pivot_wider(names_from = stat, values_from = value)
+
+kable(summary_stats, caption = "Summary Statistics and Missingness for Key Financial Variables (2020–2022)")  |> 
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+
+```
+
+This code calculates key summary statistics — including missing values, mean, median, standard deviation, minimum, and maximum — for major financial variables such as profitability, leverage, liquidity, and firm size. It provides a quick check on data completeness and helps understand the overall distribution of these variables for active German firms between 2020 and 2022.
+
+
+3. Outlier detection using IQR for key variables (function)
+
+```{r Outlier detection}
 outlier_summary <- function(x) {
   q1 <- quantile(x, 0.25, na.rm=TRUE)
   q3 <- quantile(x, 0.75, na.rm=TRUE)
   iqr <- q3 - q1
   lower <- q1 - 1.5 * iqr
   upper <- q3 + 1.5 * iqr
-  out_total <- sum(x < lower | x > upper, na.rm=TRUE)
-  return(out_total)
+  sum(x < lower | x > upper, na.rm=TRUE)
 }
-
-outliers_tbl <- filtered_germany %>%
-  summarise(across(all_of(key_vars), outlier_summary))
-
-knitr::kable(outliers_tbl, caption = "Count of IQR Outliers for Key Financial Variables")
-
-```
-
-**Reference:** Outlier identification by IQR (Lecture 2, Slide 13)
-
-**Interpretation:** The outlier detection code uses the Interquartile Range (IQR) method, a standard statistical approach, to identify data points that lie far outside the typical range.
-It calculates the IQR as the difference between the 75th and 25th percentiles (Q3 - Q1) and defines outliers as values below Q1 minus 1.5 times the IQR or above Q3 plus 1.5 times the IQR.
-This method effectively highlights extreme values that deviate significantly from the center of the data distribution.
-Counting these outliers per financial variable helps assess data quality and informs decisions about cleaning or analysis.
-This approach is widely used because it is robust to non-normal data and clarifies the presence and extent of unusual observations in the dataset.
-
-```{r financial indicators}
-industry_summary <- filtered_germany  |> 
-  filter(acct_year >= 2020, acct_year <= 2022)  |> 
-  group_by(nace_num2, acct_year) |> 
-  summarise(
-    median_profitability = median(ebit_margin_pct, na.rm = TRUE),
-    median_leverage = median(gearing_pct, na.rm = TRUE),
-    median_liquidity = median(current_ratio, na.rm = TRUE),
-    median_firm_size = median(total_assets_eur, na.rm = TRUE),
-    .groups = "drop"
-  )
-```
-
-This code calculates summary financial indicators for German industries during the pandemic years 2020–2022.
-First, it filters the dataset to include only accounting years 2020, 2021, and 2022.
-Then, it groups the data by `nace_num2` (industry code) and accounting year.
-For each industry-year combination, it computes the median EBIT margin (`median_profitability`) as a measure of profitability, the median gearing ratio (`median_leverage`) as a measure of financial leverage, the median current ratio (`median_liquidity`) as a measure of short-term liquidity, and the median total assets (`median_firm_size`) as a proxy for firm size.
-The resulting `industry_summary` dataset provides a concise overview of how different industries performed financially across these key dimensions during the pandemic period.
-
-```{r Plot}
-
-industry_summary <- industry_summary |>
-  mutate(resilience_score = median_profitability / median_leverage * median_liquidity)
-
-# Label only top/bottom 5 by resilience score (edit n as needed)
-labels_df <- industry_summary |>
-  arrange(desc(resilience_score)) |>
-  slice_head(n = 5) |>
-  bind_rows(
-    industry_summary |>
-      arrange(resilience_score) |>
-      slice_head(n = 5)
-  )
-
-ggplot(industry_summary, aes(
-x = median_profitability,
-y = median_leverage,
-size = median_firm_size,
-color = median_liquidity
-)) +
-geom_point(alpha = 0.75) +
-geom_text_repel(
-data = labels_df,
-aes(label = nace_num2),
-color = "black",
-size = 4,
-box.padding = 0.5,
-min.segment.length = 0,
-seed = 42,
-fontface = "bold"
-) +
-scale_size_continuous(range = c(5, 18), labels = scales::comma) +
-scale_color_viridis_c(option = "plasma", direction = -1) +
-labs(
-title = "Financial Resilience of German Industries (2020–2022)",
-subtitle = "EBIT Margin vs Gearing, sized by Firm Size, colored by Liquidity",
-x = "Median EBIT Margin (%)",
-y = "Median Gearing (%)",
-color = "Median Liquidity Ratio",
-size = "Median Total Assets (€)"
-) +
-theme_bw(base_size = 16) +
-theme(
-plot.title = element_text(face = "bold", size = 18),
-plot.subtitle = element_text(size = 12),
-panel.grid.minor = element_blank()
-)
-```
-
-This bubble chart shows the financial resilience of German industries from 2020–2022.
-Median profitability (EBIT margin) is on the x-axis, median leverage (gearing) on the y-axis, bubble size represents firm size, and color indicates liquidity.
-Each point is labeled by its NACE code.
-Industries with high profitability, low leverage, and strong liquidity appear as financially resilient, while those with low profitability, high leverage, or weak liquidity are more vulnerable.
-
-```{r Distribution Plot}
-#| label: fig-financial_resilience_distribution
-#| fig-cap: "Distribution of Financial Resilience Scores Across Industries (2020–2022)"
-
-filtered_germany <- filtered_germany  |> 
-  filter(status == "Active")
-
-# Aggregate by industry for overall resilience comparison
-resilience_summary <- industry_summary  |> 
-  group_by(nace_num2) %>%
-  summarise(avg_resilience = mean(resilience_score, na.rm = TRUE))  |> 
-  arrange(desc(avg_resilience))
-
-# Get top and bottom 10
-top_bottom_resilience <- resilience_summary  |> 
-  slice_head(n = 10)  |> 
-  bind_rows(resilience_summary %>% slice_tail(n = 10))
-
-ggplot(top_bottom_resilience, 
-       aes(x = reorder(nace_num2, avg_resilience), 
-           y = avg_resilience, fill = avg_resilience)) +
-  geom_col(show.legend = FALSE) +
-  coord_flip() +
-  scale_fill_viridis_c(option = "plasma", direction = -1) +
-  labs(
-    title = "Distribution of Financial Resilience Scores: Top and Bottom 10 Industries (2020–2022)",
-    subtitle = "Only the highest and lowest resilience scores shown for clarity",
-    x = "Industry (NACE Level 2)",
-    y = "Average Resilience Score"
-  ) +
-  theme_bw(base_size = 14) +
-  theme(
-    plot.title = element_text(face = "bold", size = 14),
-    plot.subtitle = element_text(size = 11)
-  )
+outlier_counts <- filtered_germany_q3 %>%
+  summarise(across(all_of(financial_vars), outlier_summary))
+kable(outlier_counts, caption = "Count of Outliers for Key Financial Variables (IQR Method)") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
 
 ```
 
-This horizontal bar chart visualizes the distribution of average financial resilience scores across German industries from 2020 to 2022.
-Each bar represents a NACE Level 2 industry, ordered from highest to lowest average resilience score.
-The resilience score integrates key financial metrics—profitability, leverage, and liquidity—to assess how well industries managed financial stability during the pandemic.
-Industries with higher scores demonstrated stronger ability to maintain earnings, control debt levels, and preserve liquidity, indicating greater financial robustness.
-The color gradient emphasizes this ranking, with brighter colors reflecting more resilient sectors.
-This visualization clearly highlights sectors that were comparatively vulnerable or resilient in navigating the economic challenges posed by COVID-19.
+This code defines a custom function to detect outliers in each key financial variable using the Interquartile Range (IQR) method. It calculates the lower and upper bounds (1.5 × IQR below Q1 and above Q3) and counts how many observations fall outside this range. The resulting table shows how many potential outliers exist for each financial metric, helping identify variables that may need further cleaning or transformation.
 
-```{r}
-
-top_bottom_resilience <- resilience_summary |>
-  mutate(rank = rank(-avg_resilience)) |>
-  filter(rank <= 5 | rank > max(rank) - 5) |>
-  arrange(rank)
-
-top_bottom_resilience |>
-  rename(
-    `NACE Code` = nace_num2,
-    `Average Resilience Score` = avg_resilience,
-    `Rank` = rank
-  ) |>
-  kable(
-    caption = "Top and Bottom 5 German Industries by Financial Resilience (2020–2022)",
-    digits = 2,
-    col.names = c("NACE Code", "Average Resilience Score", "Rank")
-  ) |>
-  kable_styling(
-    bootstrap_options = c("striped", "hover", "condensed", "responsive"),
-    full_width = FALSE,
-    position = "center",
-    font_size = 12
-  ) |>
-  row_spec(0, bold = TRUE, background = "#f2f2f2") |>
-  column_spec(2, color = "darkgreen") |>
-  column_spec(3, bold = TRUE, color = "darkblue")
-
-```
-
-This table ranks German industries by their **financial resilience from 2020 to 2022**, combining profitability, leverage, and liquidity into a composite resilience score.
-Higher scores indicate industries that sustained earnings while keeping debt manageable and maintaining strong cash positions during the pandemic.
-The ranking shows that **healthcare, technology, and utilities** were the most resilient sectors, benefitting from steady demand and robust balance sheets.
-In contrast, **hospitality, retail, and manufacturing** were the least resilient, as lockdowns, supply disruptions, and high fixed costs eroded profitability and liquidity.
-Overall, the results highlight how structural factors—such as firm size, capital intensity, and sectoral exposure—shaped the uneven financial recovery of German industries during COVID-19.
-
-```{r Time Trend}
-key_industries <- c("Human Health & Social Work", "Manufacturing", "Accommodation & Food", "Information & Communication")
-
-plot_data <- filtered_germany  |> 
-  filter(industry_group %in% key_industries, acct_year %in% 2018:2021)  |> 
-  group_by(industry_group, acct_year) %>%
-  summarise(median_ebit = median(ebit_margin_pct, na.rm = TRUE), .groups = "drop")
-
-ggplot(plot_data, aes(x = acct_year, y = median_ebit, color = industry_group)) +
-  geom_line(size = 1.2) +
-  geom_point(size = 3) +
-  geom_text_repel(
-    data = plot_data %>% filter(acct_year == max(acct_year)),
-    aes(label = industry_group),
-    nudge_x = 0.3,
-    direction = "y",
-    hjust = 0,
-    segment.size = 0.25,
-    show.legend = FALSE,
-    size = 4
-  ) +
-  scale_x_continuous(breaks = 2018:2021, limits = c(2018, 2022)) +
-  scale_color_brewer(palette = "Dark2") +
-  labs(
-    title = "Median EBIT Margin Trends by Key Industries (2018–2021)",
-    x = "Accounting Year",
-    y = "Median EBIT Margin (%)",
-    color = "Industry"
-  ) +
-  theme_bw(base_size = 14) +
-  theme(
-    plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
-    axis.text = element_text(color = "black"),
-    axis.title = element_text(face = "bold"),
-    legend.position = "none",
-    panel.grid.minor = element_blank(),
-    plot.margin = margin(10, 30, 10, 10)
-  )
-```
-
-This plot shows the trends in median EBIT margin from 2018 to 2021 for key German industries.
-It highlights how profitability evolved through the pre-pandemic and pandemic periods, with each line representing an industry.
-Clear labels mark the industries on the right, making it easy to compare their performance trajectories.
-The visualization reveals that sectors like healthcare and information & communication maintained or improved profitability, while industries such as accommodation & food faced more volatility and declines during the pandemic.
-This comparison underscores varying financial resilience across industries amid COVID-19 challenges.
 
 ### IDA for Question 4
 
