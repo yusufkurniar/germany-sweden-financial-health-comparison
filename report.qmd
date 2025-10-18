@@ -348,7 +348,9 @@ write.csv(filtered_germany, file = "filtered_germany.csv", row.names = FALSE)
 
 ### Research Question
 
-**Which German industries showed unexpected financial resilience or vulnerability from 2020 to 2022, and how were these outcomes shaped by profitability, leverage, liquidity, and firm size?**
+### Question 4
+
+**How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic? Are there anomalous recovery patterns (e.g., K-shaped) within specific industries?**
 
 During 2020–2022, industries such as healthcare, information technology, and utilities demonstrated notable financial resilience, supported by strong liquidity and stable profitability. In contrast, sectors like hospitality, transportation, and manufacturing showed greater vulnerability due to higher leverage and lower profit margins. Overall, firm size and liquidity emerged as key buffers against financial stress, while high debt levels amplified vulnerability across more capital-intensive industries.
 
@@ -434,7 +436,7 @@ kable(germany_ts %>%
 
 ##### EDA
 
-1. Data preparation
+###### 1.. Data preparation
 
 **Check for missing value (Tutorial 8)**
 
@@ -499,7 +501,7 @@ germany_ts <- germany_ts %>%
   arrange(company_id, fy_year)
 ```
 
-2. Visualizing Industry Time Series Patterns (Lecture 9, slide 24-26, feasts and tsibbletalk)  
+###### 2. Industry-level trends of ROA and liquidity (2017–2021) (Lecture 9, slide 24-26, feasts and tsibbletalk)  
 
 ```{r}
 # Calculate the average ROA and current ratio for each industry each year
@@ -583,7 +585,7 @@ Based on the Current Ratio trends (@fig-CR_ploty), most industries demonstrated 
 
 -  Construction maintained exceptional stability throughout the period.
 
-3. Macro-level evidence of anomalous recovery patterns across industries (ROA and liquidity) - feasts (Lecture 9, slide 24-26, feasts and tsibbletalk)  
+###### 3. Macro-level evidence: Industry recovery patterns (ROA vs CR) - feasts (Lecture 9, slide 24-26, feasts and tsibbletalk)  
 
 Now, I will analyze the fundamental relationship between corporate liquidity and profitability across industries during the pandemic period, with particular focus on identifying anomalous recovery patterns.
 
@@ -789,7 +791,7 @@ classification_plotly
 ```
 
 
-4. Micro-level evidence of anomalous recovery patterns across industries (ROA and liquidity) - scagnostics (Tignostics) (Lecture 8, 22-27 & Lecture 9, slide 24)
+###### 4. Micro-level evidence of anomalous recovery patterns across industries (ROA and liquidity) - scagnostics (Tignostics) (Lecture 8, 22-27 & Lecture 9, slide 24)
 
 In this section I track how the firm-level relationship between liquidity (Current Ratio) and profitability (ROA) changed during the COVID-19 period. I approach is to treat each firm as a point in the CR–ROA plane, then study the shape of each industry’s point cloud year by year. I use scagnostic metrics to quantify those shapes, and I fit a simple linear model (ROA ~ Current Ratio) for every industry × year to extract slope and residual volatility. I treat 2020 as the COVID year and compare values before and after 2020.
 
@@ -819,8 +821,6 @@ I select industries previously identified in the macro analysis (industries labe
 
 - Residual SD: higher residual SD from the linear fit signals more unexplained scatter (higher micro volatility).
 
-如图和表所示。动图表现的是特定行业中企业的ROA与CR之间关系的演变。把2020年当成疫情年，观察之前，之后的数据。我发现经历过jump的行业有三个。分别是Wholesale & Retail Trade，Information & Communication
-和Financial & Insurance。scagnostics指标计算需要多个企业出现的行业，所以行业Construction和Accommodation & Food，Administrative & Support计算不了，结果会显示NA。其他行业的变化可以看@fig-scagnostic， clumpy是点是否形成多个簇，如果出现高值，意味着行业内出现分化（K型复苏），图里2020年之后，行业Financial & Insurance clumpy显著上升，而Wholesale & Retail Trade，Information & Communication显著下降。utlying表述是否有离群点，也就是是否存在极端幸存或受害公司，Wholesale & Retail Trade没有，Information & Communication上升，而Financial & Insurance下降，所以Information & Communication存在极端幸存或受害公司。monotonic表述是否单调，值越大趋势关系越强，疫情以后，Financial & Insurance下降，说明？？Wholesale & Retail Trade，Information & Communication上升，趋势关系强。tringy表述是否形成细长形状，值越大表示强线性关系，也就是盈利与流动性线性关系更明显，在疫情前Wholesale & Retail Trade就稳定，疫情后也没变，是三个行业里的最小值；Information & Communication在疫情前就已经开始下降，疫情之后下降的斜率基本没变，所以很难判断ROA与CR之间的关系变弱是否和疫情有关；Financial & Insurance疫情前上升，意味着两个指标关系越来越明显，但是疫情后该值下降，说明疫情破环了ROA和CR之间的关系。
 
 
 ```{r}
@@ -989,11 +989,21 @@ Key patterns observed:
 The animated plot (@fig-animated_plot) shows the yearly scatter of firms in the CR–ROA plane and fitted lines. This animation helps visualise how point clouds split, shift, or tighten around a trend line.
 
 **Limitations**
+
 Results are descriptive: scagnostics indicate shape changes but do not prove causality. I will triangulate these micro results with macro indicators (feasts features) in the final section.
 
 
 
+###### 5. Summary and interpretation
 
+The exploratory analysis demonstrates that the relationship between corporate profitability and liquidity evolved unevenly across industries during the pandemic. More importantly, the recovery patterns were not the same across or within industries, showing clear evidence of a K-shaped recovery in some sectors.
+
+At the macro level, trend strength and volatility analysis revealed clear segmentation: some industries such as Construction and Finance showed resilient recovery, while others, like Accommodation and Retail, exhibited K-shaped patterns with disrupted ROA trends and high volatility.
+
+The micro-level scagnostic analysis further confirmed this divergence. After removing several industries which have small yearly samples (Construction, 	
+Accommodation & Food, and Administrative & Support), industries identified as K-shaped in the macro stage displayed higher clumpiness and outlying scores, indicating growing firm-level inequality in recovery. In contrast, resilient industries maintained stable and monotonic liquidity–profitability relationships over time.
+
+Together, these results suggest that the pandemic not only altered the overall financial dynamics between liquidity and profitability but also intensified disparities within certain industries, forming a distinct K-shaped recovery pattern.
 
 
 
