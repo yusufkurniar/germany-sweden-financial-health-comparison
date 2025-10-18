@@ -1323,7 +1323,7 @@ Industries with high profitability, low leverage, and strong liquidity appear as
 
 3. Top and Bottom 10 Industries by Resilience Score
 
-```{r}
+```{r Top & bottom 10 industries}
 resilience_summary <- industry_summary  |> 
   group_by(nace_num2)  |> 
   summarise(avg_resilience = mean(resilience_score, na.rm = TRUE))  |> 
@@ -1364,7 +1364,7 @@ This visualization clearly highlights sectors that were comparatively vulnerable
 
 4. Table of Top and Bottom 5 Industries
 
-```{r }
+```{r Top & Bottom 5 industries}
 
 top_bottom_resilience |> 
   mutate(rank = rank(-avg_resilience))  |> 
