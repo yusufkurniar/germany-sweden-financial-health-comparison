@@ -348,14 +348,16 @@ write.csv(filtered_germany, file = "filtered_germany.csv", row.names = FALSE)
 
 ### Research Question
 
-### Question 4
+### Question 3
 
-**How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic? Are there anomalous recovery patterns (e.g., K-shaped) within specific industries?**
+#### Which German industries showed unexpected financial resilience or vulnerability from 2020 to 2022, and how were these outcomes shaped by profitability, leverage, liquidity, and firm size?
 
 During 2020–2022, industries such as healthcare, information technology, and utilities demonstrated notable financial resilience, supported by strong liquidity and stable profitability. In contrast, sectors like hospitality, transportation, and manufacturing showed greater vulnerability due to higher leverage and lower profit margins. Overall, firm size and liquidity emerged as key buffers against financial stress, while high debt levels amplified vulnerability across more capital-intensive industries.
 
 
-#### How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic?				
+### Question 4
+
+#### How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic? Are there anomalous recovery patterns (e.g., K-shaped) within specific industries?				
 
 
 The COVID-19 pandemic from 2020 to 2022 severely disrupted global business activity, placing significant stress on corporate financial structures. One critical dimension of this disruption lies in how firms managed their liquidity—the ability to meet short-term obligations—while maintaining profitability during the crisis. Financial theory typically suggests that maintaining sufficient liquidity supports profitability by ensuring operational stability and investment flexibility. However, during the pandemic, this fundamental relationship may have fractured across industries due to uneven economic shocks and varying policy responses.
