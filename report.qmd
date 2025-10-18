@@ -358,26 +358,22 @@ During 2020–2022, industries such as healthcare, information technology, and u
 ### Question 4
 
 #### How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic? Are there anomalous recovery patterns (e.g., K-shaped) within specific industries?				
-
-
 The COVID-19 pandemic from 2020 to 2022 severely disrupted global business activity, placing significant stress on corporate financial structures. One critical dimension of this disruption lies in how firms managed their liquidity—the ability to meet short-term obligations—while maintaining profitability during the crisis. Financial theory typically suggests that maintaining sufficient liquidity supports profitability by ensuring operational stability and investment flexibility. However, during the pandemic, this fundamental relationship may have fractured across industries due to uneven economic shocks and varying policy responses.
 
-This study investigates how the relationship between corporate liquidity and profitability evolved and diverged across industries during the pandemic period. Using data from the OSIRIS database for Germany between 2017 and 2022, I focus on two key indicators: 
+This study investigates how the relationship between corporate liquidity and profitability evolved and diverged across industries during the pandemic period. Using data from the OSIRIS database for Germany between 2017 and 2022, we focus on two key indicators: 
 
 - **Return on Assets (ROA)** as a measure of profitability 
 
 - **Current Ratio** as a measure of liquidity. 
 
-I aim to uncover distinct recovery patterns—such as “K-shaped” rebounds, resilient sectors, and hidden crises—that reveal how the financial health of different industries adapted or deteriorated during the pandemic.
+We aim to uncover distinct recovery patterns—such as “K-shaped” rebounds, resilient sectors, and hidden crises—that reveal how the financial health of different industries adapted or deteriorated during the pandemic.
 
 
- 
+##### **IDA**
 
-##### IDA
+###### **1. Data Cleaning on Consolidation Codes**
 
-1. Data Cleaning on Consolidation Codes
-
-The raw data from Orbis contained financial statements under different consolidation codes (C1, C2, C\*, U1, U2). To ensure consistency and comparability, I prioritized consolidated accounts which represent the entire economic entity. For each firm-year observation, I retained the highest-priority available consolidated statement following the order: C1 > C2 > C*. Unconsolidated statements (U1, U2) were excluded from the analysis.
+The raw data from Orbis contained financial statements under different consolidation codes (C1, C2, C\*, U1, U2). To ensure consistency and comparability, we prioritized consolidated accounts which represent the entire economic entity. For each firm-year observation, we retained the highest-priority available consolidated statement following the order: C1 > C2 > C*. Unconsolidated statements (U1, U2) were excluded from the analysis.
 
 
 ```{r}
@@ -402,14 +398,14 @@ germany_q4 <- filtered_germany %>%
   filter(consolidation_priority %in% c(1, 2, 3))
 ```
 
-2. Select the columns to be analyzed
+###### **2. Select the columns to be analyzed**
 
 ```{r}
 germany_q4 <- germany_q4 %>%
   select(company_id, fy_year, roa_pct, current_ratio, industry_group)
 ```
 
-3. Convert data into a tsibble object using the tsibble package (Lecture 9, slide 5 & Reading week 9)
+###### **3. Convert data into a tsibble object using the tsibble package (Lecture 9, slide 5 & Reading week 9)**
 
 
 Each company was defined as a key and the financial year as the index. Basic screening was performed to check for missing values, outliers, and duplicates.
@@ -422,7 +418,7 @@ germany_ts <- germany_q4 %>%
 ```
 
 
-4. Summary
+###### **4. Summary**
 
 The trends in ROA and Current Ratio from 2017 to 2021 reveal a distinct pattern, potentially linked to the pandemic. ROA showed significant volatility: it was stable pre-pandemic, fell to a negative value in 2020, but then recovered strongly to a peak of 4.87% in 2021. In contrast, the Current Ratio remained relatively stable throughout the period, indicating consistent short-term liquidity despite the economic disruption. This suggests that while profitability was heavily impacted, the company's ability to meet its short-term obligations was maintained.
 
@@ -436,11 +432,16 @@ kable(germany_ts %>%
             mean_cr = mean(current_ratio, na.rm = TRUE)))
 ```
 
-##### EDA
 
-###### 1.. Data preparation
+
+
+##### **EDA**
+
+###### **1.. Data preparation**
 
 **Check for missing value (Tutorial 8)**
+
+The initial examination of missing values revealed a relatively low proportion of incomplete data in the dataset. As shown in @fig-missing_clu, the missing value analysis showed that only 0.7% of the total data was missing, while 99.3% of observations were complete. ROA contained between 1% and 1.5% missing values across the dataset, while the current ratio had a slightly higher proportion of missing data, ranging from 2% to 2.5% (@fig-missing_plots).
 
 
 ```{r}
@@ -480,7 +481,6 @@ m3 <- vis_miss(germany_ts, cluster = TRUE, sort_miss = TRUE) +
 m3
 ```
 
-The initial examination of missing values revealed a relatively low proportion of incomplete data in the dataset. As shown in @fig-missing_clu, the missing value analysis showed that only 0.7% of the total data was missing, while 99.3% of observations were complete. ROA contained between 1% and 1.5% missing values across the dataset, while the current ratio had a slightly higher proportion of missing data, ranging from 2% to 2.5% (@fig-missing_plots).
 
 
 **Address missingness issues**
@@ -503,7 +503,30 @@ germany_ts <- germany_ts %>%
   arrange(company_id, fy_year)
 ```
 
-###### 2. Industry-level trends of ROA and liquidity (2017–2021) (Lecture 9, slide 24-26, feasts and tsibbletalk)  
+###### **2. Industry-level trends of ROA and liquidity (2017–2021) (Lecture 9, slide 24-26, feasts and tsibbletalk)**  
+
+This section provides an initial visual overview of the pandemic's impact. We begin by plotting the average Return on Assets (ROA) and Current Ratio for each industry from 2017 to 2021.
+
+
+The interactive ROA trends (@fig-ROA_ploty) reveal distinct pandemic responses across industries:
+
+- Accommodation & Food surged temporarily in 2020 but declined again in 2021.
+
+- Industrials showed a persistent decline that accelerated post-2020, while Information & Communication rebounded sharply after an initial dip. 
+
+- Manufacturing and Transport & Storage transformed from negative to positive ROA during the pandemic period. 
+
+- Financial & Insurance maintained the highest ROA with steady growth throughout, demonstrating remarkable sector resilience.
+
+Based on the Current Ratio trends (@fig-CR_ploty), most industries demonstrated relative stability throughout the period. However, two sectors exhibited notable deviations: 
+
+- Consumer Services peaked at 8.14 in 2020 then plummeted to 0.21.
+
+- Arts, Entertainment & Recreation showed a significant upward trend in liquidity, which appears counterintuitive given pandemic constraints. 
+
+- Financials experienced a substantial decline from 7.8 in 2020 to 4.2 in 2021, indicating a sharp contraction in liquidity buffers during the post-pandemic recovery phase.
+
+-  Construction maintained exceptional stability throughout the period.
 
 ```{r}
 # Calculate the average ROA and current ratio for each industry each year
@@ -545,7 +568,7 @@ roa_plotly
 
 ```{r}
 #| label: fig-CR_ploty
-#| tbl-cap: "The interactive plot of Current Ratio trends by industry (2017-2021)"
+#| fig-cap: "The interactive plot of Current Ratio trends by industry (2017-2021)"
 
 # Current ratio
 cr_interactive <- industry_ts %>%
@@ -567,29 +590,10 @@ cr_plotly
 ```
 
 
-The interactive ROA trends (@fig-ROA_ploty) reveal distinct pandemic responses across industries:
 
-- Accommodation & Food surged temporarily in 2020 but declined again in 2021.
+###### **3. Macro-level evidence: Industry recovery patterns (ROA vs CR) - feasts (Lecture 9, slide 24-26, feasts and tsibbletalk)**  
 
-- Industrials showed a persistent decline that accelerated post-2020, while Information & Communication rebounded sharply after an initial dip. 
--
-- Manufacturing and Transport & Storage transformed from negative to positive ROA during the pandemic period. 
-
-- Financial & Insurance maintained the highest ROA with steady growth throughout, demonstrating remarkable sector resilience.
-
-Based on the Current Ratio trends (@fig-CR_ploty), most industries demonstrated relative stability throughout the period. However, two sectors exhibited notable deviations: 
-
-- Consumer Services peaked at 8.14 in 2020 then plummeted to 0.21.
-
-- Arts, Entertainment & Recreation showed a significant upward trend in liquidity, which appears counterintuitive given pandemic constraints. 
-
-- Financials experienced a substantial decline from 7.8 in 2020 to 4.2 in 2021, indicating a sharp contraction in liquidity buffers during the post-pandemic recovery phase.
-
--  Construction maintained exceptional stability throughout the period.
-
-###### 3. Macro-level evidence: Industry recovery patterns (ROA vs CR) - feasts (Lecture 9, slide 24-26, feasts and tsibbletalk)  
-
-Now, I will analyze the fundamental relationship between corporate liquidity and profitability across industries during the pandemic period, with particular focus on identifying anomalous recovery patterns.
+Now, we will analyze the fundamental relationship between corporate liquidity and profitability across industries during the pandemic period, with particular focus on identifying anomalous recovery patterns.
 
 ```{r}
 # Calculating time series features
@@ -793,13 +797,13 @@ classification_plotly
 ```
 
 
-###### 4. Micro-level evidence of anomalous recovery patterns across industries (ROA and liquidity) - scagnostics (Tignostics) (Lecture 8, 22-27 & Lecture 9, slide 24)
+###### **4. Micro-level evidence of anomalous recovery patterns across industries (ROA and liquidity) - scagnostics (Tignostics) (Lecture 8, 22-27 & Lecture 9, slide 24)**
 
-In this section I track how the firm-level relationship between liquidity (Current Ratio) and profitability (ROA) changed during the COVID-19 period. I approach is to treat each firm as a point in the CR–ROA plane, then study the shape of each industry’s point cloud year by year. I use scagnostic metrics to quantify those shapes, and I fit a simple linear model (ROA ~ Current Ratio) for every industry × year to extract slope and residual volatility. I treat 2020 as the COVID year and compare values before and after 2020.
+In this section we track how the firm-level relationship between liquidity (Current Ratio) and profitability (ROA) changed during the COVID-19 period. We approach is to treat each firm as a point in the CR–ROA plane, then study the shape of each industry’s point cloud year by year. We use scagnostic metrics to quantify those shapes, and we fit a simple linear model (ROA ~ Current Ratio) for every industry × year to extract slope and residual volatility. We treat 2020 as the COVID year and compare values before and after 2020.
 
 **Data and methods**
 
-I select industries previously identified in the macro analysis (industries labelled K-shaped, Resilient, or Hidden Crisis). For each industry × fiscal year I:
+We select industries previously identified in the macro analysis (industries labelled K-shaped, Resilient, or Hidden Crisis). For each industry × fiscal year we:
 
 - keep firm-level pairs (current_ratio, roa_pct);
 
@@ -958,7 +962,7 @@ ggplot(scag_long, aes(x = fy_year, y = value, color = industry_group)) +
 
 ```{r}
 #| label: fig-animated_plot
-#| fig-cap: "The animated plot (appendix) shows the yearly scatter of firms in the CR–ROA plane and fitted lines."
+#| fig-cap: "The animated plot shows the yearly scatter of firms in the CR–ROA plane and fitted lines."
 
 p <- ggplot(selected_companies_ts, aes(x = current_ratio, y = roa_pct, color = industry_group)) +
   geom_point(size = 2, alpha = 0.6) +
@@ -972,31 +976,35 @@ anim <- animate(p, nframes = 200, fps = 10,
                 renderer = gifski_renderer("images/my_animation.gif"))
 
 
-print(anim)
+knitr::include_graphics("images/my_animation.gif")
+
 ```
 
 **Main results**
 
-Table @tbl-company reports summary statistics for industries with at least one large slope jump (jumps > 0). Three industries experienced jumps: Wholesale & Retail Trade, Information & Communication, and Financial & Insurance. Some industries (e.g., Construction, Accommodation & Food, Administrative & Support) have too few firms in some years and therefore produce NA for scagnostics. Figure @fig-scagnostic shows time series of four metrics (outlying, clumpy, stringy, monotonic) with a vertical line at 2020.
+@tbl-company reports summary statistics for industries with at least one large slope jump (jumps > 0). Three industries experienced jumps: Wholesale & Retail Trade, Information & Communication, and Financial & Insurance. Some industries (e.g., Construction, Accommodation & Food, Administrative & Support) have too few firms in some years and therefore produce NA for scagnostics. @fig-scagnostic shows time series of four metrics (outlying, clumpy, stringy, monotonic) with a vertical line at 2020.
 
-Key patterns observed:
+**Key patterns observed:**
 
-- **Financial & Insurance**: clumpy increases markedly after 2020, while stringy and monotonic fall. Interpretation: the industry becomes more divided into subgroups (clusters of firms) and the previous linear/monotonic relation between CR and ROA weakens. This is consistent with a K-shaped fragmentation: some firms maintain or improve profitability while others decline.
 
-- **Wholesale & Retail Trade**: clumpy decreases after 2020 and monotonic and stringy show relative stability or an increase. Interpretation: the CR–ROA relationship remains more coherent and linear for firms that remain in the sample; less evidence of large within-industry clustering. No strong rise in outlying, so fewer extreme single-firm survivors/losers were detected.
 
-- **Information & Communication**: clumpy falls but outlying increases after 2020. Interpretation: the industry shows fewer multiple clusters but a greater presence of extreme firms — a small set of firms perform very differently from the rest (either much better or much worse), which also suggests micro-level unevenness.
+| Industry | Change after 2020 | Interpretation |
+|-----------|-------------------|----------------|
+| **Financial & Insurance** | ↑ *clumpy*, ↓ *stringy*, ↓ *monotonic* | Fragmentation into subgroups; weakened CR–ROA linearity; K-shaped recovery pattern. |
+| **Wholesale & Retail Trade** | ↓ *clumpy*, stable *stringy*, stable/↑ *monotonic* | Coherent CR–ROA relation; fewer within-industry clusters; no extreme survivors or losers. |
+| **Information & Communication** | ↓ *clumpy*, ↑ *outlying* | Fewer clusters but more extremes; indicates micro-level unevenness. |
+
 
 
 The animated plot (@fig-animated_plot) shows the yearly scatter of firms in the CR–ROA plane and fitted lines. This animation helps visualise how point clouds split, shift, or tighten around a trend line.
 
 **Limitations**
 
-Results are descriptive: scagnostics indicate shape changes but do not prove causality. I will triangulate these micro results with macro indicators (feasts features) in the final section.
+Results are descriptive: scagnostics indicate shape changes but do not prove causality. We will triangulate these micro results with macro indicators (feasts features) in the final section.
 
 
 
-###### 5. Summary and interpretation
+###### **5. Summary and interpretation**
 
 The exploratory analysis demonstrates that the relationship between corporate profitability and liquidity evolved unevenly across industries during the pandemic. More importantly, the recovery patterns were not the same across or within industries, showing clear evidence of a K-shaped recovery in some sectors.
 
@@ -1016,8 +1024,6 @@ Together, these results suggest that the pandemic not only altered the overall f
 
 
 
-
-#### How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic?
 
 
 
