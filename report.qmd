@@ -1942,6 +1942,8 @@ At the macro level, trend strength and volatility analysis revealed clear segmen
 The micro-level scagnostic analysis further confirmed this divergence. After removing several industries which have small yearly samples (Construction, 	
 Accommodation & Food, and Administrative & Support), the industries showing K-shaped tendencies at the macro level exhibited notable shifts in scagnostic measures. Specifically, Financial & Insurance displayed a clear rise in clumpiness, signaling within-sector fragmentation, while Arts, Entertainment & Recreation showed growing outlying behavior, reflecting the emergence of extreme performers. In contrast, resilient sectors maintained relatively stable and monotonic liquidity–profitability relationships throughout the period.
 
+These results suggest that the pandemic not only altered the overall financial dynamics between liquidity and profitability but also intensified disparities within certain industries, forming a distinct K-shaped recovery pattern.
+
 ## Conclusions
 
 **Question 1**
@@ -1964,7 +1966,9 @@ Taken together, these findings indicate that the pandemic did not fundamentally 
 
 **Question 4**
 
-These results suggest that the pandemic not only altered the overall financial dynamics between liquidity and profitability but also intensified disparities within certain industries, forming a distinct K-shaped recovery pattern.
+We explored how the relationship between corporate liquidity and profitability changed and fractured across industries during the COVID-19 pandemic. By combining time-series feature analysis and scagnostic techniques, we examined both macro- and micro-level financial dynamics among Australian industries. At the macro level, industries did not recover equally. At the micro level, the scagnostic measures confirmed these differences. 
+
+Overall, the findings suggest that the pandemic not only weakened the general link between liquidity and profitability but also created new divisions within industries. These results highlight the importance of financial flexibility and risk management, as firms with stronger liquidity positions tended to recover more quickly. Future research could examine how government support or firm characteristics contributed to these uneven recovery patterns.
 
 
 
