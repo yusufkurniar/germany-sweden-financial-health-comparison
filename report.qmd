@@ -1042,5 +1042,15 @@ Wickham H, Averick M, Bryan J, Chang W, McGowan LD, François R,
 
 The links to my use of ChatGPT for help on this assignment are:
 
-- [https://chatgpt.com/share/68857a22-debc-8001-bfcc-10552befba4c]() helped to XXX.
+
+Q4: Jingyi
+
+- [https://chatgpt.com/share/68f3046d-1ad8-800d-bc11-1b005a9e600f](https://chatgpt.com/share/68f3046d-1ad8-800d-bc11-1b005a9e600f) helped to implement animated graphics and optimize content.
+
+- [https://chatgpt.com/share/68f304c8-a088-800d-be54-939dfcd7e278](https://chatgpt.com/share/68f304c8-a088-800d-be54-939dfcd7e278) helped to evaluate whether the questions are answered adequately and where to make revisions.
+
+- [https://chatgpt.com/share/68f305ad-f15c-800d-b724-fc917c1a93ef](https://chatgpt.com/share/68f305ad-f15c-800d-b724-fc917c1a93ef) helped to deal with the problem that package ‘tignostics’ is not available for this version of R and how to use scagnostics.
+
+- [https://chatgpt.com/share/68f30667-24e0-800d-bf8c-2bd69f441dd0](https://chatgpt.com/share/68f30667-24e0-800d-bf8c-2bd69f441dd0) helped to give me some frameworks of Macro-level analysis.
+
 
