@@ -73,6 +73,11 @@ library(patchwork)
 library(plotly)
 library(tsibbletalk)
 library(feasts)
+library(broom)
+library(purrr)
+library(cassowaryr)
+library(gganimate)
+library(gifski)
 ```
 
 
@@ -534,7 +539,6 @@ roa_plotly
 
 
 
-
 ```{r}
 #| label: fig-CR_ploty
 #| tbl-cap: "The interactive plot of Current Ratio trends by industry (2017-2021)"
@@ -600,7 +604,6 @@ focus_features <- industry_features %>%
   select(industry_group, 
          roa_trend_strength, roa_spikiness,
          cr_trend_strength, cr_spikiness)
- 
 ```
 
 **Trend strength analysis**
@@ -726,7 +729,7 @@ Given the exploratory focus of our study and limited emphasis on clustering meth
 - All other combinations → "Moderate impact industries"
 
 
-As shown in @fig-classification, the analysis reveals clear patterns of differential recovery across sectors.  The Construction and Financial & Insurance sectors demonstrate resilient characteristics.	Wholesale & Retail Trade, Accommodation & Food Services, and Information & Communication exhibit K-shaped recovery patterns No industry is hidden crisis. No industries fall into the hidden crisis category, suggesting that while some sectors experienced significant disruption, none indicated underlying structural issues. This classification provides valuable insights into how different industries navigated the pandemic's challenges. Next part, we will focus on the anomalous K-shaped recoveries that suggest uneven performance within certain sectors.
+As shown in @fig-classification, the analysis reveals clear patterns of differential recovery across sectors. The Construction and Financial & Insurance sectors demonstrate resilient characteristics, maintaining stable performance throughout the pandemic period. Wholesale & Retail Trade, Accommodation & Food Services, and Information & Communication exhibit K-shaped recovery patterns. No industry is hidden crisis. The Administrative & Support sector falls into the hidden crisis category, suggesting underlying structural issues. This classification provides valuable insights into how different industries navigated the pandemic's challenges. Next part, we will focus on the anomalous K-shaped recoveries that suggest uneven performance within certain sectors and resilient industry.
 
 
 ```{r}
@@ -786,6 +789,208 @@ classification_plotly
 ```
 
 
+4. Micro-level evidence of anomalous recovery patterns across industries (ROA and liquidity) - scagnostics (Tignostics) (Lecture 8, 22-27 & Lecture 9, slide 24)
+
+In this section I track how the firm-level relationship between liquidity (Current Ratio) and profitability (ROA) changed during the COVID-19 period. I approach is to treat each firm as a point in the CR–ROA plane, then study the shape of each industry’s point cloud year by year. I use scagnostic metrics to quantify those shapes, and I fit a simple linear model (ROA ~ Current Ratio) for every industry × year to extract slope and residual volatility. I treat 2020 as the COVID year and compare values before and after 2020.
+
+**Data and methods**
+
+I select industries previously identified in the macro analysis (industries labelled K-shaped, Resilient, or Hidden Crisis). For each industry × fiscal year I:
+
+- keep firm-level pairs (current_ratio, roa_pct);
+
+- calculate scagnostic metrics: outlying, stringy, striated, clumpy, sparse, monotonic, dcor;
+
+- fit a linear model roa_pct ~ current_ratio and record slope and residual SD;
+
+- compute year-to-year slope changes and count “jumps” (a jump = |slope change| > 0.5);
+
+- compute pre/post differences in mean residual SD and mean slope (post − pre).
+
+- When an industry × year has too few firms (< 3) the scagnostics or regression are not reported (NA).
+
+**How to read the scagnostic metrics**
+
+- Clumpy: higher values indicate the points form separate clusters → suggests within-industry divergence (possible K-shaped pattern).
+
+- Outlying: higher values indicate presence of extreme firms (very strong survivors or very weak firms).
+
+- Stringy / Monotonic: higher values indicate a clearer linear or monotonic relationship between CR and ROA.
+
+- Residual SD: higher residual SD from the linear fit signals more unexplained scatter (higher micro volatility).
+
+如图和表所示。动图表现的是特定行业中企业的ROA与CR之间关系的演变。把2020年当成疫情年，观察之前，之后的数据。我发现经历过jump的行业有三个。分别是Wholesale & Retail Trade，Information & Communication
+和Financial & Insurance。scagnostics指标计算需要多个企业出现的行业，所以行业Construction和Accommodation & Food，Administrative & Support计算不了，结果会显示NA。其他行业的变化可以看@fig-scagnostic， clumpy是点是否形成多个簇，如果出现高值，意味着行业内出现分化（K型复苏），图里2020年之后，行业Financial & Insurance clumpy显著上升，而Wholesale & Retail Trade，Information & Communication显著下降。utlying表述是否有离群点，也就是是否存在极端幸存或受害公司，Wholesale & Retail Trade没有，Information & Communication上升，而Financial & Insurance下降，所以Information & Communication存在极端幸存或受害公司。monotonic表述是否单调，值越大趋势关系越强，疫情以后，Financial & Insurance下降，说明？？Wholesale & Retail Trade，Information & Communication上升，趋势关系强。tringy表述是否形成细长形状，值越大表示强线性关系，也就是盈利与流动性线性关系更明显，在疫情前Wholesale & Retail Trade就稳定，疫情后也没变，是三个行业里的最小值；Information & Communication在疫情前就已经开始下降，疫情之后下降的斜率基本没变，所以很难判断ROA与CR之间的关系变弱是否和疫情有关；Financial & Insurance疫情前上升，意味着两个指标关系越来越明显，但是疫情后该值下降，说明疫情破环了ROA和CR之间的关系。
+
+
+```{r}
+selected_industries <- industry_classes %>%
+  filter(recovery_pattern %in% c("K-shaped", "Resilient", "Hidden Crisis")) %>%
+  pull(industry_group)
+
+# Extract the companies time series data of these industries
+selected_companies_ts <- germany_ts %>%
+  filter(industry_group %in% selected_industries)
+```
+
+
+```{r}
+#| label: tbl-company
+#| tbl-cap: "Summary statistics for industries with significant slope changes (jumps > 0). The table shows average slope, maximum absolute slope change, mean residual standard deviation, number of jumps, and differences in volatility and slope before and after the COVID-19 pandemic for three industries: Wholesale & Retail Trade, Information & Communication, and Financial & Insurance."
+
+# Aggregate the original point set by industry × year
+by_ind_year <- selected_companies_ts %>%
+  group_by(industry_group) %>%
+  index_by(fy_year) %>%
+  nest(data = c(company_id, roa_pct, current_ratio)) %>%
+  mutate(n_obs = map_int(data, ~ nrow(.x)))
+
+# Calculate scagnostics
+scag_names <- c("outlying", "stringy", "striated", "clumpy", "sparse", "monotonic", "dcor")
+
+by_ind_year <- by_ind_year %>%
+  mutate(
+    scags = map(data, ~ {
+      df <- .x
+      # When there are too few samples, return a row of tibble with the same column names and types.
+      if (nrow(df) < 3) {
+        return(as_tibble(set_names(as.list(rep(NA_real_, length(scag_names))), scag_names)))
+      }
+      res <- calc_scags(df$current_ratio, df$roa_pct, scags = scag_names)
+      # Make sure to convert to atomic vectors and name them, then convert to tibble
+      res_vec <- unlist(res)
+      res_named <- set_names(as.numeric(res_vec[scag_names]), scag_names)
+      as_tibble(as.list(res_named))
+    })
+  ) %>%
+  unnest(cols = scags)  # Expand into multiple columns
+
+# Fit a linear regression for each industry × year and extract slope, intercept, and resid_sd
+by_ind_year <- by_ind_year %>%
+  mutate(
+    fit = map(data, ~ {
+      df <- .x
+      if (nrow(df) < 3 || all(is.na(df$current_ratio)) || all(is.na(df$roa_pct))) return(NULL)
+      lm(roa_pct ~ current_ratio, data = df)
+    }),
+    slope = map_dbl(fit, ~ if (is.null(.x)) NA_real_ else coef(.x)[["current_ratio"]]),
+    intercept = map_dbl(fit, ~ if (is.null(.x)) NA_real_ else coef(.x)[["(Intercept)"]]),
+    resid_sd = map_dbl(fit, ~ if (is.null(.x)) NA_real_ else sd(residuals(.x), na.rm = TRUE))
+  ) %>%
+  select(-fit)
+
+# Take industry as a time series and calculate its evolution characteristics
+industry_tignostics <- by_ind_year %>%
+  arrange(industry_group, fy_year) %>%
+  group_by(industry_group) %>%
+  mutate(
+    slope_lag = dplyr::lag(slope),
+    slope_change = slope - slope_lag,   # year-to-year change in slope
+    slope_pct_change = (slope - slope_lag) / abs(slope_lag) * 100,
+    resid_sd_lag = dplyr::lag(resid_sd),
+    resid_sd_change = resid_sd - resid_sd_lag,
+    # jumps: count of year-to-year slope changes bigger than a threshold (e.g. 0.5)
+    big_slope_jump = if_else(abs(slope_change) > 0.5, 1, 0),
+    jumps_cumulative = cumsum(replace_na(big_slope_jump, 0))
+  ) %>%
+  ungroup()
+
+# Calculate the overall volatility_shift (post - pre) before and after the epidemic (taking 2020 as the epidemic year)
+vol_shift <- by_ind_year %>%
+  mutate(period = case_when(
+    fy_year < 2020 ~ "pre",
+    fy_year == 2020 ~ "covid_year",
+    fy_year > 2020 ~ "post"
+  )) %>%
+  group_by(industry_group, period) %>%
+  summarise(mean_resid_sd = mean(resid_sd, na.rm = TRUE),
+            mean_slope = mean(slope, na.rm = TRUE),
+            .groups = "drop") %>%
+  pivot_wider(names_from = period, values_from = c(mean_resid_sd, mean_slope)) %>%
+  mutate(
+    vol_pre_post_diff = mean_resid_sd_post - mean_resid_sd_pre,
+    slope_pre_post_diff = mean_slope_post - mean_slope_pre
+  )
+
+# Merge the results to generate the final summary
+industry_summary <- industry_tignostics %>%
+  group_by(industry_group) %>%
+  summarise(
+    n_years = n_distinct(fy_year),
+    avg_slope = mean(slope, na.rm = TRUE),
+    max_abs_slope_change = if (all(is.na(slope_change))) NA_real_ else max(abs(slope_change), na.rm = TRUE),
+    mean_resid_sd = mean(resid_sd, na.rm = TRUE),
+    jumps = if (all(is.na(jumps_cumulative))) 0 else max(jumps_cumulative, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  left_join(vol_shift %>% select(industry_group, vol_pre_post_diff, slope_pre_post_diff), by = "industry_group")
+
+kable(industry_summary %>% filter(jumps > 0) %>%
+        select(-n_years))
+```
+
+
+
+```{r}
+#| label: fig-scagnostic
+#| fig-cap: "This figure shows how four scagnostic metrics changed over time across different industries. The red dashed line marks the year 2020 when COVID-19 pandemic occurred. We can see variations in outlying (extreme values), clumpy (clustering patterns), stringy (linear relationships), and monotonic (consistent trends) metrics before and after the pandemic."
+
+scag_long <- by_ind_year %>%
+  select(industry_group, fy_year, clumpy, outlying, stringy, monotonic) %>%
+  pivot_longer(cols = c(clumpy, outlying, stringy, monotonic),
+               names_to = "scag_metric", values_to = "value")
+
+ggplot(scag_long, aes(x = fy_year, y = value, color = industry_group)) +
+  geom_line(linewidth = 0.7) +
+  facet_wrap(~ scag_metric, scales = "free_y") +
+  geom_vline(xintercept = 2020, linetype = "dashed", color = "red") +
+  labs(
+    title = "Evolution of Scagnostic Metrics over Time",
+    subtitle = "Dashed line = COVID year (2020)",
+    x = "Fiscal Year", y = "Scagnostic Value"
+  ) +
+  theme_minimal()
+
+```
+
+
+```{r}
+#| label: fig-animated_plot
+#| fig-cap: "The animated plot (appendix) shows the yearly scatter of firms in the CR–ROA plane and fitted lines."
+
+p <- ggplot(selected_companies_ts, aes(x = current_ratio, y = roa_pct, color = industry_group)) +
+  geom_point(size = 2, alpha = 0.6) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Year: {frame_time}", x = "Current Ratio", y = "ROA (%)") +
+  scale_color_viridis_d() +
+  transition_time(fy_year) +
+  ease_aes("linear")
+anim <- animate(p, nframes = 200, fps = 10,
+                device = "ragg_png", 
+                renderer = gifski_renderer("images/my_animation.gif"))
+
+
+print(anim)
+```
+
+**Main results**
+
+Table @tbl-company reports summary statistics for industries with at least one large slope jump (jumps > 0). Three industries experienced jumps: Wholesale & Retail Trade, Information & Communication, and Financial & Insurance. Some industries (e.g., Construction, Accommodation & Food, Administrative & Support) have too few firms in some years and therefore produce NA for scagnostics. Figure @fig-scagnostic shows time series of four metrics (outlying, clumpy, stringy, monotonic) with a vertical line at 2020.
+
+Key patterns observed:
+
+- **Financial & Insurance**: clumpy increases markedly after 2020, while stringy and monotonic fall. Interpretation: the industry becomes more divided into subgroups (clusters of firms) and the previous linear/monotonic relation between CR and ROA weakens. This is consistent with a K-shaped fragmentation: some firms maintain or improve profitability while others decline.
+
+- **Wholesale & Retail Trade**: clumpy decreases after 2020 and monotonic and stringy show relative stability or an increase. Interpretation: the CR–ROA relationship remains more coherent and linear for firms that remain in the sample; less evidence of large within-industry clustering. No strong rise in outlying, so fewer extreme single-firm survivors/losers were detected.
+
+- **Information & Communication**: clumpy falls but outlying increases after 2020. Interpretation: the industry shows fewer multiple clusters but a greater presence of extreme firms — a small set of firms perform very differently from the rest (either much better or much worse), which also suggests micro-level unevenness.
+
+
+The animated plot (@fig-animated_plot) shows the yearly scatter of firms in the CR–ROA plane and fitted lines. This animation helps visualise how point clouds split, shift, or tighten around a trend line.
+
+**Limitations**
+Results are descriptive: scagnostics indicate shape changes but do not prove causality. I will triangulate these micro results with macro indicators (feasts features) in the final section.
+
 
 
 
@@ -796,6 +1001,13 @@ classification_plotly
 
 
 ## Conclusions
+
+
+
+
+#### How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic?
+
+
 
 
 
