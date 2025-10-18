@@ -893,14 +893,33 @@ outlier_summary <- function(x) {
   upper <- q3 + 1.5 * iqr
   sum(x < lower | x > upper, na.rm=TRUE)
 }
-outlier_counts <- filtered_germany_q3 %>%
+outlier_counts <- filtered_germany_q3  |> 
   summarise(across(all_of(financial_vars), outlier_summary))
-kable(outlier_counts, caption = "Count of Outliers for Key Financial Variables (IQR Method)") %>%
+kable(outlier_counts, caption = "Count of Outliers for Key Financial Variables (IQR Method)")  |> 
   kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
 
 ```
 
 This code defines a custom function to detect outliers in each key financial variable using the Interquartile Range (IQR) method. It calculates the lower and upper bounds (1.5 × IQR below Q1 and above Q3) and counts how many observations fall outside this range. The resulting table shows how many potential outliers exist for each financial metric, helping identify variables that may need further cleaning or transformation.
+
+4. Check distribution of missing data across years and variables
+
+```{r}
+missing_long <- filtered_germany_q3  |> 
+  select(acct_year, all_of(financial_vars))  |> 
+  pivot_longer(cols = -acct_year, names_to = "variable", values_to = "value")  |> 
+  mutate(missing = is.na(value))  |> 
+  group_by(acct_year, variable)  |> 
+  summarise(prop_missing = mean(missing), .groups = "drop")
+
+ggplot(missing_long, aes(x = variable, y = prop_missing, fill = factor(acct_year))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Proportion of Missing Values by Variable and Year",
+       x = "Variable", y = "Proportion Missing", fill = "Year") +
+  theme_minimal()
+```
+
+This code examines how much data is missing for key financial variables over time and presents it visually. It starts by reshaping the dataset into a long format so that each variable and its value are in separate rows. Then, it marks whether each observation is missing and calculates the proportion of missing values for each variable within each year. Finally, it uses a grouped bar chart to show these proportions by variable and year. This helps identify which financial indicators have higher missingness and whether data completeness has improved or worsened across the 2020–2022 period, offering insights into data reliability for further analysis.
 
 
 ### IDA for Question 4
