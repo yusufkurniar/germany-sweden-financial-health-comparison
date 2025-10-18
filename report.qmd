@@ -843,6 +843,34 @@ A slight rise in gearing (from 62% to 66%) alongside a modest decline in solvenc
 
 ### IDA for Question 3
 
+**Outlier Summary for Key Indicators**
+
+```{r outlier summary}
+outlier_summary <- function(x) {
+  q1 <- quantile(x, 0.25, na.rm=TRUE)
+  q3 <- quantile(x, 0.75, na.rm=TRUE)
+  iqr <- q3 - q1
+  lower <- q1 - 1.5 * iqr
+  upper <- q3 + 1.5 * iqr
+  out_total <- sum(x < lower | x > upper, na.rm=TRUE)
+  return(out_total)
+}
+
+outliers_tbl <- filtered_germany %>%
+  summarise(across(all_of(key_vars), outlier_summary))
+
+knitr::kable(outliers_tbl, caption = "Count of IQR Outliers for Key Financial Variables")
+
+```
+
+**Reference:** Outlier identification by IQR (Lecture 2, Slide 13)
+
+**Interpretation:** The outlier detection code uses the Interquartile Range (IQR) method, a standard statistical approach, to identify data points that lie far outside the typical range.
+It calculates the IQR as the difference between the 75th and 25th percentiles (Q3 - Q1) and defines outliers as values below Q1 minus 1.5 times the IQR or above Q3 plus 1.5 times the IQR.
+This method effectively highlights extreme values that deviate significantly from the center of the data distribution.
+Counting these outliers per financial variable helps assess data quality and informs decisions about cleaning or analysis.
+This approach is widely used because it is robust to non-normal data and clarifies the presence and extent of unusual observations in the dataset.
+
 ```{r financial indicators}
 industry_summary <- filtered_germany  |> 
   filter(acct_year >= 2020, acct_year <= 2022)  |> 
@@ -1232,27 +1260,54 @@ This question examines whether German firms altered their capital structure or s
 1.  Time trends of leverage and liquidity
 
 ```{r}
-#| label: fig-leverage-liquidity-trend
+#| label: fig-leverage-liquidity-two-panels
+#| fig-cap: "Trends in leverage (Debt-to-Assets) and liquidity (Current Ratio), 2018–2021. Debt axis shows only 0.50 and 0.51."
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(patchwork)
+
 lev_liq_long <- lev_liq_summary |>
   select(acct_year, median_debt_assets, median_liquidity) |>
   pivot_longer(-acct_year, names_to = "indicator", values_to = "value")
 
-ggplot(lev_liq_long, aes(x = acct_year, y = value, colour = indicator, group = indicator)) +
-  geom_line(linewidth = 1.1) +
-  geom_point(size = 3) +
-  facet_wrap(~ indicator, scales = "free_y",
-             labeller = as_labeller(c(median_debt_assets="Debt-to-Assets", median_liquidity="Current Ratio"))) +
-  labs(title = "Trends in Leverage and Liquidity, 2018–2021",
-       x = "Accounting Year", y = "Median Value", colour = NULL) +
+# Debt-to-Assets panel — y-axis ticks at 0.50 and 0.51 only
+p_debt <- lev_liq_long |>
+  filter(indicator == "median_debt_assets") |>
+  ggplot(aes(acct_year, value)) +
+  geom_line(colour = "#E69F00", linewidth = 1.2) +
+  geom_point(colour = "#E69F00", size = 3) +
+  scale_y_continuous(
+    limits = c(0.495, 0.515),
+    breaks = c(0.50, 0.51),
+    labels = scales::number_format(accuracy = 0.01)
+  ) +
+  labs(x = NULL, y = "Median Value", title = "Debt-to-Assets") +
   theme_minimal(base_size = 13) +
-  theme(legend.position = "none",
-        strip.text = element_text(face = "bold"),
-        plot.title = element_text(face = "bold", size = 15))
+  theme(plot.title = element_text(face = "bold"),
+        panel.grid.minor = element_blank())
+
+# Current Ratio panel — its own sensible scale
+p_curr <- lev_liq_long |>
+  filter(indicator == "median_liquidity") |>
+  ggplot(aes(acct_year, value)) +
+  geom_line(colour = "#0072B2", linewidth = 1.2) +
+  geom_point(colour = "#0072B2", size = 3) +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) +
+  labs(x = "Accounting Year", y = "Median Value", title = "Current Ratio") +
+  theme_minimal(base_size = 13) +
+  theme(plot.title = element_text(face = "bold"),
+        panel.grid.minor = element_blank())
+
+# place side-by-side with a common title
+p_debt + p_curr + plot_annotation(title = "Trends in Leverage and Liquidity, 2018–2021") &
+  theme(plot.title = element_text(face = "bold", size = 15))
 ```
 
-The trend plot shows that liquidity (current ratio) remained remarkably **stable** between 2018 and 2021, hovering around **1.8**.
-In contrast, leverage (debt-to-assets) **increased slightly** from **0.50 to 0.51**, indicating a **gradual rise** in firms’ reliance on debt financing through the pandemic period.
-Overall, German firms appear to have maintained adequate liquidity buffers despite modestly higher leverage, suggesting a cautious but resilient financial posture during economic uncertainty.
+The plots show that liquidity (current ratio) remained **broadly stable** from 2018 to 2021, fluctuating only slightly around **1.8** .
+Meanwhile, leverage (debt-to-assets) **rose modestly** from 0.50 to 0.51, peaking in 2020 before easing slightly in 2021.
+This pattern suggests that while firms **marginally increased** their reliance on debt financing during the pandemic, they continued to maintain sufficient short-term liquidity.
+Overall, German firms demonstrated a balanced financial position, reflecting resilience and prudence in managing both debt and liquidity pressures through the COVID-19 period.
 
 2.  Leverage vs Solvency (are highly levered firms less solvent?)
 
