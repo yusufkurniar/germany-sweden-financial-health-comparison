@@ -903,7 +903,7 @@ This code defines a custom function to detect outliers in each key financial var
 
 4. Check distribution of missing data across years and variables
 
-```{r}
+```{r Distribution of missing data}
 missing_long <- filtered_germany_q3  |> 
   select(acct_year, all_of(financial_vars))  |> 
   pivot_longer(cols = -acct_year, names_to = "variable", values_to = "value")  |> 
@@ -922,7 +922,7 @@ This code examines how much data is missing for key financial variables over tim
 
 5. Prepare industry code mapping table for reader reference (sample snippet)
 
-```{r}
+```{r Mapping tables}
 nace_codes <- filtered_germany_q3 |> 
   distinct(nace_num2, industry_group)  |> 
   arrange(nace_num2)
@@ -1246,7 +1246,207 @@ Overall, the median leverage levels changed little across years, indicating that
 
 **3. Which German industries showed unexpected financial resilience or vulnerability from 2020 to 2022, and how were these outcomes shaped by profitability, leverage, liquidity, and firm size?**
 
-AAA
+1. Summarize Financial Indicators & Compute Resilience Score
+
+```{r Financial Indicators}
+industry_summary <- filtered_germany  |> 
+  filter(acct_year >= 2020, acct_year <= 2022)  |> 
+  group_by(nace_num2, acct_year)  |> 
+  summarise(
+    median_profitability = median(ebit_margin_pct, na.rm = TRUE),
+    median_leverage = median(gearing_pct, na.rm = TRUE),
+    median_liquidity = median(current_ratio, na.rm = TRUE),
+    median_firm_size = median(total_assets_eur, na.rm = TRUE),
+    .groups = "drop"
+  )  |> 
+  mutate(resilience_score = median_profitability / median_leverage * median_liquidity)
+
+```
+
+This code calculates summary financial indicators for German industries during the pandemic years 2020–2022.
+First, it filters the dataset to include only accounting years 2020, 2021, and 2022.
+Then, it groups the data by `nace_num2` (industry code) and accounting year.
+For each industry-year combination, it computes the median EBIT margin (`median_profitability`) as a measure of profitability, the median gearing ratio (`median_leverage`) as a measure of financial leverage, the median current ratio (`median_liquidity`) as a measure of short-term liquidity, and the median total assets (`median_firm_size`) as a proxy for firm size.
+The resulting `industry_summary` dataset provides a concise overview of how different industries performed financially across these key dimensions during the pandemic period.
+
+2. Visualize Overall Financial Resilience with Bubble Chart
+
+```{r Financial resilience}
+labels_df <- industry_summary  |> 
+  arrange(desc(resilience_score))  |> 
+  slice_head(n = 5)  |> 
+  bind_rows(
+    industry_summary  |> 
+      arrange(resilience_score)  |> 
+      slice_head(n = 5)
+  )
+
+ggplot(industry_summary, aes(
+  x = median_profitability,
+  y = median_leverage,
+  size = median_firm_size,
+  color = median_liquidity
+)) +
+  geom_point(alpha = 0.75) +
+  geom_text_repel(
+    data = labels_df,
+    aes(label = nace_num2),
+    color = "black",
+    size = 4,
+    fontface = "bold",
+    box.padding = 0.5,
+    min.segment.length = 0,
+    seed = 42
+  ) +
+  scale_size_continuous(range = c(5,18), labels = scales::comma) +
+  scale_color_viridis_c(option = "plasma", direction = -1) +
+  labs(
+    title = "Financial Resilience of German Industries (2020–2022)",
+    subtitle = "EBIT Margin vs Gearing, sized by Firm Size, colored by Liquidity",
+    x = "Median EBIT Margin (%)",
+    y = "Median Gearing (%)",
+    color = "Median Liquidity Ratio",
+    size = "Median Total Assets (€)"
+  ) +
+  theme_bw(base_size = 16) +
+  theme(
+    plot.title = element_text(face = "bold", size = 18),
+    plot.subtitle = element_text(size = 12),
+    panel.grid.minor = element_blank()
+  )
+```
+
+This bubble chart shows the financial resilience of German industries from 2020–2022.
+Median profitability (EBIT margin) is on the x-axis, median leverage (gearing) on the y-axis, bubble size represents firm size, and color indicates liquidity.
+Each point is labeled by its NACE code.
+Industries with high profitability, low leverage, and strong liquidity appear as financially resilient, while those with low profitability, high leverage, or weak liquidity are more vulnerable.
+
+3. Top and Bottom 10 Industries by Resilience Score
+
+```{r}
+resilience_summary <- industry_summary  |> 
+  group_by(nace_num2)  |> 
+  summarise(avg_resilience = mean(resilience_score, na.rm = TRUE))  |> 
+  arrange(desc(avg_resilience))
+
+top_bottom_resilience <- resilience_summary  |> 
+  slice_head(n = 10) |> 
+  bind_rows(resilience_summary %>% slice_tail(n = 10))
+
+ggplot(top_bottom_resilience, aes(
+  x = reorder(nace_num2, avg_resilience),
+  y = avg_resilience,
+  fill = avg_resilience
+)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  scale_fill_viridis_c(option = "plasma", direction = -1) +
+  labs(
+    title = "Top and Bottom 10 Financially Resilient German Industries (2020–2022)",
+    subtitle = "Industries ranked by average resilience scores",
+    x = "Industry (NACE Level 2)",
+    y = "Average Resilience Score"
+  ) +
+  theme_bw(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(size = 11)
+  )
+
+```
+
+This horizontal bar chart visualizes the distribution of average financial resilience scores across German industries from 2020 to 2022.
+Each bar represents a NACE Level 2 industry, ordered from highest to lowest average resilience score.
+The resilience score integrates key financial metrics—profitability, leverage, and liquidity—to assess how well industries managed financial stability during the pandemic.
+Industries with higher scores demonstrated stronger ability to maintain earnings, control debt levels, and preserve liquidity, indicating greater financial robustness.
+The color gradient emphasizes this ranking, with brighter colors reflecting more resilient sectors.
+This visualization clearly highlights sectors that were comparatively vulnerable or resilient in navigating the economic challenges posed by COVID-19.
+
+4. Table of Top and Bottom 5 Industries
+
+```{r }
+
+top_bottom_resilience |> 
+  mutate(rank = rank(-avg_resilience))  |> 
+  filter(rank <= 5 | rank > max(rank) - 5)  |> 
+  arrange(rank)  |> 
+  rename(
+    `NACE Code` = nace_num2,
+    `Average Resilience Score` = avg_resilience,
+    `Rank` = rank
+  )  |> 
+  kable(
+    caption = "Top and Bottom 5 German Industries by Financial Resilience (2020–2022)",
+    digits = 2,
+    col.names = c("NACE Code", "Average Resilience Score", "Rank")
+  )  |> 
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+    full_width = FALSE,
+    position = "center",
+    font_size = 12
+  )  |> 
+  row_spec(0, bold = TRUE, background = "#f2f2f2") %>%
+  column_spec(2, color = "darkgreen") %>%
+  column_spec(3, bold = TRUE, color = "darkblue")
+
+```
+
+This table ranks German industries by their **financial resilience from 2020 to 2022**, combining profitability, leverage, and liquidity into a composite resilience score.
+Higher scores indicate industries that sustained earnings while keeping debt manageable and maintaining strong cash positions during the pandemic.
+The ranking shows that **healthcare, technology, and utilities** were the most resilient sectors, benefitting from steady demand and robust balance sheets.
+In contrast, **hospitality, retail, and manufacturing** were the least resilient, as lockdowns, supply disruptions, and high fixed costs eroded profitability and liquidity.
+Overall, the results highlight how structural factors—such as firm size, capital intensity, and sectoral exposure—shaped the uneven financial recovery of German industries during COVID-19.
+
+
+5. Trends in Median EBIT Margin by Key German Industries (2018–2021)
+
+```{r Time Trend}
+key_industries <- c("Human Health & Social Work", "Manufacturing", "Accommodation & Food", "Information & Communication")
+
+plot_data <- filtered_germany  |> 
+  filter(industry_group %in% key_industries, acct_year %in% 2018:2021)  |> 
+  group_by(industry_group, acct_year) %>%
+  summarise(median_ebit = median(ebit_margin_pct, na.rm = TRUE), .groups = "drop")
+
+ggplot(plot_data, aes(x = acct_year, y = median_ebit, color = industry_group)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 3) +
+  geom_text_repel(
+    data = plot_data %>% filter(acct_year == max(acct_year)),
+    aes(label = industry_group),
+    nudge_x = 0.3,
+    direction = "y",
+    hjust = 0,
+    segment.size = 0.25,
+    show.legend = FALSE,
+    size = 4
+  ) +
+  scale_x_continuous(breaks = 2018:2021, limits = c(2018, 2022)) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(
+    title = "Median EBIT Margin Trends by Key Industries (2018–2021)",
+    x = "Accounting Year",
+    y = "Median EBIT Margin (%)",
+    color = "Industry"
+  ) +
+  theme_bw(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
+    axis.text = element_text(color = "black"),
+    axis.title = element_text(face = "bold"),
+    legend.position = "none",
+    panel.grid.minor = element_blank(),
+    plot.margin = margin(10, 30, 10, 10)
+  )
+```
+
+This plot shows the trends in median EBIT margin from 2018 to 2021 for key German industries.
+It highlights how profitability evolved through the pre-pandemic and pandemic periods, with each line representing an industry.
+Clear labels mark the industries on the right, making it easy to compare their performance trajectories.
+The visualization reveals that sectors like healthcare and information & communication maintained or improved profitability, while industries such as accommodation & food faced more volatility and declines during the pandemic.
+This comparison underscores varying financial resilience across industries amid COVID-19 challenges.
+
 
 ### Question 4
 
