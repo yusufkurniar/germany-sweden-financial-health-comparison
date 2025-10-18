@@ -285,7 +285,11 @@ This dataset structure enables a robust exploration of temporal changes in corpo
 
 ### Research Question
 
+Here are the research questions (sub-questions) that guide us in analysing and answering the primary question: How did the pandemic affect corporate financials in Germany?
+
 **1. How did profitability change across industries?**
+
+This question assesses how profitability variables, such as ROA, EBITDA, or margins shifted across industries over time, highlighting which sectors improved, remained steady, or declined during the pre-pandemic period (2018 – 2019) and the pandemic (2020 – 2021) in Germany. These cross-industry differences reveal relative exposure, resilience, and recovery pathways during the pandemic compared to the pre-pandemic period. Understanding the direction and scale of profitability changes directly addresses the main question of how the pandemic affected corporate finances.
 
 **2. How did leverage (debt-to-assets) and liquidity (current ratio) evolve during pandemic?**
 
