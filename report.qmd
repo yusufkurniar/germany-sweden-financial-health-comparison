@@ -1053,4 +1053,6 @@ Q4: Jingyi
 
 - [https://chatgpt.com/share/68f30667-24e0-800d-bf8c-2bd69f441dd0](https://chatgpt.com/share/68f30667-24e0-800d-bf8c-2bd69f441dd0) helped to give me some frameworks of Macro-level analysis.
 
+- [https://chat.deepseek.com/share/iyzmciy2k1isbwdirn](https://chat.deepseek.com/share/iyzmciy2k1isbwdirn) helped to solve the problem of Rtools and deal with the problem that package ‘tignostics’ is not available for this version of R.
 
+- [https://chat.deepseek.com/share/r0cv9eg5fgn2xan3no](https://chat.deepseek.com/share/r0cv9eg5fgn2xan3no) helped to optimize graphs. 
