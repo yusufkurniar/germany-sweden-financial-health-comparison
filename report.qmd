@@ -313,6 +313,10 @@ We aim to uncover distinct recovery patterns—such as “K-shaped” rebounds, 
 
 ## IDA
 
+Here is the IDA process for this project:
+
+First, we develop this code to prepare the dataset for analysis by converting numeric columns, standardising text fields, and reporting missing values overall and by year. It also performs basic sanity checks for duplicate firm-years, impossible values, and consolidation codes.
+
 ```{r table-checking}
 
 num_cols <- c(
@@ -354,6 +358,8 @@ consol_levels <- filtered_germany |>
   count(consolidation_code, sort = TRUE)
 
 ```
+
+Then, we create this code to extract the 2-digit NACE code, categorises companies into broad industry groups using NACE and ICB, and creates a unified 'industry_group' factor with a fixed order for plotting purposes. It also provides a small sample of unmapped records for verification. After checking, there are no duplicates in the data using company_id, fy_year, and acct_year as the primary key.
 
 ```{r NACE-column}
 #clean 2-digit NACE as integer
@@ -443,11 +449,13 @@ filtered_germany <- filtered_germany |>
   mutate(industry_group = factor(industry_group, levels = ordered_levels))
 ```
 
+After that, we use this code to reshape numeric variables into a long format for Initial Data Analysis, separate scale variables from ratios, and assign clear labels for charts. The result is a tidy table ready for profiling and visualisation.
+
 ```{r prepare-IDA}
 #using long data
-ida_germany <- filtered_germany %>%
-  select(acct_year, all_of(num_cols)) %>%
-  pivot_longer(-acct_year, names_to = "variable_orig", values_to = "value") %>%
+ida_germany <- filtered_germany |>
+  select(acct_year, all_of(num_cols)) |>
+  pivot_longer(-acct_year, names_to = "variable_orig", values_to = "value") |>
   drop_na()
 
 #split between scale and ratio
@@ -480,15 +488,17 @@ nice <- c(
 
 pretty_var <- function(x) ifelse(x %in% names(nice), nice[x], x)
 
-ida_germany <- ida_germany %>%
+ida_germany <- ida_germany |>
   mutate(variable = pretty_var(variable_orig),
          variable = factor(variable, levels = unique(variable)))
 
 ```
 
+Then, we create this code to visualise the distribution of scale variables by year using violin and jitter plots on a log scale, with medians highlighted. It allows quick checks of spread, skewness, and outliers over time for monetary measures.
+
 ```{r IDA-scale}
 #chart for scale variables (log axis)
-p_scale <- ida_germany %>%
+p_scale <- ida_germany |>
   filter(variable_orig %in% scale_vars) |>
   mutate(y = if_else(value > 0, value, NA_real_)) |>
   ggplot(aes(x = factor(acct_year), y = y)) +
@@ -506,11 +516,9 @@ p_scale <- ida_germany %>%
 p_scale
 ```
 
-According to the table, the monetary amounts (EUR) variables are heavily right-skewed: most firms are small to mid-sized, with a long tail from a few very large firms (hence the log scale in figures).
-From 2018 to 2021, medians are relatively stable, with a slight increase in liabilities relative to assets and sales.
-Distributions widen in 2020 and 2021, showing more variability in assets, revenues, and especially net income.
-Net income shows the most significant relative spread, indicating higher volatility in profitability during the pandemic.
-Therefore, in EDA, the median and IQR are used rather than the mean.
+According to the chart, the monetary amounts (EUR) variables are heavily right-skewed: most firms are small to mid-sized, with a long tail from a few very large firms (hence the log scale in figures). From 2018 to 2021, medians are relatively stable, with a slight increase in liabilities relative to assets and sales. Distributions widen in 2020 and 2021, showing more variability in assets, revenues, and especially net income. Net income shows the most significant relative spread, indicating higher volatility in profitability during the pandemic. Therefore, in EDA, the median and IQR are used rather than the mean.
+
+After that, we visualise ratio and percentage metrics by year on a linear scale using violin and jitter plots with median markers, faceted by variable. It is used to assess distribution shape, central tendency, spread, and potential outliers across time without log transformation.
 
 ```{r IDA-ratio}
 #chart for ratio variables (linear axis)
@@ -530,12 +538,9 @@ p_ratio <- ida_germany |>
 p_ratio
 ```
 
-According to the table, the profitability ratios (EBIT/EBITDA margins, ROA) cluster near small positives, with wider variation in 2020–2021.
-ROE has the heaviest tails and many negatives, indicating pressure on equity returns during the pandemic.
-Solvency is relatively stable with a slight dip around 2020; gearing is more dispersed and somewhat higher in 2020–2021 for some firms.
-Liquidity (current/quick ratios) is generally low, with some moderate levels, but it shows long right tails, reflecting a few firms with strong buffers.
-Efficiency (net assets and stock turnover) is broadly stable.
-Therefore, in EDA, we report median and IQR rather than means, and we cap extreme values in figures only to improve readability while keeping original values for calculations.
+According to the chart, the profitability ratios (EBIT/EBITDA margins, ROA) cluster near small positives, with wider variation in 2020–2021. ROE has the heaviest tails and many negatives, indicating pressure on equity returns during the pandemic. Solvency is relatively stable with a slight dip around 2020; gearing is more dispersed and somewhat higher in 2020–2021 for some firms. Liquidity (current/quick ratios) is generally low, with some moderate levels, but it shows long right tails, reflecting a few firms with strong buffers. Efficiency (net assets and stock turnover) is broadly stable. Therefore, in EDA, we report median and IQR rather than means, and we cap extreme values in figures only to improve readability while keeping original values for calculations.
+
+Then, we measure missing data for key numeric variables by industry and by year, then visualise year-wise gaps with a heatmap. It highlights variables or periods with substantial missingness, guiding imputation, exclusion, or robustness checks before analysis.
 
 ```{r numeric-missingness-check}
 key_vars <- c("total_assets_eur","total_liabilities_eur","total_equity_eur",
@@ -562,10 +567,9 @@ ggplot(missing_heat, aes(variable, factor(acct_year), fill = missing_rate)) +
   theme_minimal() + theme(axis.text.x=element_text(angle=45, hjust=1))
 ```
 
-According to the heatmap, missingness is concentrated in the gearing_pct and liquidity_ratio fields with around 20 – 25%, moderate for ebit_margin_pct/ebitda_margin_pct with around 10 – 15%, and low for net_income_eur/ROA/ROE.
-The balance-sheet totals and revenue are essentially complete.
-The pattern is stable across 2018 – 2021, with no pandemic-specific spike.
-This means ratio analyses will have smaller sample sizes than level variables.
+According to the heatmap, missingness is concentrated in the gearing_pct and liquidity_ratio fields with around 20 – 25%, moderate for ebit_margin_pct/ebitda_margin_pct with around 10 – 15%, and low for net_income_eur/ROA/ROE. The balance-sheet totals and revenue are essentially complete. The pattern is stable across 2018 – 2021, with no pandemic-specific spike. This means ratio analyses will have smaller sample sizes than level variables.
+
+After that, we used this code to detect outliers in all numeric variables with two rules—IQR (1.5×) and standardized scores (|z| > 3)—and summarise counts and proportions per variable, ordered by the IQR share. It flags variables with heavy tails or extreme values to guide winsorisation, transformation, or sensitivity checks before modelling.
 
 ```{r outliers-check}
 num_cols <- c("total_assets_eur","total_liabilities_eur","total_equity_eur",
@@ -597,10 +601,9 @@ outliers_overall |>
   kable_styling(full_width = FALSE, font_size = 11)
 ```
 
-According to the table, the share of extreme values per variable is assessed using two rules: the IQR fence (share_iqr) and a z-score cutoff (share_z).
-Outliers are most common in net_income_eur (around 25%), EBIT margin (about 19%), and interest_cover (about 18%), while they are infrequent in solvency_pct (around 1%) and less common for turnover and gearing.
-The z-score method identifies far fewer points because many variables are right-skewed, which makes mean/SD-based detection conservative.
-The IQR rule provides a more informative screening here.
+According to the table, the share of extreme values per variable is assessed using two rules: the IQR fence (share_iqr) and a z-score cutoff (share_z). Outliers are most common in net_income_eur (around 25%), EBIT margin (about 19%), and interest_cover (about 18%), while they are infrequent in solvency_pct (around 1%) and less common for turnover and gearing. The z-score method identifies far fewer points because many variables are right-skewed, which makes mean/SD-based detection conservative. The IQR rule provides a more informative screening here.
+
+Then, we standardise key character fields by trimming whitespace, normalising case, and converting blanks to NA, and report missingness for identifiers and classification codes. This ensures consistent keys for joins and grouping, and highlights data quality issues to address before analysis.
 
 ```{r character-check}
 #character variables to check
@@ -629,11 +632,13 @@ char_missing |>
   kable_styling(full_width = FALSE, font_size = 11)
 ```
 
-According to the table, identifiers and locations are complete: company_id, company_name, country, city, and consolidation_code show no missing data.
-Industry codes are mostly available: NACE has about 2.0% missing, ICB around 6.2%, and SIC approximately 0.1%.
-This indicates that while a small number of firms cannot be classified by NACE alone, most can be identified using the ICB/SIC fallbacks, which are categorised as industrial_group.
+According to the table, identifiers and locations are complete: company_id, company_name, country, city, and consolidation_code show no missing data. Industry codes are mostly available: NACE has about 2.0% missing, ICB around 6.2%, and SIC approximately 0.1%. This indicates that while a small number of firms cannot be classified by NACE alone, most can be identified using the ICB/SIC fallbacks, which are categorised as industrial_group.
+
+After completing the general IDA, we developed the specific IDA to address our sub-questions. Here are the details:
 
 ### IDA for Question 1
+
+AAA
 
 ```{r}
 stopifnot("net_income_eur" %in% names(filtered_germany))
@@ -664,6 +669,8 @@ filtered_germany_1 <- filtered_germany |>
   )
 ```
 
+AAA
+
 ```{r}
 #Firm “one-gap” fill within the same period only
 
@@ -689,6 +696,8 @@ filtered_germany_1 <- filtered_germany_1 |>
     roe_step1    = coalesce(roe_use,           roe_step1)
   )
 ```
+
+AAA
 
 ```{r}
 #median fills in strict order (no cross-period borrowing)
@@ -772,6 +781,8 @@ filtered_germany_1 <- filtered_germany_1 |>
   ) |>
   select(-ends_with("_step1"))
 ```
+
+AAA
 
 ```{r}
 impute_summary_q1 <- filtered_germany_1 |>
@@ -1004,7 +1015,9 @@ kable(germany_ts %>%
 
 **1. How did profitability change across industries?**
 
-```{r}
+This code is used to recode years into pre-pandemic and pandemic periods, reshape key profitability metrics to a long format, and visualise their distributions for all firms. It is used to compare central tendency (median) and dispersion (IQR, tails) before versus during the pandemic across EBIT, EBITDA, ROA, ROE, and net income.
+
+```{r q1_profitability_distributions_overall}
 #recode period to short labels
 filtered_germany_1 <- filtered_germany_1 |>
   mutate(period = if_else(acct_year >= 2020, "Pandemic (2020–21)", "Pre (2018–19)"),
@@ -1067,12 +1080,11 @@ p_q1_all
 ```
 
 The chart compares profitability before (2018–19) and during the pandemic (2020 – 2021) for all firms.
-Across EBIT and EBITDA margins, the medians remain largely unchanged, but the spreads widen in 2020 – 2021, indicating increased dispersion in operating performance.
-ROA and especially ROE show many more extreme negatives in 2020 – 2021, indicating that a greater share of firms reported losses or equity write-downs, even though the median stayed near zero.
-Net income (asinh) also becomes more dispersed in 2020 –21, with a heavier lower tail, confirming higher volatility.
-A key insight is that central tendencies barely moved while tail risk increased.
+Across EBIT and EBITDA margins, the medians remain largely unchanged, but the spreads widen in 2020 – 2021, indicating increased dispersion in operating performance. ROA and especially ROE show many more extreme negatives in 2020 – 2021, indicating that a greater share of firms reported losses or equity write-downs, even though the median stayed near zero. Net income (asinh) also becomes more dispersed in 2020 –21, with a heavier lower tail, confirming higher volatility. A key insight is that central tendencies barely moved while tail risk increased.
 
-```{r}
+This code summarises industry-level median EBITDA margins during the pre-pandemic and pandemic periods, then illustrates the change (Pandemic – Pre) to show the direction and magnitude by sector. Using medians ensures a reliable comparison, highlighting typical firms and identifying industries with significant improvements or declines.
+
+```{r q1_industry_ebitda_median_delta}
 #keep only mapped industry
 germ_mapped <- filtered_germany_1 |>
   filter(!is.na(ebitda_margin_q1),
@@ -1081,10 +1093,10 @@ germ_mapped <- filtered_germany_1 |>
   droplevels()
 
 #build medians & delta (Pandemic – Pre)
-eb_med <- germ_mapped %>%
+eb_med <- germ_mapped |>
   mutate(period = if_else(acct_year >= 2020, "Pandemic", "Pre"),
          period = factor(period, levels = c("Pre","Pandemic"))) |>
-  group_by(industry_group, period) %>%
+  group_by(industry_group, period) |>
   summarise(med = median(ebitda_margin_q1, na.rm = TRUE), .groups = "drop") |>
   pivot_wider(names_from = period, values_from = med) %>%
   drop_na(Pre, Pandemic) |> #keep industries with both periods
@@ -1110,12 +1122,7 @@ ggplot(eb_med, aes(y = reorder(industry_group, delta))) +
 
 ```
 
-This dumbbell chart compares the median EBITDA margin (%) in each industry before and during the pandemic.
-It shows the direction and magnitude of profitability changes across sectors on a single axis.
-Overall, most industries moved only slightly, but a few stand out: Accommodation & Food shows the biggest improvement, bouncing from slightly negative to positive margins, and Technology also saw an increase.
-The largest drop is in Health Care, which fell sharply from a high pre-pandemic median to a much lower level.
-Cyclical sectors like Industrials, Construction, Arts & Entertainment, and Financials experienced small to moderate decreases, while Utilities and Education remain near flat.
-Using medians (rather than means) makes the comparison more robust to outliers and highlights typical firms within each industry.
+This dumbbell chart compares the median EBITDA margin (%) in each industry before and during the pandemic. It shows the direction and magnitude of profitability changes across sectors on a single axis. Overall, most industries moved only slightly, but a few stand out: Accommodation & Food shows the biggest improvement, bouncing from slightly negative to positive margins, and Technology also saw an increase. The largest drop is in Health Care, which fell sharply from a high pre-pandemic median to a much lower level. Cyclical sectors like Industrials, Construction, Arts & Entertainment, and Financials experienced small to moderate decreases, while Utilities and Education remain near flat. Using medians (rather than means) makes the comparison more robust to outliers and highlights typical firms within each industry.
 
 ### Question 2
 
