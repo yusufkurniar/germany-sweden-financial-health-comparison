@@ -821,6 +821,26 @@ A slight rise in gearing (from 62% to 66%) alongside a modest decline in solvenc
 
 ### IDA for Question 3
 
+**Outlier Summary for Key Indicators**
+```{r outlier summary}
+outlier_summary <- function(x) {
+  q1 <- quantile(x, 0.25, na.rm=TRUE)
+  q3 <- quantile(x, 0.75, na.rm=TRUE)
+  iqr <- q3 - q1
+  lower <- q1 - 1.5 * iqr
+  upper <- q3 + 1.5 * iqr
+  out_total <- sum(x < lower | x > upper, na.rm=TRUE)
+  return(out_total)
+}
+
+outliers_tbl <- filtered_germany %>%
+  summarise(across(all_of(key_vars), outlier_summary))
+
+knitr::kable(outliers_tbl, caption = "Count of IQR Outliers for Key Financial Variables")
+
+```
+**Reference:** Outlier identification by IQR (Lecture 2, Slide 13)
+
 ```{r financial indicators}
 industry_summary <- filtered_germany  |> 
   filter(acct_year >= 2020, acct_year <= 2022)  |> 
