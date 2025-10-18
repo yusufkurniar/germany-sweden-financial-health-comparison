@@ -844,7 +844,6 @@ knitr::kable(outliers_tbl, caption = "Count of IQR Outliers for Key Financial Va
 
 **Interpretation:** The outlier detection code uses the Interquartile Range (IQR) method, a standard statistical approach, to identify data points that lie far outside the typical range. It calculates the IQR as the difference between the 75th and 25th percentiles (Q3 - Q1) and defines outliers as values below Q1 minus 1.5 times the IQR or above Q3 plus 1.5 times the IQR. This method effectively highlights extreme values that deviate significantly from the center of the data distribution. Counting these outliers per financial variable helps assess data quality and informs decisions about cleaning or analysis. This approach is widely used because it is robust to non-normal data and clarifies the presence and extent of unusual observations in the dataset.
 
-
 ```{r financial indicators}
 industry_summary <- filtered_germany  |> 
   filter(acct_year >= 2020, acct_year <= 2022)  |> 
