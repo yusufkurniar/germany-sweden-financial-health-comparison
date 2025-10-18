@@ -845,13 +845,12 @@ A slight rise in gearing (from 62% to 66%) alongside a modest decline in solvenc
 
 1. Filter relevant years and active firms for pandemic analysis
 
-This code filters the dataset **filtered_germany** to keep only the records relevant for the **pandemic period (2020–2022)** and only **active firms.**
-
 ```{r Filtering relevant data}
 filtered_germany_q3 <- filtered_germany  |> 
   filter(acct_year >= 2020, acct_year <= 2022, status == "Active")
 ```
 
+This code filters the dataset **filtered_germany** to keep only the records relevant for the **pandemic period (2020–2022)** and only **active firms.**
 
 2. Summary checks on key financial variables for completeness and basic stats
 ```{r Summary checks}
@@ -867,7 +866,7 @@ summary_stats <- filtered_germany_q3  |>
                      min = ~min(., na.rm = TRUE),
                      max = ~max(., na.rm = TRUE)
                    )
-                   )) %>%
+                   )) |> 
   pivot_longer(everything(),
                names_to = c("variable", "stat"),
                names_sep = "_",
@@ -920,6 +919,19 @@ ggplot(missing_long, aes(x = variable, y = prop_missing, fill = factor(acct_year
 ```
 
 This code examines how much data is missing for key financial variables over time and presents it visually. It starts by reshaping the dataset into a long format so that each variable and its value are in separate rows. Then, it marks whether each observation is missing and calculates the proportion of missing values for each variable within each year. Finally, it uses a grouped bar chart to show these proportions by variable and year. This helps identify which financial indicators have higher missingness and whether data completeness has improved or worsened across the 2020–2022 period, offering insights into data reliability for further analysis.
+
+5. Prepare industry code mapping table for reader reference (sample snippet)
+
+```{r}
+nace_codes <- filtered_germany_q3 |> 
+  distinct(nace_num2, industry_group)  |> 
+  arrange(nace_num2)
+
+kable(nace_codes, caption = "NACE Level 2 Code to Industry Mapping") |> 
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+```
+
+This code generates a reference table to help readers interpret industry-level results later in the report. It begins by selecting unique combinations of `nace_num2` (the NACE Level 2 industry code) and `industry_group` from the filtered dataset, ensuring that each code is listed only once. The table is then arranged in ascending order of `nace_num2` for readability. Finally, the `kable()` and `kable_styling()` functions are used to display the results in a clean, professional format. This table serves as a useful lookup guide, allowing readers to easily understand which industry each NACE code represents when reviewing the subsequent analyses and visualizations.
 
 
 ### IDA for Question 4
