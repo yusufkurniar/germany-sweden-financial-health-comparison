@@ -311,7 +311,7 @@ Overall, firm size and liquidity emerged as key buffers against financial stress
 **4. How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic?**
 
 The COVID-19 pandemic from 2020 to 2022 severely disrupted global business activity, placing significant stress on corporate financial structures.
-One critical dimension of this disruption lies in how firms managed their liquidity—the ability to meet short-term obligations—while maintaining profitability during the crisis.
+The core issue was how firms preserved their short-term solvency without sacrificing profitability during the crisis.
 Financial theory typically suggests that maintaining sufficient liquidity supports profitability by ensuring operational stability and investment flexibility.
 However, during the pandemic, this fundamental relationship may have fractured across industries due to uneven economic shocks and varying policy responses.
 
@@ -1062,14 +1062,78 @@ germany_ts <- germany_q4 %>%
   arrange(company_id, fy_year)
 ```
 
-4.  Summary
+4.  Missing value
+
+**Check for missing value (Tutorial 8)**
+
+The initial examination of missing values revealed a relatively low proportion of incomplete data in the dataset.
+As shown in @fig-missing_clu, the missing value analysis showed that only 0.7% of the total data was missing, while 99.3% of observations were complete.
+ROA contained between 1% and 1.5% missing values across the dataset, while the current ratio had a slightly higher proportion of missing data, ranging from 2% to 2.5% (@fig-missing_plots).
+
+```{r Q4 IDA 4. Missing value -Check for missing value}
+#| label: fig-missing_plots
+#| fig-cap: "The plots of Missing Value Distribution"
+
+# Check for missing ROA and CR
+miss_var <- 
+  gg_miss_var(germany_ts, show_pct = TRUE) + 
+  labs(title = "Distribution of Missing Values", 
+       subtitle = "For all variables")
+
+# Check for missing values by industry group
+miss_industry <- germany_ts |> 
+  group_by(industry_group) |> 
+  gg_miss_var(show_pct = TRUE) + 
+  labs(title = "Distribution of Missing Values", 
+       subtitle = "By industry group")
+
+
+# Missing case pattern
+miss_case <- gg_miss_case(germany_ts, show_pct = TRUE) + 
+  labs(title = "Distribution of Missing Case Pattern")
+  
+miss_var / miss_industry / miss_case
+```
+
+```{r Q4 EDA 4. Missing value -Check for missing value 2}
+#| label: fig-missing_clu
+#| fig-cap: "The plot of clustering to visualize missing patterns"
+
+m3 <- vis_miss(germany_ts, cluster = TRUE, sort_miss = TRUE) +
+  theme(axis.text.x = element_text(size = 8, angle = 45, hjust = 1),
+        axis.text.y = element_text(size = 8))
+
+m3
+```
+
+**Address missingness issues**
+
+To address missing data, observations with missing values in either ROA or current ratio were removed from the dataset.
+Additionally, to ensure temporal consistency across the study period, only industry groups that contained data for all three years (2019-2021) were retained. The 'Other / Unmapped' category was removed from the study as it comprises companies without clear industry classification.
+
+```{r Q4 IDA 4. Address missingness issues}
+germany_ts <- germany_ts %>%
+  as_tibble() %>%   # Convert to a normal tibble
+  # Remove observations with missing ROA or CR
+  filter(!is.na(roa_pct) & !is.na(current_ratio)) %>%
+   # Remove industries that don't have data in 2019-2021
+  group_by(industry_group) %>%
+  filter(all(2019:2021 %in% fy_year)) %>%
+  filter(industry_group != "Other / Unmapped") %>%
+  ungroup() %>%
+  # Convert back to tsibble format
+  as_tsibble(key = company_id, index = fy_year) %>%
+  arrange(company_id, fy_year)
+```
+
+5.  Summary
 
 The trends in ROA and Current Ratio from 2017 to 2021 reveal a distinct pattern, potentially linked to the pandemic.
-ROA showed significant volatility: it was stable pre-pandemic, fell to a negative value in 2020, but then recovered strongly to a peak of 4.90% in 2021.
+ROA showed significant volatility: it was stable pre-pandemic, fell to a negative value in 2020, but then recovered strongly to a peak of 5% in 2021.
 In contrast, the Current Ratio remained relatively stable throughout the period, indicating consistent short-term liquidity despite the economic disruption.
 This suggests that while profitability was heavily impacted, the company's ability to meet its short-term obligations was maintained.
 
-```{r Q4 IDA 4. Summary}
+```{r Q4 IDA 5. Summary}
 #| label: tbl-summary
 #| tbl-cap: "Trends in Mean Return on Assets (ROA) and Current Ratio from Pre-Pandemic to Post-Pandemic Years (2017-2021)"
 
@@ -1535,70 +1599,8 @@ This comparison underscores varying financial resilience across industries amid 
 
 **4. How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic?**
 
-1.  Data preparation
 
-**Check for missing value (Tutorial 8)**
-
-The initial examination of missing values revealed a relatively low proportion of incomplete data in the dataset.
-As shown in @fig-missing_clu, the missing value analysis showed that only 0.5% of the total data was missing, while 99.5% of observations were complete.
-ROA contained between 1% and 1.5% missing values across the dataset, while the current ratio had a slightly higher proportion of missing data, ranging from 1.5% to 2% (@fig-missing_plots).
-
-```{r Q4 EDA 1. Data preparation -Check for missing value}
-#| label: fig-missing_plots
-#| fig-cap: "The plots of Missing Value Distribution"
-
-# Check for missing ROA and CR
-miss_var <- 
-  gg_miss_var(germany_ts, show_pct = TRUE) + 
-  labs(title = "Distribution of Missing Values", 
-       subtitle = "For all variables")
-
-# Check for missing values by industry group
-miss_industry <- germany_ts |> 
-  group_by(industry_group) |> 
-  gg_miss_var(show_pct = TRUE) + 
-  labs(title = "Distribution of Missing Values", 
-       subtitle = "By industry group")
-
-
-# Missing case pattern
-miss_case <- gg_miss_case(germany_ts, show_pct = TRUE) + 
-  labs(title = "Distribution of Missing Case Pattern")
-  
-miss_var / miss_industry / miss_case
-```
-
-```{r Q4 EDA 1. Data preparation -Check for missing value 2}
-#| label: fig-missing_clu
-#| fig-cap: "The plot of clustering to visualize missing patterns"
-
-m3 <- vis_miss(germany_ts, cluster = TRUE, sort_miss = TRUE) +
-  theme(axis.text.x = element_text(size = 8, angle = 45, hjust = 1),
-        axis.text.y = element_text(size = 8))
-
-m3
-```
-
-**Address missingness issues**
-
-The 'Other / Unmapped' category was removed from the study as it comprises companies without clear industry classification.
-
-```{r Q4 EDA 1. Data preparation -Address missingness issues}
-germany_ts <- germany_ts %>%
-  as_tibble() %>%   # Convert to a normal tibble
-  # Remove observations with missing ROA or CR
-  filter(!is.na(roa_pct) & !is.na(current_ratio)) %>%
-   # Remove industries that don't have data in 2019-2021
-  group_by(industry_group) %>%
-  filter(all(2019:2021 %in% fy_year)) %>%
-  filter(industry_group != "Other / Unmapped") %>%
-  ungroup() %>%
-  # Convert back to tsibble format
-  as_tsibble(key = company_id, index = fy_year) %>%
-  arrange(company_id, fy_year)
-```
-
-2.  Industry-level trends of ROA and liquidity (2017–2021) (Lecture 9, slide 24-26, feasts and tsibbletalk)
+1.  Industry-level trends of ROA and liquidity (2017–2021) (Lecture 9, slide 24-26, feasts and tsibbletalk)
 
 This section provides an initial visual overview of the pandemic's impact.
 We begin by plotting the average Return on Assets (ROA) and Current Ratio for each industry from 2017 to 2021.
@@ -1618,11 +1620,11 @@ However, two sectors exhibited notable deviations:
 
 -   Arts, Entertainment & Recreation showed a significant upward trend in liquidity, which appears counterintuitive given pandemic constraints.
 
--   Financials experienced a substantial decline from 8.17 in 2020 to 4.44 in 2021, indicating a sharp contraction in liquidity buffers during the post-pandemic recovery phase.
+-   Financials experienced a substantial decline from 7.8 in 2020 to 4.21 in 2021, indicating a sharp contraction in liquidity buffers during the post-pandemic recovery phase.
 
 -   Construction maintained exceptional stability throughout the period.
 
-```{r Q4 EDA 2. Industry-level trends -Calculate}
+```{r Q4 EDA 1. Industry-level trends -Calculate}
 # Calculate the average ROA and current ratio for each industry each year
 industry_ts <- germany_ts %>%
   group_by(industry_group) %>%
@@ -1635,7 +1637,7 @@ industry_ts <- germany_ts %>%
 
 ```
 
-```{r Q4 EDA 2. Industry-level trends -ROA}
+```{r Q4 EDA 1. Industry-level trends -ROA}
 #| label: fig-ROA_ploty
 #| fig-cap: "The interactive plot of ROA trends by industry (2017-2021)"
 
@@ -1644,7 +1646,7 @@ roa_interactive <- industry_ts %>%
   ggplot(aes(x = fy_year, y = industry_roa, group = industry_group)) +
   geom_line(aes(color = industry_group), size = 0.8, alpha = 0.7) +
   geom_vline(xintercept = 2020, linetype = "dashed", color = "red", size = 1) +
-  labs(title = "Interactive ROA Trends by Industry (2017-2021)<br><sub><i>Vertical line indicates pandemic start (2020) - Hover for details<br><sub><i>",
+  labs(title = "Interactive ROA Trends by Industry (2017-2021)<br><sub><i>Vertical line indicates pandemic start (2020)<br><sub><i>",
        x = "Year", y = "ROA (%)") +
   theme_minimal() +
   theme(legend.position = "none") 
@@ -1657,7 +1659,7 @@ roa_plotly <-
 roa_plotly
 ```
 
-```{r Q4 EDA 2. Industry-level trends -CR}
+```{r Q4 EDA 1. Industry-level trends -CR}
 #| label: fig-CR_ploty
 #| fig-cap: "The interactive plot of Current Ratio trends by industry (2017-2021)"
 
@@ -1680,11 +1682,11 @@ cr_plotly <-
 cr_plotly
 ```
 
-3.  Macro-level evidence: Industry recovery patterns (ROA vs CR) - feasts (Lecture 9, slide 24-26, feasts and tsibbletalk)
+2.  Macro-level evidence: Industry recovery patterns (ROA vs CR) - feasts (Lecture 9, slide 24-26, feasts and tsibbletalk)
 
 Now, we will analyze the fundamental relationship between corporate liquidity and profitability across industries during the pandemic period, with particular focus on identifying anomalous recovery patterns.
 
-```{r Q4 EDA 3. Macro-level evidence -Calculate}
+```{r Q4 EDA 2. Macro-level evidence -Calculate}
 # Calculating time series features
 industry_features <- industry_ts %>%
   features(industry_roa, feat_stl) %>%
@@ -1710,7 +1712,7 @@ Five industries in the bottom-left quadrant, indicating severe deterioration in 
 Accommodation & Food has the largest bubble, reflecting extreme volatility and weak performance during pandemic restrictions.
 This pattern reflects the extreme operational challenges faced by hospitality-related sectors during pandemic restrictions.
 
-```{r Q4 EDA 3. Macro-level evidence -Trend strength analysis}
+```{r Q4 EDA 2. Macro-level evidence -Trend strength analysis}
 #| label: fig-trend_in
 #| fig-cap: "Scatter plot visualizing trend strength disruption across industries during the pandemic period. The 0.3 threshold lines demarcate sectors experiencing significant breakdown in ROA (x-axis) and Current Ratio (y-axis) trends, with bubble size representing ROA spikiness as a measure of financial instability. Industries in bottom-left corner are most severely impacted."
 
@@ -1761,7 +1763,7 @@ After trend strength analysis, the volatility examination in @fig-volatility_in 
 Five industries show high ROA volatility, but most have moderate Current Ratio spikiness.
 However, Consumer Services is exceptional with the highest Current Ratio spikiness, suggesting unique liquidity challenges.
 
-```{r Q4 EDA 3. Macro-level evidence -Volatility analysis}
+```{r Q4 EDA 2. Macro-level evidence -Volatility analysis}
 #| label: fig-volatility_in
 #| fig-cap: "Volatility analysis of industry financial metrics during pandemic. Plot displays ROA spikiness (x-axis) against Current Ratio spikiness (y-axis), with industry groups color-coded and bubble sizes indicating ROA trend strength. Median values marked with dashed blue lines. Top-right industries have highest volatility. The ROA spikiness of the Accommodation industry exceeds 20,000 and is not shown in the figure."
 
@@ -1835,7 +1837,7 @@ The Administrative & Support sector falls into the hidden crisis category, sugge
 This classification provides valuable insights into how different industries navigated the pandemic's challenges.
 Next part, we will focus on the anomalous K-shaped recoveries that suggest uneven performance within certain sectors and resilient industry.
 
-```{r Q4 EDA 3. Macro-level evidence -industry classes}
+```{r Q4 EDA 2. Macro-level evidence -industry classes}
 industry_classes <- focus_features %>%
   mutate(
     # Calculate threshold
@@ -1856,7 +1858,7 @@ industry_classes <- focus_features %>%
   )
 ```
 
-```{r Q4 EDA 3. Macro-level evidence -industry classes figure}
+```{r Q4 EDA 2. Macro-level evidence -industry classes figure}
 #| label: fig-classification
 #| fig-cap: "Classification of industry recovery patterns based on ROA trend strength and volatility. Four distinct patterns emerge: Resilient (high trend strength, low volatility), K-shaped (low trend strength, high volatility), Hidden Crisis (high trend strength but high volatility), and Moderate Impact (all others). Dashed lines represent classification thresholds."
 
@@ -1891,7 +1893,7 @@ classification_plotly <- ggplotly(classification_plot, tooltip = "text") %>%
 classification_plotly
 ```
 
-4.  Micro-level evidence of anomalous recovery patterns across industries (ROA and liquidity) - scagnostics (Tignostics) (Lecture 8, 22-27 & Lecture 9, slide 24)
+3.  Micro-level evidence of anomalous recovery patterns across industries (ROA and liquidity) - scagnostics (Tignostics) (Lecture 8, 22-27 & Lecture 9, slide 24)
 
 In this section we track how the firm-level relationship between liquidity (Current Ratio) and profitability (ROA) changed during the COVID-19 period.
 We approach is to treat each firm as a point in the CR–ROA plane, then study the shape of each industry’s point cloud year by year.
@@ -1925,7 +1927,7 @@ For each industry × fiscal year we:
 
 -   Residual SD: higher residual SD from the linear fit signals more unexplained scatter (higher micro volatility).
 
-```{r Q4 EDA 4. Micro-level evidence -data}
+```{r Q4 EDA 3. Micro-level evidence -data}
 selected_industries <- industry_classes %>%
   filter(recovery_pattern %in% c("K-shaped", "Resilient", "Hidden Crisis")) %>%
   pull(industry_group)
@@ -1935,7 +1937,7 @@ selected_companies_ts <- germany_ts %>%
   filter(industry_group %in% selected_industries)
 ```
 
-```{r Q4 EDA 4. Micro-level evidence -Calculate scagnostic}
+```{r Q4 EDA 3. Micro-level evidence -Calculate scagnostic}
 #| label: tbl-company
 #| tbl-cap: "Summary statistics for industries with significant slope changes (jumps > 0). The table shows average slope, maximum absolute slope change, mean residual standard deviation, number of jumps, and differences in volatility and slope before and after the COVID-19 pandemic for three industries: Wholesale & Retail Trade, Information & Communication, and Financial & Insurance."
 
@@ -2030,7 +2032,7 @@ kable(industry_summary %>% filter(jumps > 0) %>%
         select(-n_years))
 ```
 
-```{r Q4 EDA 4. Micro-level evidence -scagnostic figure}
+```{r Q4 EDA 3. Micro-level evidence -scagnostic figure}
 #| label: fig-scagnostic
 #| fig-cap: "This figure shows how four scagnostic metrics changed over time across different industries. The red dashed line marks the year 2020 when COVID-19 pandemic occurred. We can see variations in outlying (extreme values), clumpy (clustering patterns), stringy (linear relationships), and monotonic (consistent trends) metrics before and after the pandemic."
 #| warning: false
@@ -2047,12 +2049,12 @@ ggplot(scag_long, aes(x = fy_year, y = value, color = industry_group)) +
   labs(
     title = "Evolution of Scagnostic Metrics over Time",
     subtitle = "Dashed line = COVID year (2020)",
-    x = "Fiscal Year", y = "Scagnostic Value"
+    x = "Year", y = "Scagnostic Value"
   ) +
   theme_minimal()
 ```
 
-```{r Q4 EDA 4. Micro-level evidence -animated_plot}
+```{r Q4 EDA 3. Micro-level evidence -animated_plot}
 #| label: fig-animated_plot
 #| fig-cap: "The animated plot shows the yearly scatter of firms in the CR–ROA plane and fitted lines."
 
