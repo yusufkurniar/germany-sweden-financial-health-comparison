@@ -86,6 +86,7 @@ library(ggplot2)
 library(scales)
 library(tidyr)
 library(ggrepel)
+library(viridisLite)
 ```
 
 ## Introduction
@@ -924,6 +925,8 @@ This code filters the dataset **filtered_germany** to keep only the records rele
 2.  Summary checks on key financial variables for completeness and basic stats
 
 ```{r Summary checks}
+options(scipen = 999)
+
 financial_vars <- c("ebit_margin_pct", "gearing_pct", "current_ratio", "total_assets_eur")
 
 summary_stats <- filtered_germany_q3 %>%
@@ -940,18 +943,29 @@ summary_stats <- filtered_germany_q3 %>%
     .names = "{.col}_{.fn}"
   ))
 
-# Now pivot to long and wide format to get a tidy printable table
 summary_stats_tidy <- summary_stats %>%
   pivot_longer(
     everything(),
-    names_to = c("variable", "stat"),
+    names_to = c("Variable", "Stat"),
     names_pattern = "(.+)_(.+)",
-    values_to = "value"
+    values_to = "Value"
   ) %>%
-  pivot_wider(names_from = stat, values_from = value)
+  pivot_wider(names_from = Stat, values_from = Value)
 
-kable(summary_stats_tidy, caption = "Summary Statistics for Key Financial Variables (2020–2022)") %>%
-  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+# Force decimal precision
+summary_stats_tidy <- summary_stats_tidy %>%
+  mutate(across(where(is.numeric), ~round(., 5)))
+
+kable(summary_stats_tidy,
+      caption = "Summary Statistics for Key Financial Variables (2020–2022)",
+      col.names = c("Variable", "Missing", "Mean", "Median", "SD", "Min", "Max"),
+      align = "lrrrrrr",
+      escape = FALSE
+) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"),
+                full_width = FALSE, font_size = 15) %>%
+  column_spec(1, width = "5cm") %>%
+  scroll_box(width = "100%")
 
 ```
 
@@ -1558,7 +1572,7 @@ key_industries <- c("Human Health & Social Work", "Manufacturing", "Accommodatio
 
 plot_data <- filtered_germany  |> 
   filter(industry_group %in% key_industries, acct_year %in% 2018:2021)  |> 
-  group_by(industry_group, acct_year) %>%
+  group_by(industry_group, acct_year) |> 
   summarise(median_ebit = median(ebit_margin_pct, na.rm = TRUE), .groups = "drop")
 
 ggplot(plot_data, aes(x = acct_year, y = median_ebit, color = industry_group)) +
@@ -1582,14 +1596,14 @@ ggplot(plot_data, aes(x = acct_year, y = median_ebit, color = industry_group)) +
     y = "Median EBIT Margin (%)",
     color = "Industry"
   ) +
-  theme_bw(base_size = 14) +
+  theme_bw(base_size = 12) +
   theme(
     plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
     axis.text = element_text(color = "black"),
     axis.title = element_text(face = "bold"),
     legend.position = "none",
     panel.grid.minor = element_blank(),
-    plot.margin = margin(10, 30, 10, 10)
+    plot.margin = margin(10, 10, 10, 10)
   )
 ```
 
