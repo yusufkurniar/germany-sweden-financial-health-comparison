@@ -1428,7 +1428,6 @@ The resulting `industry_summary` dataset provides a concise overview of how diff
 2.  Visualize Overall Financial Resilience with Bubble Chart
 
 ```{r Financial resilience}
-
 p <- ggplot(industry_summary, aes(
   x = median_profitability,
   y = median_leverage,
@@ -1441,7 +1440,8 @@ p <- ggplot(industry_summary, aes(
   )
 )) +
   geom_point(size = 4, alpha = 0.85, shape = 21, stroke = 0.7) +
-  scale_color_distiller(palette = "Spectral", direction = 1) +
+  # Use a richer color gradient here:
+  scale_color_gradientn(colors = turbo(20)) +  
   labs(
     title = "German Industry Profitability vs Leverage (2020–2022)",
     subtitle = "Color indicates median liquidity by industry; axes limited for interpretability",
@@ -1466,7 +1466,7 @@ p <- ggplot(industry_summary, aes(
     plot.margin = margin(16, 16, 16, 16)
   )
 
-# Make interactive
+# Interactive plot with more gradient colours
 ggplotly(p, tooltip = "text")
 
 ```
