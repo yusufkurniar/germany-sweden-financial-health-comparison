@@ -69,7 +69,18 @@ library(dplyr)
 library(stringr)
 library(janitor)
 library(skimr)
+library(tsibble)
 library(knitr)
+library(naniar)
+library(patchwork)
+library(plotly)
+library(tsibbletalk)
+library(feasts)
+library(broom)
+library(purrr)
+library(cassowaryr)
+library(gganimate)
+library(gifski)
 library(kableExtra)
 library(ggplot2)
 library(scales)
@@ -273,9 +284,19 @@ This dataset structure enables a robust exploration of temporal changes in corpo
 
 ### Research Question
 
+Here are the research questions (sub-questions) that guide us in analysing and answering the primary question: How did the pandemic affect corporate financials in Germany?
+
 **1. How did profitability change across industries?**
 
+This question assesses how profitability variables, such as ROA, EBITDA, or margins shifted across industries over time, highlighting which sectors improved, remained steady, or declined during the pre-pandemic period (2018 – 2019) and the pandemic (2020 – 2021) in Germany.
+These cross-industry differences reveal relative exposure, resilience, and recovery pathways during the pandemic compared to the pre-pandemic period.
+Understanding the direction and scale of profitability changes directly addresses the main question of how the pandemic affected corporate finances.
+
 **2. How did leverage (debt-to-assets) and liquidity (current ratio) evolve during pandemic?**
+
+This question examines how German firms managed their financial structure and short-term liquidity during the COVID-19 period.
+By tracking leverage and liquidity trends, we can assess whether firms relied more on debt financing or preserved liquidity to withstand operational shocks.
+Understanding these shifts helps explain how the pandemic influenced firms’ balance sheet resilience and capacity to absorb financial stress.
 
 **3. Which German industries showed unexpected financial resilience or vulnerability from 2020 to 2022, and how were these outcomes shaped by profitability, leverage, liquidity, and firm size?**
 
@@ -285,7 +306,26 @@ Overall, firm size and liquidity emerged as key buffers against financial stress
 
 **4. How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic?**
 
+The COVID-19 pandemic from 2020 to 2022 severely disrupted global business activity, placing significant stress on corporate financial structures.
+One critical dimension of this disruption lies in how firms managed their liquidity—the ability to meet short-term obligations—while maintaining profitability during the crisis.
+Financial theory typically suggests that maintaining sufficient liquidity supports profitability by ensuring operational stability and investment flexibility.
+However, during the pandemic, this fundamental relationship may have fractured across industries due to uneven economic shocks and varying policy responses.
+
+This question investigates how the relationship between corporate liquidity and profitability evolved and diverged across industries during the pandemic period.
+Using data from the OSIRIS database for Germany between 2017 and 2022, we focus on two key indicators:
+
+-   **Return on Assets (ROA)** as a measure of profitability
+
+-   **Current Ratio** as a measure of liquidity.
+
+We aim to uncover distinct recovery patterns—such as “K-shaped” rebounds, resilient sectors, and hidden crises—that reveal how the financial health of different industries adapted or deteriorated during the pandemic.
+
 ## IDA
+
+Here is the IDA process for this project:
+
+First, we develop this code to prepare the dataset for analysis by converting numeric columns, standardising text fields, and reporting missing values overall and by year.
+It also performs basic sanity checks for duplicate firm-years, impossible values, and consolidation codes.
 
 ```{r table-checking}
 
@@ -328,6 +368,10 @@ consol_levels <- filtered_germany |>
   count(consolidation_code, sort = TRUE)
 
 ```
+
+Then, we create this code to extract the 2-digit NACE code, categorises companies into broad industry groups using NACE and ICB, and creates a unified 'industry_group' factor with a fixed order for plotting purposes.
+It also provides a small sample of unmapped records for verification.
+After checking, there are no duplicates in the data using company_id, fy_year, and acct_year as the primary key.
 
 ```{r NACE-column}
 #clean 2-digit NACE as integer
@@ -417,11 +461,14 @@ filtered_germany <- filtered_germany |>
   mutate(industry_group = factor(industry_group, levels = ordered_levels))
 ```
 
+After that, we use this code to reshape numeric variables into a long format for Initial Data Analysis, separate scale variables from ratios, and assign clear labels for charts.
+The result is a tidy table ready for profiling and visualisation.
+
 ```{r prepare-IDA}
 #using long data
-ida_germany <- filtered_germany %>%
-  select(acct_year, all_of(num_cols)) %>%
-  pivot_longer(-acct_year, names_to = "variable_orig", values_to = "value") %>%
+ida_germany <- filtered_germany |>
+  select(acct_year, all_of(num_cols)) |>
+  pivot_longer(-acct_year, names_to = "variable_orig", values_to = "value") |>
   drop_na()
 
 #split between scale and ratio
@@ -454,15 +501,18 @@ nice <- c(
 
 pretty_var <- function(x) ifelse(x %in% names(nice), nice[x], x)
 
-ida_germany <- ida_germany %>%
+ida_germany <- ida_germany |>
   mutate(variable = pretty_var(variable_orig),
          variable = factor(variable, levels = unique(variable)))
 
 ```
 
+Then, we create this code to visualise the distribution of scale variables by year using violin and jitter plots on a log scale, with medians highlighted.
+It allows quick checks of spread, skewness, and outliers over time for monetary measures.
+
 ```{r IDA-scale}
 #chart for scale variables (log axis)
-p_scale <- ida_germany %>%
+p_scale <- ida_germany |>
   filter(variable_orig %in% scale_vars) |>
   mutate(y = if_else(value > 0, value, NA_real_)) |>
   ggplot(aes(x = factor(acct_year), y = y)) +
@@ -480,11 +530,14 @@ p_scale <- ida_germany %>%
 p_scale
 ```
 
-According to the table, the monetary amounts (EUR) variables are heavily right-skewed: most firms are small to mid-sized, with a long tail from a few very large firms (hence the log scale in figures).
+According to the chart, the monetary amounts (EUR) variables are heavily right-skewed: most firms are small to mid-sized, with a long tail from a few very large firms (hence the log scale in figures).
 From 2018 to 2021, medians are relatively stable, with a slight increase in liabilities relative to assets and sales.
 Distributions widen in 2020 and 2021, showing more variability in assets, revenues, and especially net income.
 Net income shows the most significant relative spread, indicating higher volatility in profitability during the pandemic.
 Therefore, in EDA, the median and IQR are used rather than the mean.
+
+After that, we visualise ratio and percentage metrics by year on a linear scale using violin and jitter plots with median markers, faceted by variable.
+It is used to assess distribution shape, central tendency, spread, and potential outliers across time without log transformation.
 
 ```{r IDA-ratio}
 #chart for ratio variables (linear axis)
@@ -504,12 +557,15 @@ p_ratio <- ida_germany |>
 p_ratio
 ```
 
-According to the table, the profitability ratios (EBIT/EBITDA margins, ROA) cluster near small positives, with wider variation in 2020–2021.
+According to the chart, the profitability ratios (EBIT/EBITDA margins, ROA) cluster near small positives, with wider variation in 2020–2021.
 ROE has the heaviest tails and many negatives, indicating pressure on equity returns during the pandemic.
 Solvency is relatively stable with a slight dip around 2020; gearing is more dispersed and somewhat higher in 2020–2021 for some firms.
 Liquidity (current/quick ratios) is generally low, with some moderate levels, but it shows long right tails, reflecting a few firms with strong buffers.
 Efficiency (net assets and stock turnover) is broadly stable.
 Therefore, in EDA, we report median and IQR rather than means, and we cap extreme values in figures only to improve readability while keeping original values for calculations.
+
+Then, we measure missing data for key numeric variables by industry and by year, then visualise year-wise gaps with a heatmap.
+It highlights variables or periods with substantial missingness, guiding imputation, exclusion, or robustness checks before analysis.
 
 ```{r numeric-missingness-check}
 key_vars <- c("total_assets_eur","total_liabilities_eur","total_equity_eur",
@@ -540,6 +596,9 @@ According to the heatmap, missingness is concentrated in the gearing_pct and liq
 The balance-sheet totals and revenue are essentially complete.
 The pattern is stable across 2018 – 2021, with no pandemic-specific spike.
 This means ratio analyses will have smaller sample sizes than level variables.
+
+After that, we used this code to detect outliers in all numeric variables with two rules—IQR (1.5×) and standardized scores (\|z\| \> 3)—and summarise counts and proportions per variable, ordered by the IQR share.
+It flags variables with heavy tails or extreme values to guide winsorisation, transformation, or sensitivity checks before modelling.
 
 ```{r outliers-check}
 num_cols <- c("total_assets_eur","total_liabilities_eur","total_equity_eur",
@@ -576,6 +635,9 @@ Outliers are most common in net_income_eur (around 25%), EBIT margin (about 19%)
 The z-score method identifies far fewer points because many variables are right-skewed, which makes mean/SD-based detection conservative.
 The IQR rule provides a more informative screening here.
 
+Then, we standardise key character fields by trimming whitespace, normalising case, and converting blanks to NA, and report missingness for identifiers and classification codes.
+This ensures consistent keys for joins and grouping, and highlights data quality issues to address before analysis.
+
 ```{r character-check}
 #character variables to check
 char_vars <- c("company_id","company_name","country","city",
@@ -607,9 +669,16 @@ According to the table, identifiers and locations are complete: company_id, comp
 Industry codes are mostly available: NACE has about 2.0% missing, ICB around 6.2%, and SIC approximately 0.1%.
 This indicates that while a small number of firms cannot be classified by NACE alone, most can be identified using the ICB/SIC fallbacks, which are categorised as industrial_group.
 
+After completing the general IDA, we developed the specific IDA to address our sub-questions.
+Here are the details:
+
 ### IDA for Question 1
 
-```{r}
+We first add a period label (Pre-pandemic 2018–2019 vs. Pandemic 2020–2021).
+For visuals, net_income_eur is transformed using asinh() so we can plot both gains and losses on a comparable scale.
+Where ROA/ROE are missing, we recalculate simple fallbacks from the accounting totals and record the sources of the values (reported vs. recomputed).
+
+```{r q1_prepare_profitability_inputs}
 stopifnot("net_income_eur" %in% names(filtered_germany))
 
 filtered_germany_1 <- filtered_germany |>
@@ -638,6 +707,9 @@ filtered_germany_1 <- filtered_germany |>
   )
 ```
 
+Then, we perform a conservative within-firm, within-period “one-gap” fill, patching only a single missing year when adjacent values match.
+It then restores reported values where available.
+
 ```{r}
 #Firm “one-gap” fill within the same period only
 
@@ -663,6 +735,9 @@ filtered_germany_1 <- filtered_germany_1 |>
     roe_step1    = coalesce(roe_use,           roe_step1)
   )
 ```
+
+After that, we impute remaining gaps following a strict hierarchy: first industry and year, then industry and period, and finally period, without crossing period boundaries.
+This process produces the final Q1 variables (EBIT, EBITDA, ROA, ROE) and records the source of each value.
 
 ```{r}
 #median fills in strict order (no cross-period borrowing)
@@ -747,6 +822,9 @@ filtered_germany_1 <- filtered_germany_1 |>
   select(-ends_with("_step1"))
 ```
 
+Then, we summarise imputation provenance by period, counting observations that are reported, firm-filled, or imputed from industry/year/period medians.
+It offers a transparent audit of data construction for Question 1.
+
 ```{r}
 impute_summary_q1 <- filtered_germany_1 |>
   summarise(
@@ -778,13 +856,22 @@ impute_summary_q1 <- filtered_germany_1 |>
     roe_ind_period  = sum(roe_src == "ind×period",          na.rm=TRUE),
     roe_period      = sum(roe_src == "period",              na.rm=TRUE)
   )
+
+impute_summary_q1 |>
+  kable(align = "l", booktabs = TRUE) |>
+  kable_styling(full_width = FALSE, font_size = 11)
 ```
+
+According to the table, EBIT/EBITDA margins: Coverage is high, with about 84% of rows reported directly (3,399/4,071 pre, and 3,337/3,975 pandemic), and the remaining approximately 16% filled using (industry and year) medians.
+No firm-gap or period-level fills were needed.
+Furthermore, ROA: around 98 – 99% is available (or recomputed from net income/assets).
+Only about 1% was recomputed (52 pre and 43 pandemic), and less than 0.3% used (industry and year) fallback (11 pre; 2 pandemic).
+Moreover, ROE: approximately 96% are reported, around 0.5% are recomputed (16 – 18 rows), and about 3.6 – 3.8% use (industry and year) medians.
+Overall, imputations are minimal, transparent, and unlikely to influence results.
 
 ### IDA for Question 2
 
-The analysis focuses on leverage and liquidity indicators for active German firms between 2018 and 2021.
-Key derived variables include debt-to-assets and equity ratio, along with reported measures of gearing, solvency, and current ratio.
-Missing and extreme values were excluded to maintain consistency in year-to-year comparisons.
+The analysis focuses on leverage and liquidity indicators for active German firms between 2018 and 2021. Key derived variables include the debt-to-assets ratio and the equity ratio, along with reported measures of gearing, solvency, and the current ratio. Missing and extreme values were excluded to maintain consistency across year-to-year comparisons.
 
 ```{r}
 # Create leverage and liquidity indicators
@@ -821,235 +908,172 @@ A slight rise in gearing (from 62% to 66%) alongside a modest decline in solvenc
 
 ### IDA for Question 3
 
-```{r financial indicators}
-industry_summary <- filtered_germany  |> 
-  filter(acct_year >= 2020, acct_year <= 2022)  |> 
-  group_by(nace_num2, acct_year) |> 
-  summarise(
-    median_profitability = median(ebit_margin_pct, na.rm = TRUE),
-    median_leverage = median(gearing_pct, na.rm = TRUE),
-    median_liquidity = median(current_ratio, na.rm = TRUE),
-    median_firm_size = median(total_assets_eur, na.rm = TRUE),
-    .groups = "drop"
-  )
+1.  Filter relevant years and active firms for pandemic analysis
+
+```{r Filtering relevant data}
+filtered_germany_q3 <- filtered_germany  |> 
+  filter(acct_year >= 2020, acct_year <= 2022, status == "Active")
 ```
 
-This code calculates summary financial indicators for German industries during the pandemic years 2020–2022.
-First, it filters the dataset to include only accounting years 2020, 2021, and 2022.
-Then, it groups the data by `nace_num2` (industry code) and accounting year.
-For each industry-year combination, it computes the median EBIT margin (`median_profitability`) as a measure of profitability, the median gearing ratio (`median_leverage`) as a measure of financial leverage, the median current ratio (`median_liquidity`) as a measure of short-term liquidity, and the median total assets (`median_firm_size`) as a proxy for firm size.
-The resulting `industry_summary` dataset provides a concise overview of how different industries performed financially across these key dimensions during the pandemic period.
+This code filters the dataset **filtered_germany** to keep only the records relevant for the **pandemic period (2020–2022)** and only **active firms.**
 
-```{r Plot}
+2.  Summary checks on key financial variables for completeness and basic stats
 
-industry_summary <- industry_summary |>
-  mutate(resilience_score = median_profitability / median_leverage * median_liquidity)
+```{r Summary checks}
+financial_vars <- c("ebit_margin_pct", "gearing_pct", "current_ratio", "total_assets_eur")
 
-# Label only top/bottom 5 by resilience score (edit n as needed)
-labels_df <- industry_summary |>
-  arrange(desc(resilience_score)) |>
-  slice_head(n = 5) |>
-  bind_rows(
-    industry_summary |>
-      arrange(resilience_score) |>
-      slice_head(n = 5)
-  )
+summary_stats <- filtered_germany_q3  |> 
+  summarise(across(all_of(financial_vars),
+                   list(
+                     missing = ~sum(is.na(.)),
+                     mean = ~mean(., na.rm = TRUE),
+                     median = ~median(., na.rm = TRUE),
+                     sd = ~sd(., na.rm = TRUE),
+                     min = ~min(., na.rm = TRUE),
+                     max = ~max(., na.rm = TRUE)
+                   )
+                   )) |> 
+  pivot_longer(everything(),
+               names_to = c("variable", "stat"),
+               names_sep = "_",
+               values_to = "value")  |> 
+  pivot_wider(names_from = stat, values_from = value)
 
-ggplot(industry_summary, aes(
-x = median_profitability,
-y = median_leverage,
-size = median_firm_size,
-color = median_liquidity
-)) +
-geom_point(alpha = 0.75) +
-geom_text_repel(
-data = labels_df,
-aes(label = nace_num2),
-color = "black",
-size = 4,
-box.padding = 0.5,
-min.segment.length = 0,
-seed = 42,
-fontface = "bold"
-) +
-scale_size_continuous(range = c(5, 18), labels = scales::comma) +
-scale_color_viridis_c(option = "plasma", direction = -1) +
-labs(
-title = "Financial Resilience of German Industries (2020–2022)",
-subtitle = "EBIT Margin vs Gearing, sized by Firm Size, colored by Liquidity",
-x = "Median EBIT Margin (%)",
-y = "Median Gearing (%)",
-color = "Median Liquidity Ratio",
-size = "Median Total Assets (€)"
-) +
-theme_bw(base_size = 16) +
-theme(
-plot.title = element_text(face = "bold", size = 18),
-plot.subtitle = element_text(size = 12),
-panel.grid.minor = element_blank()
-)
-```
-
-This bubble chart shows the financial resilience of German industries from 2020–2022.
-Median profitability (EBIT margin) is on the x-axis, median leverage (gearing) on the y-axis, bubble size represents firm size, and color indicates liquidity.
-Each point is labeled by its NACE code.
-Industries with high profitability, low leverage, and strong liquidity appear as financially resilient, while those with low profitability, high leverage, or weak liquidity are more vulnerable.
-
-```{r Distribution Plot}
-#| label: fig-financial_resilience_distribution
-#| fig-cap: "Distribution of Financial Resilience Scores Across Industries (2020–2022)"
-
-filtered_germany <- filtered_germany  |> 
-  filter(status == "Active")
-
-# Aggregate by industry for overall resilience comparison
-resilience_summary <- industry_summary  |> 
-  group_by(nace_num2) %>%
-  summarise(avg_resilience = mean(resilience_score, na.rm = TRUE))  |> 
-  arrange(desc(avg_resilience))
-
-# Get top and bottom 10
-top_bottom_resilience <- resilience_summary  |> 
-  slice_head(n = 10)  |> 
-  bind_rows(resilience_summary %>% slice_tail(n = 10))
-
-ggplot(top_bottom_resilience, 
-       aes(x = reorder(nace_num2, avg_resilience), 
-           y = avg_resilience, fill = avg_resilience)) +
-  geom_col(show.legend = FALSE) +
-  coord_flip() +
-  scale_fill_viridis_c(option = "plasma", direction = -1) +
-  labs(
-    title = "Distribution of Financial Resilience Scores: Top and Bottom 10 Industries (2020–2022)",
-    subtitle = "Only the highest and lowest resilience scores shown for clarity",
-    x = "Industry (NACE Level 2)",
-    y = "Average Resilience Score"
-  ) +
-  theme_bw(base_size = 14) +
-  theme(
-    plot.title = element_text(face = "bold", size = 14),
-    plot.subtitle = element_text(size = 11)
-  )
+kable(summary_stats, caption = "Summary Statistics and Missingness for Key Financial Variables (2020–2022)")  |> 
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
 
 ```
 
-This horizontal bar chart visualizes the distribution of average financial resilience scores across German industries from 2020 to 2022.
-Each bar represents a NACE Level 2 industry, ordered from highest to lowest average resilience score.
-The resilience score integrates key financial metrics—profitability, leverage, and liquidity—to assess how well industries managed financial stability during the pandemic.
-Industries with higher scores demonstrated stronger ability to maintain earnings, control debt levels, and preserve liquidity, indicating greater financial robustness.
-The color gradient emphasizes this ranking, with brighter colors reflecting more resilient sectors.
-This visualization clearly highlights sectors that were comparatively vulnerable or resilient in navigating the economic challenges posed by COVID-19.
+This code calculates key summary statistics — including missing values, mean, median, standard deviation, minimum, and maximum — for major financial variables such as profitability, leverage, liquidity, and firm size.
+It provides a quick check on data completeness and helps understand the overall distribution of these variables for active German firms between 2020 and 2022.
 
-```{r}
+3.  Outlier detection using IQR for key variables (function)
 
-top_bottom_resilience <- resilience_summary |>
-  mutate(rank = rank(-avg_resilience)) |>
-  filter(rank <= 5 | rank > max(rank) - 5) |>
-  arrange(rank)
-
-top_bottom_resilience |>
-  rename(
-    `NACE Code` = nace_num2,
-    `Average Resilience Score` = avg_resilience,
-    `Rank` = rank
-  ) |>
-  kable(
-    caption = "Top and Bottom 5 German Industries by Financial Resilience (2020–2022)",
-    digits = 2,
-    col.names = c("NACE Code", "Average Resilience Score", "Rank")
-  ) |>
-  kable_styling(
-    bootstrap_options = c("striped", "hover", "condensed", "responsive"),
-    full_width = FALSE,
-    position = "center",
-    font_size = 12
-  ) |>
-  row_spec(0, bold = TRUE, background = "#f2f2f2") |>
-  column_spec(2, color = "darkgreen") |>
-  column_spec(3, bold = TRUE, color = "darkblue")
+```{r Outlier detection}
+outlier_summary <- function(x) {
+  q1 <- quantile(x, 0.25, na.rm=TRUE)
+  q3 <- quantile(x, 0.75, na.rm=TRUE)
+  iqr <- q3 - q1
+  lower <- q1 - 1.5 * iqr
+  upper <- q3 + 1.5 * iqr
+  sum(x < lower | x > upper, na.rm=TRUE)
+}
+outlier_counts <- filtered_germany_q3  |> 
+  summarise(across(all_of(financial_vars), outlier_summary))
+kable(outlier_counts, caption = "Count of Outliers for Key Financial Variables (IQR Method)")  |> 
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
 
 ```
 
-This table ranks German industries by their **financial resilience from 2020 to 2022**, combining profitability, leverage, and liquidity into a composite resilience score.
-Higher scores indicate industries that sustained earnings while keeping debt manageable and maintaining strong cash positions during the pandemic.
-The ranking shows that **healthcare, technology, and utilities** were the most resilient sectors, benefitting from steady demand and robust balance sheets.
-In contrast, **hospitality, retail, and manufacturing** were the least resilient, as lockdowns, supply disruptions, and high fixed costs eroded profitability and liquidity.
-Overall, the results highlight how structural factors—such as firm size, capital intensity, and sectoral exposure—shaped the uneven financial recovery of German industries during COVID-19.
+This code defines a custom function to detect outliers in each key financial variable using the Interquartile Range (IQR) method.
+It calculates the lower and upper bounds (1.5 × IQR below Q1 and above Q3) and counts how many observations fall outside this range.
+The resulting table shows how many potential outliers exist for each financial metric, helping identify variables that may need further cleaning or transformation.
 
-```{r Time Trend}
-key_industries <- c("Human Health & Social Work", "Manufacturing", "Accommodation & Food", "Information & Communication")
+4.  Check distribution of missing data across years and variables
 
-plot_data <- filtered_germany  |> 
-  filter(industry_group %in% key_industries, acct_year %in% 2018:2021)  |> 
-  group_by(industry_group, acct_year) %>%
-  summarise(median_ebit = median(ebit_margin_pct, na.rm = TRUE), .groups = "drop")
+```{r Distribution of missing data}
+missing_long <- filtered_germany_q3  |> 
+  select(acct_year, all_of(financial_vars))  |> 
+  pivot_longer(cols = -acct_year, names_to = "variable", values_to = "value")  |> 
+  mutate(missing = is.na(value))  |> 
+  group_by(acct_year, variable)  |> 
+  summarise(prop_missing = mean(missing), .groups = "drop")
 
-ggplot(plot_data, aes(x = acct_year, y = median_ebit, color = industry_group)) +
-  geom_line(size = 1.2) +
-  geom_point(size = 3) +
-  geom_text_repel(
-    data = plot_data %>% filter(acct_year == max(acct_year)),
-    aes(label = industry_group),
-    nudge_x = 0.3,
-    direction = "y",
-    hjust = 0,
-    segment.size = 0.25,
-    show.legend = FALSE,
-    size = 4
-  ) +
-  scale_x_continuous(breaks = 2018:2021, limits = c(2018, 2022)) +
-  scale_color_brewer(palette = "Dark2") +
-  labs(
-    title = "Median EBIT Margin Trends by Key Industries (2018–2021)",
-    x = "Accounting Year",
-    y = "Median EBIT Margin (%)",
-    color = "Industry"
-  ) +
-  theme_bw(base_size = 14) +
-  theme(
-    plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
-    axis.text = element_text(color = "black"),
-    axis.title = element_text(face = "bold"),
-    legend.position = "none",
-    panel.grid.minor = element_blank(),
-    plot.margin = margin(10, 30, 10, 10)
-  )
+ggplot(missing_long, aes(x = variable, y = prop_missing, fill = factor(acct_year))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Proportion of Missing Values by Variable and Year",
+       x = "Variable", y = "Proportion Missing", fill = "Year") +
+  theme_minimal()
 ```
 
-This plot shows the trends in median EBIT margin from 2018 to 2021 for key German industries.
-It highlights how profitability evolved through the pre-pandemic and pandemic periods, with each line representing an industry.
-Clear labels mark the industries on the right, making it easy to compare their performance trajectories.
-The visualization reveals that sectors like healthcare and information & communication maintained or improved profitability, while industries such as accommodation & food faced more volatility and declines during the pandemic.
-This comparison underscores varying financial resilience across industries amid COVID-19 challenges.
+This code examines how much data is missing for key financial variables over time and presents it visually.
+It starts by reshaping the dataset into a long format so that each variable and its value are in separate rows.
+Then, it marks whether each observation is missing and calculates the proportion of missing values for each variable within each year.
+Finally, it uses a grouped bar chart to show these proportions by variable and year.
+This helps identify which financial indicators have higher missingness and whether data completeness has improved or worsened across the 2020–2022 period, offering insights into data reliability for further analysis.
+
+5.  Prepare industry code mapping table for reader reference (sample snippet)
+
+```{r Mapping tables}
+nace_codes <- filtered_germany_q3 |> 
+  distinct(nace_num2, industry_group)  |> 
+  arrange(nace_num2)
+
+kable(nace_codes, caption = "NACE Level 2 Code to Industry Mapping") |> 
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+```
+
+This code generates a reference table to help readers interpret industry-level results later in the report.
+It begins by selecting unique combinations of `nace_num2` (the NACE Level 2 industry code) and `industry_group` from the filtered dataset, ensuring that each code is listed only once.
+The table is then arranged in ascending order of `nace_num2` for readability.
+Finally, the `kable()` and `kable_styling()` functions are used to display the results in a clean, professional format.
+This table serves as a useful lookup guide, allowing readers to easily understand which industry each NACE code represents when reviewing the subsequent analyses and visualizations.
 
 ### IDA for Question 4
 
-```{r Q4 IDA}
-# Focus variables for liquidity–profitability analysis
-liq_prof_data <- filtered_germany |>
-  filter(acct_year %in% 2018:2021, status == "Active") |>
-  select(acct_year, industry_group, company_id, company_name, 
-         current_ratio, liquidity_ratio, roa_pct, roe_pct) |>
-  drop_na(current_ratio, roa_pct)
+1.  Data Cleaning on Consolidation Codes
 
-# Summary statistics
-liq_prof_summary <- liq_prof_data |>
-  group_by(acct_year) |>
-  summarise(
-    median_liquidity = median(current_ratio, na.rm = TRUE),
-    iqr_liquidity = IQR(current_ratio, na.rm = TRUE),
-    median_roa = median(roa_pct, na.rm = TRUE),
-    iqr_roa = IQR(roa_pct, na.rm = TRUE)
-  )
+The raw data from Orbis contained financial statements under different consolidation codes (C1, C2, C\*, U1, U2).
+To ensure consistency and comparability, we prioritized consolidated accounts which represent the entire economic entity.
+For each firm-year observation, we retained the highest-priority available consolidated statement following the order: C1 \> C2 \> C\*.
+Unconsolidated statements (U1, U2) were excluded from the analysis.
 
-liq_prof_summary |>
-  knitr::kable(digits = 2, caption = "Liquidity and Profitability Summary (2018–2021)") |>
-  kableExtra::kable_styling(full_width = FALSE, font_size = 11)
+```{r Q4 IDA 1. Data Cleaning on Consolidation Codes}
+germany_q4 <- filtered_germany %>%
+  mutate(
+    consolidation_priority = case_when(
+      consolidation_code == "C1" ~ 1,  # highest priority
+      consolidation_code == "C2" ~ 2,
+      consolidation_code == "C*" ~ 3,
+      consolidation_code == "U1" ~ 99, # Very low priority, about to be filtered
+      consolidation_code == "U2" ~ 99,
+      TRUE ~ 99  # Handle any unexpected code
+    )
+  ) %>%
+  
+  # Group by company and year, and keep only the highest priority records
+  group_by(company_id, fy_year) %>%
+  arrange(consolidation_priority, .by_group = TRUE) %>%
+  slice(1) %>% # Take the first row of each group, which has the highest priority
+  ungroup() %>%
+  # Filter out the remaining non-consolidated records
+  filter(consolidation_priority %in% c(1, 2, 3))
 ```
 
-The summary statistics show that firms’ liquidity positions remained relatively stable throughout 2018–2021, with median current ratios hovering around 1.8–1.9× and a consistent spread (IQR ≈ 2.5).
-In contrast, profitability (measured by ROA) dropped sharply during the pandemic—from 4.1% in 2018 to just 2.3% in 2020—before showing a slight recovery in 2021.
-The increasing IQR for ROA suggests that profitability outcomes became more dispersed, indicating uneven recovery across firms and industries.
+2.  Select the columns to be analyzed
+
+```{r Q4 IDA 2. Select the columns to be analyzed}
+germany_q4 <- germany_q4 %>%
+  select(company_id, fy_year, roa_pct, current_ratio, industry_group)
+```
+
+3.  Convert data into a tsibble object using the tsibble package (Lecture 9, slide 5 & Reading week 9)
+
+Each company was defined as a key and the financial year as the index.
+Basic screening was performed to check for missing values, outliers, and duplicates.
+
+```{r Q4 IDA 3. Convert data into a tsibble object using the tsibble package (Lecture 9, slide 5 & Reading week 9)}
+germany_ts <- germany_q4 %>%
+  as_tsibble(key = company_id, index = fy_year) %>%
+  arrange(company_id, fy_year)
+```
+
+4.  Summary
+
+The trends in ROA and Current Ratio from 2017 to 2021 reveal a distinct pattern, potentially linked to the pandemic.
+ROA showed significant volatility: it was stable pre-pandemic, fell to a negative value in 2020, but then recovered strongly to a peak of 4.90% in 2021.
+In contrast, the Current Ratio remained relatively stable throughout the period, indicating consistent short-term liquidity despite the economic disruption.
+This suggests that while profitability was heavily impacted, the company's ability to meet its short-term obligations was maintained.
+
+```{r Q4 IDA 4. Summary}
+#| label: tbl-summary
+#| tbl-cap: "Trends in Mean Return on Assets (ROA) and Current Ratio from Pre-Pandemic to Post-Pandemic Years (2017-2021)"
+
+kable(germany_ts %>%
+  index_by(fy_year) %>%
+  summarise(mean_roa = mean(roa_pct, na.rm = TRUE),
+            mean_cr = mean(current_ratio, na.rm = TRUE)))
+```
 
 ## EDA
 
@@ -1057,7 +1081,10 @@ The increasing IQR for ROA suggests that profitability outcomes became more disp
 
 **1. How did profitability change across industries?**
 
-```{r}
+This code is used to recode years into pre-pandemic and pandemic periods, reshape key profitability metrics to a long format, and visualise their distributions for all firms.
+It is used to compare central tendency (median) and dispersion (IQR, tails) before versus during the pandemic across EBIT, EBITDA, ROA, ROE, and net income.
+
+```{r q1_profitability_distributions_overall}
 #recode period to short labels
 filtered_germany_1 <- filtered_germany_1 |>
   mutate(period = if_else(acct_year >= 2020, "Pandemic (2020–21)", "Pre (2018–19)"),
@@ -1125,7 +1152,10 @@ ROA and especially ROE show many more extreme negatives in 2020 – 2021, indica
 Net income (asinh) also becomes more dispersed in 2020 –21, with a heavier lower tail, confirming higher volatility.
 A key insight is that central tendencies barely moved while tail risk increased.
 
-```{r}
+This code summarises industry-level median EBITDA margins during the pre-pandemic and pandemic periods, then illustrates the change (Pandemic – Pre) to show the direction and magnitude by sector.
+Using medians ensures a reliable comparison, highlighting typical firms and identifying industries with significant improvements or declines.
+
+```{r q1_industry_ebitda_median_delta}
 #keep only mapped industry
 germ_mapped <- filtered_germany_1 |>
   filter(!is.na(ebitda_margin_q1),
@@ -1134,10 +1164,10 @@ germ_mapped <- filtered_germany_1 |>
   droplevels()
 
 #build medians & delta (Pandemic – Pre)
-eb_med <- germ_mapped %>%
+eb_med <- germ_mapped |>
   mutate(period = if_else(acct_year >= 2020, "Pandemic", "Pre"),
          period = factor(period, levels = c("Pre","Pandemic"))) |>
-  group_by(industry_group, period) %>%
+  group_by(industry_group, period) |>
   summarise(med = median(ebitda_margin_q1, na.rm = TRUE), .groups = "drop") |>
   pivot_wider(names_from = period, values_from = med) %>%
   drop_na(Pre, Pandemic) |> #keep industries with both periods
@@ -1179,27 +1209,48 @@ This question examines whether German firms altered their capital structure or s
 1.  Time trends of leverage and liquidity
 
 ```{r}
-#| label: fig-leverage-liquidity-trend
+#| label: fig-leverage-liquidity-two-panels
 lev_liq_long <- lev_liq_summary |>
   select(acct_year, median_debt_assets, median_liquidity) |>
   pivot_longer(-acct_year, names_to = "indicator", values_to = "value")
 
-ggplot(lev_liq_long, aes(x = acct_year, y = value, colour = indicator, group = indicator)) +
-  geom_line(linewidth = 1.1) +
-  geom_point(size = 3) +
-  facet_wrap(~ indicator, scales = "free_y",
-             labeller = as_labeller(c(median_debt_assets="Debt-to-Assets", median_liquidity="Current Ratio"))) +
-  labs(title = "Trends in Leverage and Liquidity, 2018–2021",
-       x = "Accounting Year", y = "Median Value", colour = NULL) +
+# Debt-to-Assets panel — y-axis ticks at 0.50 and 0.51 only
+p_debt <- lev_liq_long |>
+  filter(indicator == "median_debt_assets") |>
+  ggplot(aes(acct_year, value)) +
+  geom_line(colour = "#E69F00", linewidth = 1.2) +
+  geom_point(colour = "#E69F00", size = 3) +
+  scale_y_continuous(
+    limits = c(0.495, 0.515),
+    breaks = c(0.50, 0.51),
+    labels = scales::number_format(accuracy = 0.01)
+  ) +
+  labs(x = NULL, y = "Median Value", title = "Debt-to-Assets") +
   theme_minimal(base_size = 13) +
-  theme(legend.position = "none",
-        strip.text = element_text(face = "bold"),
-        plot.title = element_text(face = "bold", size = 15))
+  theme(plot.title = element_text(face = "bold"),
+        panel.grid.minor = element_blank())
+
+# Current Ratio panel — its own sensible scale
+p_curr <- lev_liq_long |>
+  filter(indicator == "median_liquidity") |>
+  ggplot(aes(acct_year, value)) +
+  geom_line(colour = "#0072B2", linewidth = 1.2) +
+  geom_point(colour = "#0072B2", size = 3) +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) +
+  labs(x = "Accounting Year", y = "Median Value", title = "Current Ratio") +
+  theme_minimal(base_size = 13) +
+  theme(plot.title = element_text(face = "bold"),
+        panel.grid.minor = element_blank())
+
+# place side-by-side with a common title
+p_debt + p_curr + plot_annotation(title = "Trends in Leverage and Liquidity, 2018–2021") &
+  theme(plot.title = element_text(face = "bold", size = 15))
 ```
 
-The trend plot shows that liquidity (current ratio) remained remarkably **stable** between 2018 and 2021, hovering around **1.8**.
-In contrast, leverage (debt-to-assets) **increased slightly** from **0.50 to 0.51**, indicating a **gradual rise** in firms’ reliance on debt financing through the pandemic period.
-Overall, German firms appear to have maintained adequate liquidity buffers despite modestly higher leverage, suggesting a cautious but resilient financial posture during economic uncertainty.
+The plots show that liquidity (current ratio) remained **broadly stable** from 2018 to 2021, fluctuating only slightly around **1.8** .
+Meanwhile, leverage (debt-to-assets) **rose modestly** from 0.50 to 0.51, peaking in 2020 before easing slightly in 2021.
+This pattern suggests that while firms **marginally increased** their reliance on debt financing during the pandemic, they continued to maintain sufficient short-term liquidity.
+Overall, German firms demonstrated a balanced financial position, reflecting resilience and prudence in managing both debt and liquidity pressures through the COVID-19 period.
 
 2.  Leverage vs Solvency (are highly levered firms less solvent?)
 
@@ -1276,53 +1327,783 @@ Overall, the median leverage levels changed little across years, indicating that
 
 **3. Which German industries showed unexpected financial resilience or vulnerability from 2020 to 2022, and how were these outcomes shaped by profitability, leverage, liquidity, and firm size?**
 
-AAA
+1.  Summarize Financial Indicators & Compute Resilience Score
+
+```{r Financial Indicators}
+industry_summary <- filtered_germany  |> 
+  filter(acct_year >= 2020, acct_year <= 2022)  |> 
+  group_by(nace_num2, acct_year)  |> 
+  summarise(
+    median_profitability = median(ebit_margin_pct, na.rm = TRUE),
+    median_leverage = median(gearing_pct, na.rm = TRUE),
+    median_liquidity = median(current_ratio, na.rm = TRUE),
+    median_firm_size = median(total_assets_eur, na.rm = TRUE),
+    .groups = "drop"
+  )  |> 
+  mutate(resilience_score = median_profitability / median_leverage * median_liquidity)
+
+```
+
+This code calculates summary financial indicators for German industries during the pandemic years 2020–2022.
+First, it filters the dataset to include only accounting years 2020, 2021, and 2022.
+Then, it groups the data by `nace_num2` (industry code) and accounting year.
+For each industry-year combination, it computes the median EBIT margin (`median_profitability`) as a measure of profitability, the median gearing ratio (`median_leverage`) as a measure of financial leverage, the median current ratio (`median_liquidity`) as a measure of short-term liquidity, and the median total assets (`median_firm_size`) as a proxy for firm size.
+The resulting `industry_summary` dataset provides a concise overview of how different industries performed financially across these key dimensions during the pandemic period.
+
+2.  Visualize Overall Financial Resilience with Bubble Chart
+
+```{r Financial resilience}
+labels_df <- industry_summary  |> 
+  arrange(desc(resilience_score))  |> 
+  slice_head(n = 5)  |> 
+  bind_rows(
+    industry_summary  |> 
+      arrange(resilience_score)  |> 
+      slice_head(n = 5)
+  )
+
+ggplot(industry_summary, aes(
+  x = median_profitability,
+  y = median_leverage,
+  size = median_firm_size,
+  color = median_liquidity
+)) +
+  geom_point(alpha = 0.75) +
+  geom_text_repel(
+    data = labels_df,
+    aes(label = nace_num2),
+    color = "black",
+    size = 4,
+    fontface = "bold",
+    box.padding = 0.5,
+    min.segment.length = 0,
+    seed = 42
+  ) +
+  scale_size_continuous(range = c(5,18), labels = scales::comma) +
+  scale_color_viridis_c(option = "plasma", direction = -1) +
+  labs(
+    title = "Financial Resilience of German Industries (2020–2022)",
+    subtitle = "EBIT Margin vs Gearing, sized by Firm Size, colored by Liquidity",
+    x = "Median EBIT Margin (%)",
+    y = "Median Gearing (%)",
+    color = "Median Liquidity Ratio",
+    size = "Median Total Assets (€)"
+  ) +
+  theme_bw(base_size = 16) +
+  theme(
+    plot.title = element_text(face = "bold", size = 18),
+    plot.subtitle = element_text(size = 12),
+    panel.grid.minor = element_blank()
+  )
+```
+
+This bubble chart shows the financial resilience of German industries from 2020–2022.
+Median profitability (EBIT margin) is on the x-axis, median leverage (gearing) on the y-axis, bubble size represents firm size, and color indicates liquidity.
+Each point is labeled by its NACE code.
+Industries with high profitability, low leverage, and strong liquidity appear as financially resilient, while those with low profitability, high leverage, or weak liquidity are more vulnerable.
+
+3.  Top and Bottom 10 Industries by Resilience Score
+
+```{r Top & bottom 10 industries}
+resilience_summary <- industry_summary  |> 
+  group_by(nace_num2)  |> 
+  summarise(avg_resilience = mean(resilience_score, na.rm = TRUE))  |> 
+  arrange(desc(avg_resilience))
+
+top_bottom_resilience <- resilience_summary  |> 
+  slice_head(n = 10) |> 
+  bind_rows(resilience_summary %>% slice_tail(n = 10))
+
+ggplot(top_bottom_resilience, aes(
+  x = reorder(nace_num2, avg_resilience),
+  y = avg_resilience,
+  fill = avg_resilience
+)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  scale_fill_viridis_c(option = "plasma", direction = -1) +
+  labs(
+    title = "Top and Bottom 10 Financially Resilient German Industries (2020–2022)",
+    subtitle = "Industries ranked by average resilience scores",
+    x = "Industry (NACE Level 2)",
+    y = "Average Resilience Score"
+  ) +
+  theme_bw(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(size = 11)
+  )
+
+```
+
+This horizontal bar chart visualizes the distribution of average financial resilience scores across German industries from 2020 to 2022.
+Each bar represents a NACE Level 2 industry, ordered from highest to lowest average resilience score.
+The resilience score integrates key financial metrics—profitability, leverage, and liquidity—to assess how well industries managed financial stability during the pandemic.
+Industries with higher scores demonstrated stronger ability to maintain earnings, control debt levels, and preserve liquidity, indicating greater financial robustness.
+The color gradient emphasizes this ranking, with brighter colors reflecting more resilient sectors.
+This visualization clearly highlights sectors that were comparatively vulnerable or resilient in navigating the economic challenges posed by COVID-19.
+
+4.  Table of Top and Bottom 5 Industries
+
+```{r Top & Bottom 5 industries}
+
+top_bottom_resilience |> 
+  mutate(rank = rank(-avg_resilience))  |> 
+  filter(rank <= 5 | rank > max(rank) - 5)  |> 
+  arrange(rank)  |> 
+  rename(
+    `NACE Code` = nace_num2,
+    `Average Resilience Score` = avg_resilience,
+    `Rank` = rank
+  )  |> 
+  kable(
+    caption = "Top and Bottom 5 German Industries by Financial Resilience (2020–2022)",
+    digits = 2,
+    col.names = c("NACE Code", "Average Resilience Score", "Rank")
+  )  |> 
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+    full_width = FALSE,
+    position = "center",
+    font_size = 12
+  )  |> 
+  row_spec(0, bold = TRUE, background = "#f2f2f2") %>%
+  column_spec(2, color = "darkgreen") %>%
+  column_spec(3, bold = TRUE, color = "darkblue")
+
+```
+
+This table ranks German industries by their **financial resilience from 2020 to 2022**, combining profitability, leverage, and liquidity into a composite resilience score.
+Higher scores indicate industries that sustained earnings while keeping debt manageable and maintaining strong cash positions during the pandemic.
+The ranking shows that **healthcare, technology, and utilities** were the most resilient sectors, benefitting from steady demand and robust balance sheets.
+In contrast, **hospitality, retail, and manufacturing** were the least resilient, as lockdowns, supply disruptions, and high fixed costs eroded profitability and liquidity.
+Overall, the results highlight how structural factors—such as firm size, capital intensity, and sectoral exposure—shaped the uneven financial recovery of German industries during COVID-19.
+
+5.  Trends in Median EBIT Margin by Key German Industries (2018–2021)
+
+```{r Time Trend}
+key_industries <- c("Human Health & Social Work", "Manufacturing", "Accommodation & Food", "Information & Communication")
+
+plot_data <- filtered_germany  |> 
+  filter(industry_group %in% key_industries, acct_year %in% 2018:2021)  |> 
+  group_by(industry_group, acct_year) %>%
+  summarise(median_ebit = median(ebit_margin_pct, na.rm = TRUE), .groups = "drop")
+
+ggplot(plot_data, aes(x = acct_year, y = median_ebit, color = industry_group)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 3) +
+  geom_text_repel(
+    data = plot_data %>% filter(acct_year == max(acct_year)),
+    aes(label = industry_group),
+    nudge_x = 0.3,
+    direction = "y",
+    hjust = 0,
+    segment.size = 0.25,
+    show.legend = FALSE,
+    size = 4
+  ) +
+  scale_x_continuous(breaks = 2018:2021, limits = c(2018, 2022)) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(
+    title = "Median EBIT Margin Trends by Key Industries (2018–2021)",
+    x = "Accounting Year",
+    y = "Median EBIT Margin (%)",
+    color = "Industry"
+  ) +
+  theme_bw(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
+    axis.text = element_text(color = "black"),
+    axis.title = element_text(face = "bold"),
+    legend.position = "none",
+    panel.grid.minor = element_blank(),
+    plot.margin = margin(10, 30, 10, 10)
+  )
+```
+
+This plot shows the trends in median EBIT margin from 2018 to 2021 for key German industries.
+It highlights how profitability evolved through the pre-pandemic and pandemic periods, with each line representing an industry.
+Clear labels mark the industries on the right, making it easy to compare their performance trajectories.
+The visualization reveals that sectors like healthcare and information & communication maintained or improved profitability, while industries such as accommodation & food faced more volatility and declines during the pandemic.
+This comparison underscores varying financial resilience across industries amid COVID-19 challenges.
 
 ### Question 4
 
 **4. How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic?**
 
-```{r Q4 EDA}
-#| label: fig-liquidity-profitability
-#| fig-cap: "Median Profitability (ROA) Across Liquidity Levels, 2018–2021."
-# Trim to reasonable display range (avoid extreme outliers)
-liq_prof_trimmed <- liq_prof_data |>
-  filter(current_ratio > 0.1, current_ratio < 50,
-         roa_pct > -50, roa_pct < 50)
+1.  Data preparation
 
-# Bin liquidity levels (log scale bins for even spread)
-binned_liq <- liq_prof_trimmed |>
-  mutate(liq_bin = cut(current_ratio,
-                       breaks = c(0, 0.5, 1, 2, 3.5, 5, 10, 20, 50, Inf),
-                       include.lowest = TRUE)) |>
-  group_by(acct_year, liq_bin) |>
-  summarise(median_roa = median(roa_pct, na.rm = TRUE), .groups = "drop")
+**Check for missing value (Tutorial 8)**
 
-ggplot(binned_liq, aes(x = liq_bin, y = median_roa, colour = factor(acct_year), group = acct_year)) +
-  geom_line(linewidth = 1.2) +
-  geom_point(size = 2) +
-  labs(
-    title = "Median Profitability (ROA) Across Liquidity Levels",
-    subtitle = "Binned view of liquidity–profitability relationship, 2018–2021",
-    x = "Liquidity Level (Current Ratio, binned)",
-    y = "Median ROA (%)",
-    colour = "Accounting Year"
-  ) +
-  geom_hline(yintercept = 0, colour = "grey70", linetype = "dashed") +
-  annotate("text", x = 7.5, y = 0.5, label = "ROA = 0 threshold", size = 3.5, colour = "grey40") +
-  theme_minimal(base_size = 13) +
-  theme(
-    legend.position = "top",
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    plot.title = element_text(face = "bold", size = 15),
-    plot.subtitle = element_text(size = 12)
+The initial examination of missing values revealed a relatively low proportion of incomplete data in the dataset.
+As shown in @fig-missing_clu, the missing value analysis showed that only 0.5% of the total data was missing, while 99.5% of observations were complete.
+ROA contained between 1% and 1.5% missing values across the dataset, while the current ratio had a slightly higher proportion of missing data, ranging from 1.5% to 2% (@fig-missing_plots).
+
+```{r Q4 EDA 1. Data preparation -Check for missing value}
+#| label: fig-missing_plots
+#| fig-cap: "The plots of Missing Value Distribution"
+
+# Check for missing ROA and CR
+miss_var <- 
+  gg_miss_var(germany_ts, show_pct = TRUE) + 
+  labs(title = "Distribution of Missing Values", 
+       subtitle = "For all variables")
+
+# Check for missing values by industry group
+miss_industry <- germany_ts |> 
+  group_by(industry_group) |> 
+  gg_miss_var(show_pct = TRUE) + 
+  labs(title = "Distribution of Missing Values", 
+       subtitle = "By industry group")
+
+
+# Missing case pattern
+miss_case <- gg_miss_case(germany_ts, show_pct = TRUE) + 
+  labs(title = "Distribution of Missing Case Pattern")
+  
+miss_var / miss_industry / miss_case
+```
+
+```{r Q4 EDA 1. Data preparation -Check for missing value 2}
+#| label: fig-missing_clu
+#| fig-cap: "The plot of clustering to visualize missing patterns"
+
+m3 <- vis_miss(germany_ts, cluster = TRUE, sort_miss = TRUE) +
+  theme(axis.text.x = element_text(size = 8, angle = 45, hjust = 1),
+        axis.text.y = element_text(size = 8))
+
+m3
+```
+
+**Address missingness issues**
+
+The 'Other / Unmapped' category was removed from the study as it comprises companies without clear industry classification.
+
+```{r Q4 EDA 1. Data preparation -Address missingness issues}
+germany_ts <- germany_ts %>%
+  as_tibble() %>%   # Convert to a normal tibble
+  # Remove observations with missing ROA or CR
+  filter(!is.na(roa_pct) & !is.na(current_ratio)) %>%
+   # Remove industries that don't have data in 2019-2021
+  group_by(industry_group) %>%
+  filter(all(2019:2021 %in% fy_year)) %>%
+  filter(industry_group != "Other / Unmapped") %>%
+  ungroup() %>%
+  # Convert back to tsibble format
+  as_tsibble(key = company_id, index = fy_year) %>%
+  arrange(company_id, fy_year)
+```
+
+2.  Industry-level trends of ROA and liquidity (2017–2021) (Lecture 9, slide 24-26, feasts and tsibbletalk)
+
+This section provides an initial visual overview of the pandemic's impact.
+We begin by plotting the average Return on Assets (ROA) and Current Ratio for each industry from 2017 to 2021.
+
+The interactive ROA trends (@fig-ROA_ploty) reveal distinct pandemic responses across industries:
+
+-   Accommodation & Food surged temporarily in 2019 but declined again in 2020.
+
+-   Industrials showed a persistent decline that accelerated post-2020, while Information & Communication rebounded sharply after an initial dip.
+
+-   Financial & Insurance maintained the highest ROA with steady growth throughout, demonstrating remarkable sector resilience.
+
+Based on the Current Ratio trends (@fig-CR_ploty), most industries demonstrated relative stability throughout the period.
+However, two sectors exhibited notable deviations:
+
+-   Consumer Services peaked at 8.14 in 2020 then plummeted to 0.21.
+
+-   Arts, Entertainment & Recreation showed a significant upward trend in liquidity, which appears counterintuitive given pandemic constraints.
+
+-   Financials experienced a substantial decline from 8.17 in 2020 to 4.44 in 2021, indicating a sharp contraction in liquidity buffers during the post-pandemic recovery phase.
+
+-   Construction maintained exceptional stability throughout the period.
+
+```{r Q4 EDA 2. Industry-level trends -Calculate}
+# Calculate the average ROA and current ratio for each industry each year
+industry_ts <- germany_ts %>%
+  group_by(industry_group) %>%
+  index_by(fy_year) %>%
+  summarise(
+    industry_roa = mean(roa_pct, na.rm = TRUE),
+    industry_cr = mean(current_ratio, na.rm = TRUE),
+    n_companies = n()  
+  )
+
+```
+
+```{r Q4 EDA 2. Industry-level trends -ROA}
+#| label: fig-ROA_ploty
+#| fig-cap: "The interactive plot of ROA trends by industry (2017-2021)"
+
+# ROA
+roa_interactive <- industry_ts %>%
+  ggplot(aes(x = fy_year, y = industry_roa, group = industry_group)) +
+  geom_line(aes(color = industry_group), size = 0.8, alpha = 0.7) +
+  geom_vline(xintercept = 2020, linetype = "dashed", color = "red", size = 1) +
+  labs(title = "Interactive ROA Trends by Industry (2017-2021)<br><sub><i>Vertical line indicates pandemic start (2020) - Hover for details<br><sub><i>",
+       x = "Year", y = "ROA (%)") +
+  theme_minimal() +
+  theme(legend.position = "none") 
+
+# Plotly interactive charts -ROA
+roa_plotly <- 
+  ggplotly(roa_interactive, tooltip = c("industry_group", "fy_year", "industry_roa")) %>%
+  plotly::layout(hoverlabel = list(bgcolor = "white", font = list(size = 12)))
+
+roa_plotly
+```
+
+```{r Q4 EDA 2. Industry-level trends -CR}
+#| label: fig-CR_ploty
+#| fig-cap: "The interactive plot of Current Ratio trends by industry (2017-2021)"
+
+# Current ratio
+cr_interactive <- industry_ts %>%
+  ggplot(aes(x = fy_year, y = industry_cr, group = industry_group)) +
+  geom_line(aes(color = industry_group), size = 0.8, alpha = 0.7) +
+  geom_vline(xintercept = 2020, linetype = "dashed", color = "red", size = 1) +
+  labs(title = "Interactive Current Ratio Trends by Industry (2017-2021)<br><sub><i>Vertical line indicates pandemic start (2020) - Hover for details<br><sub><i>",
+       x = "Year", y = "Current Ratio") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+
+cr_plotly <- 
+  ggplotly(cr_interactive, tooltip = c("industry_group", "fy_year", "industry_cr")) %>%
+  plotly::layout(hoverlabel = list(bgcolor = "white", font = list(size = 12)))
+
+
+cr_plotly
+```
+
+3.  Macro-level evidence: Industry recovery patterns (ROA vs CR) - feasts (Lecture 9, slide 24-26, feasts and tsibbletalk)
+
+Now, we will analyze the fundamental relationship between corporate liquidity and profitability across industries during the pandemic period, with particular focus on identifying anomalous recovery patterns.
+
+```{r Q4 EDA 3. Macro-level evidence -Calculate}
+# Calculating time series features
+industry_features <- industry_ts %>%
+  features(industry_roa, feat_stl) %>%
+  rename_with(~ paste0("roa_", .), -industry_group) %>%
+  left_join(
+    industry_ts %>%
+      features(industry_cr, features = feat_stl) %>%
+      rename_with(~ paste0("cr_", .), -industry_group),
+    by = "industry_group"
+  )
+
+# Focus on trend_strength and spikiness
+focus_features <- industry_features %>%
+  select(industry_group, 
+         roa_trend_strength, roa_spikiness,
+         cr_trend_strength, cr_spikiness)
+```
+
+**Trend strength analysis**
+
+The trend strength visualization in @fig-trend_in reveals significant disruptions to industry financial fundamentals.
+Five industries in the bottom-left quadrant, indicating severe deterioration in both ROA and Current Ratio trends.
+Accommodation & Food has the largest bubble, reflecting extreme volatility and weak performance during pandemic restrictions.
+This pattern reflects the extreme operational challenges faced by hospitality-related sectors during pandemic restrictions.
+
+```{r Q4 EDA 3. Macro-level evidence -Trend strength analysis}
+#| label: fig-trend_in
+#| fig-cap: "Scatter plot visualizing trend strength disruption across industries during the pandemic period. The 0.3 threshold lines demarcate sectors experiencing significant breakdown in ROA (x-axis) and Current Ratio (y-axis) trends, with bubble size representing ROA spikiness as a measure of financial instability. Industries in bottom-left corner are most severely impacted."
+
+# Trend strength analysis to identify the hardest-hit sectors
+trend_analysis <- focus_features %>%
+  mutate(
+    # Identify sectors where trends are broken (low trend strength)
+    roa_trend_disrupted = roa_trend_strength < 0.3,
+    cr_trend_disrupted = cr_trend_strength < 0.3,
+    overall_trend_impact = (roa_trend_strength + cr_trend_strength) / 2
+  )
+
+# Create plot
+trend_plot <- focus_features %>%
+  ggplot(aes(x = roa_trend_strength, y = cr_trend_strength)) +
+  geom_point(aes(size = roa_spikiness, 
+                 color = industry_group, 
+                 text = industry_group), alpha = 0.7) +
+  geom_hline(yintercept = 0.3, linetype = "dashed", color = "red", alpha = 0.7) +
+  geom_vline(xintercept = 0.3, linetype = "dashed", color = "red", alpha = 0.7) +
+   labs(title = "Impact of Pandemic on Industry Trend Strength<br><sub><i>Red dashed lines indicate trend strength threshold (0.3)<br><sub><i>",
+       x = "ROA Trend Strength", y = "Current Ratio Trend Strength",
+       size = "ROA Spikiness") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+# Convert to interactive plotly
+trend_in <- ggplotly(trend_plot, tooltip = c("text", "x", "y", "size")) %>%
+  plotly::layout(
+    hoverlabel = list(bgcolor = "white", font = list(size = 12)),
+    annotations = list(
+      list(
+        x = 0.3, y = 1,
+        xref = "x", yref = "y",
+        text = "Threshold (0.3)",
+        showarrow = FALSE,
+        font = list(color = "red", size = 10)
+      )
+    )
+  )
+
+trend_in
+```
+
+**Volatility analysis**
+
+After trend strength analysis, the volatility examination in @fig-volatility_in demonstrates divergent patterns in financial metric instability.
+Five industries show high ROA volatility, but most have moderate Current Ratio spikiness.
+However, Consumer Services is exceptional with the highest Current Ratio spikiness, suggesting unique liquidity challenges.
+
+```{r Q4 EDA 3. Macro-level evidence -Volatility analysis}
+#| label: fig-volatility_in
+#| fig-cap: "Volatility analysis of industry financial metrics during pandemic. Plot displays ROA spikiness (x-axis) against Current Ratio spikiness (y-axis), with industry groups color-coded and bubble sizes indicating ROA trend strength. Median values marked with dashed blue lines. Top-right industries have highest volatility. The ROA spikiness of the Accommodation industry exceeds 20,000 and is not shown in the figure."
+
+# Volatility analysis to identify the sectors with the greatest volatility during the pandemic
+volatility_analysis <- focus_features %>%
+  mutate(
+    high_roa_volatility = roa_spikiness > median(roa_spikiness),
+    high_cr_volatility = cr_spikiness > median(cr_spikiness),
+    overall_volatility = (scale(roa_spikiness) + scale(cr_spikiness)) / 2)
+
+volatility_plot <- focus_features %>%
+  ggplot(aes(x = roa_spikiness, y = cr_spikiness)) +
+  geom_point(aes(color = industry_group, 
+                 size = roa_trend_strength, 
+                 text = industry_group), alpha = 0.7) +
+  geom_hline(yintercept = median(focus_features$cr_spikiness), 
+             linetype = "dashed", color = "blue", alpha = 0.5) +
+  geom_vline(xintercept = median(focus_features$roa_spikiness), 
+             linetype = "dashed", color = "blue", alpha = 0.5) +
+  coord_cartesian(xlim = c(0, quantile(focus_features$roa_spikiness, 0.90))) + # Limit to 75% quantile
+  labs(title = "Industry Volatility Analysis During Pandemic<br><sub><i>Blue dashed lines represent medians, excluding the extreme values<br><sub><i>",
+       x = "ROA Spikiness", y = "Current Ratio Spikiness",
+       size = "ROA Trend Strength") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+
+volatility_in <- ggplotly(volatility_plot, tooltip = c("text", "x", "y", "size")) %>%
+  plotly::layout(
+    hoverlabel = list(bgcolor = "white", font = list(size = 12)),
+    annotations = list(
+      list(
+        x = median(focus_features$roa_spikiness),
+        y = 0.9,
+        xref = "x", yref = "paper",
+        text = "Median ROA Spikiness",
+        showarrow = FALSE,
+        font = list(color = "blue", size = 10)
+      ),
+      list(
+        x = 0.5,
+        y = median(focus_features$cr_spikiness),
+        xref = "paper", yref = "y",
+        text = "Median CR Spikiness",
+        showarrow = FALSE,
+        font = list(color = "blue", size = 10)
+      )
+    )
+  )
+
+volatility_in
+```
+
+**Threshold-based industry classification**
+
+Given the exploratory focus of our study and limited emphasis on clustering methods in lectures, we instead used threshold-based segmentation to classify industries into recovery archetypes.
+This approach categorizes industries based on their ROA trend strength and volatility using the following criteria:
+
+-   High trend strength (≥0.7) + Low spikiness (≤median) → "Resilient industries"
+
+-   Low trend strength (≤0.3) + High spikiness (≥75th percentile) → "K-shaped recovery industries"
+
+-   High trend strength (≥0.7) + High spikiness (≥75th percentile) → "Hidden crisis industries"
+
+-   All other combinations → "Moderate impact industries"
+
+As shown in @fig-classification, the analysis reveals clear patterns of differential recovery across sectors.
+The Construction and Financial & Insurance sectors demonstrate resilient characteristics, maintaining stable performance throughout the pandemic period.
+Arts, Entertainment & Recreation , Accommodation & Food Services, and Information & Communication exhibit K-shaped recovery patterns.
+The Administrative & Support sector falls into the hidden crisis category, suggesting underlying structural issues.
+This classification provides valuable insights into how different industries navigated the pandemic's challenges.
+Next part, we will focus on the anomalous K-shaped recoveries that suggest uneven performance within certain sectors and resilient industry.
+
+```{r Q4 EDA 3. Macro-level evidence -industry classes}
+industry_classes <- focus_features %>%
+  mutate(
+    # Calculate threshold
+    trend_threshold_high = 0.7,
+    trend_threshold_low = 0.3,
+    spikiness_threshold_high = quantile(roa_spikiness, 0.75),
+    
+    # Classification
+    recovery_pattern = case_when(
+      roa_trend_strength >= trend_threshold_high & 
+        roa_spikiness <= median(roa_spikiness) ~ "Resilient",
+      roa_trend_strength <= trend_threshold_low & 
+        roa_spikiness >= spikiness_threshold_high ~ "K-shaped",
+      roa_trend_strength >= trend_threshold_high & 
+        roa_spikiness >= spikiness_threshold_high ~ "Hidden Crisis",
+      TRUE ~ "Moderate Impact"
+    )
   )
 ```
 
-The line chart illustrates how median profitability (ROA) varies across different liquidity levels for German firms between 2018 and 2021.
-In the pre-pandemic years (2018–2019), profitability increased steadily with higher liquidity up to around a current ratio of 3–4, reflecting an efficient balance between liquidity and asset use.
-However, this positive relationship weakened during 2020, when firms with higher liquidity did not achieve correspondingly higher returns.
-The 2021 pattern shows partial recovery but remains flatter than before, suggesting that while firms regained some profitability, the traditional liquidity–profitability link fractured under pandemic-related financial constraints.
+```{r Q4 EDA 3. Macro-level evidence -industry classes figure}
+#| label: fig-classification
+#| fig-cap: "Classification of industry recovery patterns based on ROA trend strength and volatility. Four distinct patterns emerge: Resilient (high trend strength, low volatility), K-shaped (low trend strength, high volatility), Hidden Crisis (high trend strength but high volatility), and Moderate Impact (all others). Dashed lines represent classification thresholds."
+
+classification_plot <- industry_classes %>%
+  ggplot(aes(x = roa_trend_strength, y = roa_spikiness, 
+             color = recovery_pattern, 
+             text = paste("Industry:", industry_group,
+                         "<br>Recovery Pattern:", recovery_pattern,
+                         "<br>ROA Trend Strength:", round(roa_trend_strength, 3),
+                         "<br>ROA Spikiness:", round(roa_spikiness, 3)))) +
+  geom_point(size = 2, alpha = 0.7) +
+  geom_vline(xintercept = c(0.3, 0.7), linetype = "dashed", alpha = 0.5) +
+  geom_hline(yintercept = median(industry_classes$roa_spikiness), 
+             linetype = "dashed", alpha = 0.5) +
+  labs(title = "Industry Recovery Patterns Classification",
+       x = "ROA Trend Strength", y = "ROA Spikiness",
+       color = "Recovery Pattern") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+
+classification_plotly <- ggplotly(classification_plot, tooltip = "text") %>%
+  plotly::layout(
+    hoverlabel = list(bgcolor = "white", font = list(size = 12)),
+    title = list(
+      text = "Industry Recovery Patterns Classification<br><sub><i>Based on ROA trend strength and volatility analysis</i></sub>",
+      x = 0.05
+    ),
+    margin = list(t = 100)
+  )
+
+classification_plotly
+```
+
+4.  Micro-level evidence of anomalous recovery patterns across industries (ROA and liquidity) - scagnostics (Tignostics) (Lecture 8, 22-27 & Lecture 9, slide 24)
+
+In this section we track how the firm-level relationship between liquidity (Current Ratio) and profitability (ROA) changed during the COVID-19 period.
+We approach is to treat each firm as a point in the CR–ROA plane, then study the shape of each industry’s point cloud year by year.
+We use scagnostic metrics to quantify those shapes, and we fit a simple linear model (ROA \~ Current Ratio) for every industry × year to extract slope and residual volatility.
+We treat 2020 as the COVID year and compare values before and after 2020.
+
+**Data and methods**
+
+We select industries previously identified in the macro analysis (industries labelled K-shaped, Resilient, or Hidden Crisis).
+For each industry × fiscal year we:
+
+-   keep firm-level pairs (current_ratio, roa_pct);
+
+-   calculate scagnostic metrics: outlying, stringy, striated, clumpy, sparse, monotonic, dcor;
+
+-   fit a linear model roa_pct \~ current_ratio and record slope and residual SD;
+
+-   compute year-to-year slope changes and count “jumps” (a jump = \|slope change\| \> 0.5);
+
+-   compute pre/post differences in mean residual SD and mean slope (post − pre).
+
+-   When an industry × year has too few firms (\< 3) the scagnostics or regression are not reported (NA).
+
+**How to read the scagnostic metrics**
+
+-   Clumpy: higher values indicate the points form separate clusters → suggests within-industry divergence (possible K-shaped pattern).
+
+-   Outlying: higher values indicate presence of extreme firms (very strong survivors or very weak firms).
+
+-   Stringy / Monotonic: higher values indicate a clearer linear or monotonic relationship between CR and ROA.
+
+-   Residual SD: higher residual SD from the linear fit signals more unexplained scatter (higher micro volatility).
+
+```{r Q4 EDA 4. Micro-level evidence -data}
+selected_industries <- industry_classes %>%
+  filter(recovery_pattern %in% c("K-shaped", "Resilient", "Hidden Crisis")) %>%
+  pull(industry_group)
+
+# Extract the companies time series data of these industries
+selected_companies_ts <- germany_ts %>%
+  filter(industry_group %in% selected_industries)
+```
+
+```{r Q4 EDA 4. Micro-level evidence -Calculate scagnostic}
+#| label: tbl-company
+#| tbl-cap: "Summary statistics for industries with significant slope changes (jumps > 0). The table shows average slope, maximum absolute slope change, mean residual standard deviation, number of jumps, and differences in volatility and slope before and after the COVID-19 pandemic for three industries: Wholesale & Retail Trade, Information & Communication, and Financial & Insurance."
+
+# Aggregate the original point set by industry × year
+by_ind_year <- selected_companies_ts %>%
+  group_by(industry_group) %>%
+  index_by(fy_year) %>%
+  nest(data = c(company_id, roa_pct, current_ratio)) %>%
+  mutate(n_obs = map_int(data, ~ nrow(.x)))
+
+# Calculate scagnostics
+scag_names <- c("outlying", "stringy", "striated", "clumpy", "sparse", "monotonic", "dcor")
+
+by_ind_year <- by_ind_year %>%
+  mutate(
+    scags = map(data, ~ {
+      df <- .x
+      # When there are too few samples, return a row of tibble with the same column names and types.
+      if (nrow(df) < 3) {
+        return(as_tibble(set_names(as.list(rep(NA_real_, length(scag_names))), scag_names)))
+      }
+      res <- calc_scags(df$current_ratio, df$roa_pct, scags = scag_names)
+      # Make sure to convert to atomic vectors and name them, then convert to tibble
+      res_vec <- unlist(res)
+      res_named <- set_names(as.numeric(res_vec[scag_names]), scag_names)
+      as_tibble(as.list(res_named))
+    })
+  ) %>%
+  unnest(cols = scags)  # Expand into multiple columns
+
+# Fit a linear regression for each industry × year and extract slope, intercept, and resid_sd
+by_ind_year <- by_ind_year %>%
+  mutate(
+    fit = map(data, ~ {
+      df <- .x
+      if (nrow(df) < 3 || all(is.na(df$current_ratio)) || all(is.na(df$roa_pct))) return(NULL)
+      lm(roa_pct ~ current_ratio, data = df)
+    }),
+    slope = map_dbl(fit, ~ if (is.null(.x)) NA_real_ else coef(.x)[["current_ratio"]]),
+    intercept = map_dbl(fit, ~ if (is.null(.x)) NA_real_ else coef(.x)[["(Intercept)"]]),
+    resid_sd = map_dbl(fit, ~ if (is.null(.x)) NA_real_ else sd(residuals(.x), na.rm = TRUE))
+  ) %>%
+  select(-fit)
+
+# Take industry as a time series and calculate its evolution characteristics
+industry_tignostics <- by_ind_year %>%
+  arrange(industry_group, fy_year) %>%
+  group_by(industry_group) %>%
+  mutate(
+    slope_lag = dplyr::lag(slope),
+    slope_change = slope - slope_lag,   # year-to-year change in slope
+    slope_pct_change = (slope - slope_lag) / abs(slope_lag) * 100,
+    resid_sd_lag = dplyr::lag(resid_sd),
+    resid_sd_change = resid_sd - resid_sd_lag,
+    # jumps: count of year-to-year slope changes bigger than a threshold (e.g. 0.5)
+    big_slope_jump = if_else(abs(slope_change) > 0.5, 1, 0),
+    jumps_cumulative = cumsum(replace_na(big_slope_jump, 0))
+  ) %>%
+  ungroup()
+
+# Calculate the overall volatility_shift (post - pre) before and after the epidemic (taking 2020 as the epidemic year)
+vol_shift <- by_ind_year %>%
+  mutate(period = case_when(
+    fy_year < 2020 ~ "pre",
+    fy_year == 2020 ~ "covid_year",
+    fy_year > 2020 ~ "post"
+  )) %>%
+  group_by(industry_group, period) %>%
+  summarise(mean_resid_sd = mean(resid_sd, na.rm = TRUE),
+            mean_slope = mean(slope, na.rm = TRUE),
+            .groups = "drop") %>%
+  pivot_wider(names_from = period, values_from = c(mean_resid_sd, mean_slope)) %>%
+  mutate(
+    vol_pre_post_diff = mean_resid_sd_post - mean_resid_sd_pre,
+    slope_pre_post_diff = mean_slope_post - mean_slope_pre
+  )
+
+# Merge the results to generate the final summary
+industry_summary <- industry_tignostics %>%
+  group_by(industry_group) %>%
+  summarise(
+    n_years = n_distinct(fy_year),
+    avg_slope = mean(slope, na.rm = TRUE),
+    max_abs_slope_change = if (all(is.na(slope_change))) NA_real_ else max(abs(slope_change), na.rm = TRUE),
+    mean_resid_sd = mean(resid_sd, na.rm = TRUE),
+    jumps = if (all(is.na(jumps_cumulative))) 0 else max(jumps_cumulative, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  left_join(vol_shift %>% select(industry_group, vol_pre_post_diff, slope_pre_post_diff), by = "industry_group")
+
+kable(industry_summary %>% filter(jumps > 0) %>%
+        select(-n_years))
+```
+
+```{r Q4 EDA 4. Micro-level evidence -scagnostic figure}
+#| label: fig-scagnostic
+#| fig-cap: "This figure shows how four scagnostic metrics changed over time across different industries. The red dashed line marks the year 2020 when COVID-19 pandemic occurred. We can see variations in outlying (extreme values), clumpy (clustering patterns), stringy (linear relationships), and monotonic (consistent trends) metrics before and after the pandemic."
+#| warning: false
+
+scag_long <- by_ind_year %>%
+  select(industry_group, fy_year, clumpy, outlying, stringy, monotonic) %>%
+  pivot_longer(cols = c(clumpy, outlying, stringy, monotonic),
+               names_to = "scag_metric", values_to = "value")
+
+ggplot(scag_long, aes(x = fy_year, y = value, color = industry_group)) +
+  geom_line(linewidth = 0.7) +
+  facet_wrap(~ scag_metric, scales = "free_y") +
+  geom_vline(xintercept = 2020, linetype = "dashed", color = "red") +
+  labs(
+    title = "Evolution of Scagnostic Metrics over Time",
+    subtitle = "Dashed line = COVID year (2020)",
+    x = "Fiscal Year", y = "Scagnostic Value"
+  ) +
+  theme_minimal()
+```
+
+```{r Q4 EDA 4. Micro-level evidence -animated_plot}
+#| label: fig-animated_plot
+#| fig-cap: "The animated plot shows the yearly scatter of firms in the CR–ROA plane and fitted lines."
+
+p <- ggplot(selected_companies_ts, aes(x = current_ratio, y = roa_pct, color = industry_group)) +
+  geom_point(size = 2, alpha = 0.6) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Year: {frame_time}", x = "Current Ratio", y = "ROA (%)") +
+  transition_time(fy_year) +
+  ease_aes("linear")
+anim <- animate(p, nframes = 100, fps = 6,
+                device = "ragg_png", 
+                renderer = gifski_renderer("images/my_animation.gif"))
+
+
+knitr::include_graphics("images/my_animation.gif")
+
+```
+
+**Main results**
+
+@tbl-company reports summary statistics for industries with at least one large slope jump (jumps \> 0).
+Three industries experienced jumps: Arts, Entertainment & Recreation, Information & Communication, and Financial & Insurance.
+Some industries (e.g., Construction, Accommodation & Food, Administrative & Support) have too few firms in some years and therefore produce NA for scagnostics.
+@fig-scagnostic shows time series of four metrics (outlying, clumpy, stringy, monotonic) with a vertical line at 2020.
+
+**Key patterns observed:**
+
+| Industry | Change after 2020 | Interpretation |
+|------------------------|------------------------|------------------------|
+| **Financial & Insurance** | ↑ *clumpy*, ↓ *stringy*, ↑ *monotonic* | Increased fragmentation suggests a K-shaped recovery; weakened linear CR–ROA relationship; stronger monotonic trend implies more structured but divergent performance. |
+| **Arts, Entertainment & Recreation** | ↓ *clumpy*, ↑ *outlying*, ↑ *monotonic* | Fewer internal clusters but more extreme performers; stronger monotonic trend indicates clearer performance–liquidity relationship post-pandemic. |
+| **Information & Communication** | ↓ *clumpy*, stable *outlying*, ↑ monotonic | Reduced clustering with no significant outliers; strong monotonic rise implies more uniform and predictable firm behavior. |
+
+The animated plot (@fig-animated_plot) shows the yearly scatter of firms in the CR–ROA plane and fitted lines.
+This animation helps visualise how point clouds split, shift, or tighten around a trend line.
+
+**Limitations**
+
+Results are descriptive: scagnostics indicate shape changes but do not prove causality.
+We will triangulate these micro results with macro indicators (feasts features) in the final section.
+
+5.  Summary and interpretation
+
+The exploratory analysis demonstrates that the relationship between corporate profitability and liquidity evolved unevenly across industries during the pandemic.
+More importantly, the recovery patterns were not the same across or within industries, showing clear evidence of a K-shaped recovery in some sectors.
+
+At the macro level, trend strength and volatility analysis revealed clear segmentation: some industries such as Construction and Finance showed resilient recovery, while others, like Accommodation, Information and Recreation, exhibited K-shaped patterns with disrupted ROA trends and high volatility.
+
+The micro-level scagnostic analysis further confirmed this divergence.
+After removing several industries which have small yearly samples (Construction,\
+Accommodation & Food, and Administrative & Support), the industries showing K-shaped tendencies at the macro level exhibited notable shifts in scagnostic measures.
+Specifically, Financial & Insurance displayed a clear rise in clumpiness, signaling within-sector fragmentation, while Arts, Entertainment & Recreation showed growing outlying behavior, reflecting the emergence of extreme performers.
+In contrast, resilient sectors maintained relatively stable and monotonic liquidity–profitability relationships throughout the period.
+
+These results suggest that the pandemic not only altered the overall financial dynamics between liquidity and profitability but also intensified disparities within certain industries, forming a distinct K-shaped recovery pattern.
 
 ## Conclusions
 
@@ -1344,7 +2125,37 @@ Taken together, these findings indicate that the pandemic did not fundamentally 
 
 **Question 3**
 
+The initial data analysis carefully prepared the dataset for question 3 by filtering for the pandemic years 2020 to 2022 and active firms.
+Key financial indicators—profitability, leverage, liquidity, and firm size—were inspected for completeness and outliers, ensuring data integrity.
+Summary statistics and visualizations of missingness confirmed data suitability for further analysis.
+These steps established a robust foundation for evaluating financial resilience across German industries.
+
+The exploratory data analysis then computed a composite resilience score combining these financial dimensions and used clear visualizations such as bubble charts and bar plots to identify which industries were most and least resilient.
+Healthcare, technology, and utilities emerged as strong performers, supported by high profitability and liquidity alongside moderate leverage and larger firm size, while hospitality, retail, and manufacturing sectors showed relative vulnerability.
+Time trend analyses of median EBIT margins further contextualized these findings, illustrating how different sectors navigated the pandemic’s economic shocks.
+Together, the analyses demonstrate that structural financial characteristics shaped industry-specific outcomes, providing valuable insights for economic recovery strategies.
+
 **Question 4**
+
+We explored how the relationship between corporate liquidity and profitability changed and fractured across industries during the COVID-19 pandemic.
+By combining time-series feature analysis and scagnostic techniques, we examined both macro- and micro-level financial dynamics among Australian industries.
+At the macro level, industries did not recover equally.
+At the micro level, the scagnostic measures confirmed these differences.
+
+Overall, the findings suggest that the pandemic not only weakened the general link between liquidity and profitability but also created new divisions within industries.
+These results highlight the importance of financial flexibility and risk management, as firms with stronger liquidity positions tended to recover more quickly.
+Future research could examine how government support or firm characteristics contributed to these uneven recovery patterns.
+
+Overall, the findings suggest that the pandemic not only weakened the general link between liquidity and profitability but also created new divisions within industries.
+These results highlight the importance of financial flexibility and risk management, as firms with stronger liquidity positions tended to recover more quickly.
+Future research could examine how government support or firm characteristics contributed to these uneven recovery patterns.
+
+Final conclusion 
+
+The COVID-19 pandemic had a moderate but uneven impact on corporate financials in Germany, revealing both stability in overall performance and divergence across industries. Profitability (Q1) remained broadly stable during the pandemic, although variation across firms increased. Service-oriented and technology sectors demonstrated greater resilience, while capital-intensive industries such as Manufacturing, Construction, and Transport experienced declines.
+Leverage and liquidity patterns (Q2) indicate that firms maintained stable liquidity buffers while slightly increasing leverage, reflecting cautious yet sustainable financial management during a period of uncertainty. Industry-level results (Q3) suggest that structural factors, rather than short-term shocks, primarily determined resilience—Manufacturing and Construction remained highly leveraged, whereas service-based sectors retained stronger liquidity positions. Finally, the relationship between liquidity and profitability (Q4) weakened during the pandemic, as some firms prioritised liquidity preservation at the expense of profitability.
+Overall, German firms displayed financial prudence and adaptability, effectively absorbing the short-term financial pressures of COVID-19. However, the crisis amplified existing disparities, strengthening already resilient sectors while leaving more leveraged industries relatively vulnerable.
+
 
 ## Resources
 
@@ -1354,6 +2165,18 @@ Wickham H, Averick M, Bryan J, Chang W, McGowan LD, François R, Grolemund G, Ha
 "Welcome to the tidyverse." *Journal of Open Source Software*, *4*(43), 1686.
 [doi:10.21105/joss.01686](https://doi.org/10.21105/joss.01686).
 
-The links to my use of ChatGPT for help on this assignment are:
+The links to my use of ChatGPT and other AI for help on this assignment are:
 
--   [https://chatgpt.com/share/68857a22-debc-8001-bfcc-10552befba4c]() helped to XXX.
+Q4: Jingyi
+
+-   <https://chatgpt.com/share/68f3046d-1ad8-800d-bc11-1b005a9e600f> helped to implement animated graphics and optimize content.
+
+-   <https://chatgpt.com/share/68f304c8-a088-800d-be54-939dfcd7e278> helped to evaluate whether the questions are answered adequately and where to make revisions.
+
+-   <https://chatgpt.com/share/68f305ad-f15c-800d-b724-fc917c1a93ef> helped to deal with the problem that package ‘tignostics’ is not available for this version of R and how to use scagnostics.
+
+-   <https://chatgpt.com/share/68f30667-24e0-800d-bf8c-2bd69f441dd0> helped to give me some frameworks of Macro-level analysis.
+
+-   <https://chat.deepseek.com/share/iyzmciy2k1isbwdirn> helped to solve the problem of Rtools and deal with the problem that package ‘tignostics’ is not available for this version of R.
+
+-   <https://chat.deepseek.com/share/r0cv9eg5fgn2xan3no> helped to optimize graphs.
