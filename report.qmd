@@ -638,9 +638,9 @@ After completing the general IDA, we developed the specific IDA to address our s
 
 ### IDA for Question 1
 
-AAA
+We first add a period label (Pre-pandemic 2018–2019 vs. Pandemic 2020–2021). For visuals, net_income_eur is transformed using asinh() so we can plot both gains and losses on a comparable scale. Where ROA/ROE are missing, we recalculate simple fallbacks from the accounting totals and record the sources of the values (reported vs. recomputed).
 
-```{r}
+```{r q1_prepare_profitability_inputs}
 stopifnot("net_income_eur" %in% names(filtered_germany))
 
 filtered_germany_1 <- filtered_germany |>
@@ -669,7 +669,7 @@ filtered_germany_1 <- filtered_germany |>
   )
 ```
 
-AAA
+Then, we perform a conservative within-firm, within-period “one-gap” fill, patching only a single missing year when adjacent values match. It then restores reported values where available.
 
 ```{r}
 #Firm “one-gap” fill within the same period only
@@ -697,7 +697,7 @@ filtered_germany_1 <- filtered_germany_1 |>
   )
 ```
 
-AAA
+After that, we impute remaining gaps following a strict hierarchy: first industry and year, then industry and period, and finally period, without crossing period boundaries. This process produces the final Q1 variables (EBIT, EBITDA, ROA, ROE) and records the source of each value.
 
 ```{r}
 #median fills in strict order (no cross-period borrowing)
@@ -782,7 +782,7 @@ filtered_germany_1 <- filtered_germany_1 |>
   select(-ends_with("_step1"))
 ```
 
-AAA
+Then, we summarise imputation provenance by period, counting observations that are reported, firm-filled, or imputed from industry/year/period medians. It offers a transparent audit of data construction for Question 1.
 
 ```{r}
 impute_summary_q1 <- filtered_germany_1 |>
@@ -815,7 +815,13 @@ impute_summary_q1 <- filtered_germany_1 |>
     roe_ind_period  = sum(roe_src == "ind×period",          na.rm=TRUE),
     roe_period      = sum(roe_src == "period",              na.rm=TRUE)
   )
+
+impute_summary_q1 |>
+  kable(align = "l", booktabs = TRUE) |>
+  kable_styling(full_width = FALSE, font_size = 11)
 ```
+
+According to the table, EBIT/EBITDA margins: Coverage is high, with about 84% of rows reported directly (3,399/4,071 pre, and 3,337/3,975 pandemic), and the remaining approximately 16% filled using (industry and year) medians. No firm-gap or period-level fills were needed. Furthermore, ROA: around 98 – 99% is available (or recomputed from net income/assets). Only about 1% was recomputed (52 pre and 43 pandemic), and less than 0.3% used (industry and year) fallback (11 pre; 2 pandemic). Moreover, ROE: approximately 96% are reported, around 0.5% are recomputed (16 – 18 rows), and about 3.6 – 3.8% use (industry and year) medians. Overall, imputations are minimal, transparent, and unlikely to influence results.
 
 ### IDA for Question 2
 
