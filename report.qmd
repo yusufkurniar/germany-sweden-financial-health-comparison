@@ -920,7 +920,7 @@ A slight rise in gearing (from 62% to 66%) alongside a modest decline in solvenc
 
 ### IDA for Question 3
 
-1.  Filter relevant years and active firms for pandemic analysis
+1.  Filter relevant years and active firms for pandemic analysis (Lecture - 2 & 3)
 
 ```{r Filtering relevant data}
 filtered_germany_q3 <- filtered_germany  |> 
@@ -929,7 +929,7 @@ filtered_germany_q3 <- filtered_germany  |>
 
 This code filters the dataset **filtered_germany** to keep only the records relevant for the **pandemic period (2020–2022)** and only **active firms.**
 
-2.  Summary checks on key financial variables for completeness and basic stats
+2.  Summary checks on key financial variables for completeness and basic stats (Lecture - 2,3 & 5)
 
 ```{r Summary checks}
 options(scipen = 999)
@@ -979,7 +979,7 @@ kable(summary_stats_tidy,
 This code calculates key summary statistics — including missing values, mean, median, standard deviation, minimum, and maximum — for major financial variables such as profitability, leverage, liquidity, and firm size.
 It provides a quick check on data completeness and helps understand the overall distribution of these variables for active German firms between 2020 and 2022.
 
-3.  Outlier detection using IQR for key variables (function)
+3.  Outlier detection using IQR for key variables (function) (Lecture 5 & 6)
 
 ```{r Outlier detection}
 outlier_summary <- function(x) {
@@ -1001,7 +1001,7 @@ This code defines a custom function to detect outliers in each key financial var
 It calculates the lower and upper bounds (1.5 × IQR below Q1 and above Q3) and counts how many observations fall outside this range.
 The resulting table shows how many potential outliers exist for each financial metric, helping identify variables that may need further cleaning or transformation.
 
-4.  Check distribution of missing data across years and variables
+4.  Check distribution of missing data across years and variables (Lecture - 4 & 6)
 
 ```{r Distribution of missing data}
 missing_long <- filtered_germany_q3  |> 
@@ -1024,7 +1024,7 @@ Then, it marks whether each observation is missing and calculates the proportion
 Finally, it uses a grouped bar chart to show these proportions by variable and year.
 This helps identify which financial indicators have higher missingness and whether data completeness has improved or worsened across the 2020–2022 period, offering insights into data reliability for further analysis.
 
-5.  Prepare industry code mapping table for reader reference (sample snippet)
+5.  Prepare industry code mapping table for reader reference (sample snippet) (Lecture - 2 & 7)
 
 ```{r Mapping tables}
 nace_codes <- filtered_germany_q3 |> 
@@ -1423,7 +1423,7 @@ Overall, the median leverage levels changed little across years, indicating that
 
 **3. Which German industries showed unexpected financial resilience or vulnerability from 2020 to 2022, and how were these outcomes shaped by profitability, leverage, liquidity, and firm size?**
 
-1.  Summarize Financial Indicators & Compute Resilience Score
+1.  Summarize Financial Indicators & Compute Resilience Score (Lecture - 3, 5)
 
 ```{r Financial Indicators}
 industry_summary <- filtered_germany |> 
@@ -1448,7 +1448,7 @@ Then, it groups the data by `nace_num2` (industry code) and accounting year.
 For each industry-year combination, it computes the median EBIT margin (`median_profitability`) as a measure of profitability, the median gearing ratio (`median_leverage`) as a measure of financial leverage, the median current ratio (`median_liquidity`) as a measure of short-term liquidity, and the median total assets (`median_firm_size`) as a proxy for firm size.
 The resulting `industry_summary` dataset provides a concise overview of how different industries performed financially across these key dimensions during the pandemic period.
 
-2.  Visualize Overall Financial Resilience with Bubble Chart
+2.  Visualize Overall Financial Resilience with Bubble Chart (Lecture - 4, 10)
 
 ```{r Financial resilience}
 p <- ggplot(industry_summary, aes(
@@ -1499,7 +1499,7 @@ ggplotly(p, tooltip = "text")
 This interactive bubble chart illustrates the **financial resilience of German industries from 2020–2022** by comparing key financial indicators. The **x-axis** represents median profitability (EBIT margin), while the **y-axis** shows median leverage (gearing ratio). Bubble **color** reflects liquidity levels, helping highlight which industries are more financially stable. Industries positioned **to the right and lower** on the chart indicate stronger financial health — combining higher profitability, lower leverage, and higher liquidity — whereas those toward the **left or upper areas** suggest weaker resilience and greater financial risk.
 
 
-3.  Top and Bottom 10 Industries by Resilience Score
+3.  Top and Bottom 10 Industries by Resilience Score (Lecture - 3, 4)
 
 ```{r Top & bottom 10 industries}
 resilience_summary <- industry_summary  |> 
@@ -1542,7 +1542,7 @@ Industries with higher scores demonstrated stronger ability to maintain earnings
 The color gradient emphasizes this ranking, with brighter colors reflecting more resilient sectors.
 This visualization clearly highlights sectors that were comparatively vulnerable or resilient in navigating the economic challenges posed by COVID-19.
 
-4.  Table of Top and Bottom 5 Industries
+4.  Table of Top and Bottom 5 Industries (Lecture - 2, 6)
 
 ```{r Top & Bottom 5 industries}
 
@@ -1580,7 +1580,7 @@ The ranking shows that **healthcare, technology, and utilities** were the most r
 In contrast, **hospitality, retail, and manufacturing** were the least resilient, as lockdowns, supply disruptions, and high fixed costs eroded profitability and liquidity.
 Overall, the results highlight how structural factors—such as firm size, capital intensity, and sectoral exposure—shaped the uneven financial recovery of German industries during COVID-19.
 
-5.  Trends in Median EBIT Margin by Key German Industries (2018–2021)
+5.  Trends in Median EBIT Margin by Key German Industries (2018–2021) (Lecture - 4, 9)
 
 ```{r Time Trend}
 key_industries <- c("Health Care", "Manufacturing", "Accommodation & Food", "Information & Communication")
