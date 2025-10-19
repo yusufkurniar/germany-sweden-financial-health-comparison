@@ -2171,6 +2171,9 @@ Wickham H, Averick M, Bryan J, Chang W, McGowan LD, François R, Grolemund G, Ha
 
 The links to my use of ChatGPT and other AI for help on this assignment are:
 
+Q2: Bhuvana
+-   <https://chatgpt.com/share/68f4378d-bb24-8003-8471-ed2147a8fab3> Used for formatting assistance, debugging R code, and improving interpretation flow.
+
 Q4: Jingyi
 
 -   <https://chatgpt.com/share/68f3046d-1ad8-800d-bc11-1b005a9e600f> helped to implement animated graphics and optimize content.
