@@ -102,7 +102,7 @@ In Germany, the first confirmed case was recorded on 27 January 2020.
 Nationwide contact restrictions began on 22 March 2020.
 Most nationwide measures were lifted between 20 March and 2 April 2022, and the final federal provisions expired on 7 April 2023.
 
-This project examines how German companies responded to these shocks during 2020 – 2021, using financial data from the Bureau van Dijk OSIRIS Database — a reliable global source of harmonised corporate information.
+This project examines how German companies responded to these shocks during 2020 – 2021, using financial data from the Bureau van Dijk OSIRIS Database. A reliable global source of harmonised corporate information.
 The dataset available for this study covers 2018 – 2021.
 The period from 2018–2019 provides the pre-pandemic baseline, while 2020 – 2021 captures the pandemic period.
 Data for 2022 are not available in this extract.
@@ -2146,55 +2146,11 @@ These results suggest that the pandemic not only altered the overall financial d
 
 ## Conclusions
 
-**Question 1**
+According to Q1, median profitability remained broadly stable between 2018 – 2019 and 2020 – 2021, but dispersion increased. The interesting result is that the Accommodation and Food sectors improved despite lockdowns, while the Health Care sector declined sharply, and ROA and ROE exhibited heavier lower tails. Additionally, for Q2, balance sheets remained steady as liquidity changed little and leverage increased only slightly. The key point is that firms did not leverage up even when credit was cheap. 
 
-Median profitability remained broadly stable across all firms (EBIT/EBITDA medians barely changed), but industry patterns varied.
-The largest median improvements in EBITDA margin were seen in Technology and Accommodation & Food, while Administrative & Support, Financials, Construction, and parts of Consumer Services experienced clear median declines.
-Health Care continued as a structurally high-margin outlier with little change in its median.
-Although typical profitability (medians) stayed relatively stable, the distribution widened: ROA/ROE and net income showed more firms with losses or very low returns in 2020 – 2021.
-In short, the pandemic increased downside risk and variation, creating winners and losers by industry, even though the overall profitability for the average firm remained roughly the same.
+According to Q3 and Q4, resilience correlates with stronger liquidity and moderate leverage, with the Health Care, Technology, and Utilities sectors showing more resilience, while Hospitality, Retail, and Manufacturing are more vulnerable. The interesting part is that the link between liquidity and profitability weakened as many firms protected cash at the expense of near-term margins. 
 
-**Question 2**
-
-Overall, the results suggest that German firms’ leverage and liquidity positions remained largely stable throughout 2018–2021.
-Median liquidity ratios changed little, while leverage increased only marginally, indicating a cautious approach to debt financing during the pandemic.
-The consistent negative association between leverage and solvency highlights that higher debt levels continued to correspond with weaker financial stability, yet this relationship did not materially shift over time.
-Across industries, leverage patterns were persistent, with capital-intensive sectors maintaining higher debt ratios and service-based sectors remaining more conservative.
-Taken together, these findings indicate that the pandemic did not fundamentally alter firms’ capital structures, but rather reinforced existing financial behaviours and industry norms.
-
-**Question 3**
-
-The initial data analysis carefully prepared the dataset for question 3 by filtering for the pandemic years 2020 to 2022 and active firms.
-Key financial indicators—profitability, leverage, liquidity, and firm size—were inspected for completeness and outliers, ensuring data integrity.
-Summary statistics and visualizations of missingness confirmed data suitability for further analysis.
-These steps established a robust foundation for evaluating financial resilience across German industries.
-
-The exploratory data analysis then computed a composite resilience score combining these financial dimensions and used clear visualizations such as bubble charts and bar plots to identify which industries were most and least resilient.
-Healthcare, technology, and utilities emerged as strong performers, supported by high profitability and liquidity alongside moderate leverage and larger firm size, while hospitality, retail, and manufacturing sectors showed relative vulnerability.
-Time trend analyses of median EBIT margins further contextualized these findings, illustrating how different sectors navigated the pandemic’s economic shocks.
-Together, the analyses demonstrate that structural financial characteristics shaped industry-specific outcomes, providing valuable insights for economic recovery strategies.
-
-**Question 4**
-
-We explored how the relationship between corporate liquidity and profitability changed and fractured across industries during the COVID-19 pandemic.
-By combining time-series feature analysis and scagnostic techniques, we examined both macro- and micro-level financial dynamics among Australian industries.
-At the macro level, industries did not recover equally.
-At the micro level, the scagnostic measures confirmed these differences.
-
-Overall, the findings suggest that the pandemic not only weakened the general link between liquidity and profitability but also created new divisions within industries.
-These results highlight the importance of financial flexibility and risk management, as firms with stronger liquidity positions tended to recover more quickly.
-Future research could examine how government support or firm characteristics contributed to these uneven recovery patterns.
-
-Overall, the findings suggest that the pandemic not only weakened the general link between liquidity and profitability but also created new divisions within industries.
-These results highlight the importance of financial flexibility and risk management, as firms with stronger liquidity positions tended to recover more quickly.
-Future research could examine how government support or firm characteristics contributed to these uneven recovery patterns.
-
-Final conclusion 
-
-The COVID-19 pandemic had a moderate but uneven impact on corporate financials in Germany, revealing both stability in overall performance and divergence across industries. Profitability (Q1) remained broadly stable during the pandemic, although variation across firms increased. Service-oriented and technology sectors demonstrated greater resilience, while capital-intensive industries such as Manufacturing, Construction, and Transport experienced declines.
-Leverage and liquidity patterns (Q2) indicate that firms maintained stable liquidity buffers while slightly increasing leverage, reflecting cautious yet sustainable financial management during a period of uncertainty. Industry-level results (Q3) suggest that structural factors, rather than short-term shocks, primarily determined resilience—Manufacturing and Construction remained highly leveraged, whereas service-based sectors retained stronger liquidity positions. Finally, the relationship between liquidity and profitability (Q4) weakened during the pandemic, as some firms prioritised liquidity preservation at the expense of profitability.
-Overall, German firms displayed financial prudence and adaptability, effectively absorbing the short-term financial pressures of COVID-19. However, the crisis amplified existing disparities, strengthening already resilient sectors while leaving more leveraged industries relatively vulnerable.
-
+Overall, the pandemic’s impact on German corporate finances was moderate but uneven: typical profitability was maintained, balance sheets remained steady, and the main changes involved greater dispersion and sectoral divergence. The crisis highlighted existing gaps, strengthening resilient sectors and revealing vulnerabilities in more leveraged, cyclical industries.
 
 ## Resources
 
