@@ -109,7 +109,7 @@ All analytical procedures follow the ETC5521 workflow, ensuring reproducibility,
 
 The dataset used in this analysis originates from **the Bureau van Dijk OSIRIS database**, a comprehensive source of harmonised financial information for publicly listed and major private firms worldwide.
 For this study, we extracted firm-level data for **German companies** over the **2018–2021 accounting years**, a period that captures both pre-pandemic and pandemic-era financial performance.
-Each record represents a firm’s reported financials for a specific accounting year, enabling longitudinal exploration of trends in profitability, liquidity, leverage, and resilience.
+Each record represents a firm’s reported financials for a specific accounting year, enabling longitudinal exploration of trends in profitability, liquidity, leverage, and resilience. These are the processes to load the data and combine them:
 
 ```{r read-data}
 #define the folder
@@ -159,6 +159,8 @@ combined_germany <- {
     arrange(year)
 }
 ```
+
+After the data is combined, we standardise the raw file into analysis-ready fields. It normalises column names, maps long vendor headers to clear variables by topic, and creates a fiscal-year label from the year-end date. Finally, it keeps only the identifiers, industry codes, and financial variables needed for the analysis.
 
 ```{r data-cleaning}
 filtered_germany <- combined_germany |>
@@ -228,6 +230,8 @@ filtered_germany <- combined_germany |>
   )
 
 ```
+
+This is the table describing the variables we used in this project:
 
 ```{r table-description}
 data_dictionary <- tribble(
@@ -671,7 +675,7 @@ filtered_germany_1 <- filtered_germany |>
 
 Then, we perform a conservative within-firm, within-period “one-gap” fill, patching only a single missing year when adjacent values match. It then restores reported values where available.
 
-```{r}
+```{r q1_firm_one_gap_fill}
 #Firm “one-gap” fill within the same period only
 
 fill_one_gap <- function(x){
@@ -699,7 +703,7 @@ filtered_germany_1 <- filtered_germany_1 |>
 
 After that, we impute remaining gaps following a strict hierarchy: first industry and year, then industry and period, and finally period, without crossing period boundaries. This process produces the final Q1 variables (EBIT, EBITDA, ROA, ROE) and records the source of each value.
 
-```{r}
+```{r q1_impute_hierarchy_finalize}
 #median fills in strict order (no cross-period borrowing)
 #industry × year medians
 med_ixy <- filtered_germany_1 |>
@@ -784,7 +788,7 @@ filtered_germany_1 <- filtered_germany_1 |>
 
 Then, we summarise imputation provenance by period, counting observations that are reported, firm-filled, or imputed from industry/year/period medians. It offers a transparent audit of data construction for Question 1.
 
-```{r}
+```{r 1_imputation_summary}
 impute_summary_q1 <- filtered_germany_1 |>
   summarise(
     .by = period,
