@@ -1705,7 +1705,7 @@ volatility_plot <- focus_features %>%
   geom_vline(xintercept = median(focus_features$roa_spikiness), 
              linetype = "dashed", color = "blue", alpha = 0.5) +
   coord_cartesian(xlim = c(0, quantile(focus_features$roa_spikiness, 0.90))) + # Limit to 75% quantile
-  labs(title = "Industry Volatility Analysis During Pandemic<br><sub>Blue dashed lines represent medians, excluding the extreme values",
+  labs(title = "Industry Volatility Analysis During Pandemic<br><sub><i>Blue dashed lines represent medians, excluding the extreme values<br><sub><i>",
        x = "ROA Spikiness", y = "Current Ratio Spikiness",
        size = "ROA Trend Strength") +
   theme_minimal() +
@@ -1950,6 +1950,7 @@ kable(industry_summary %>% filter(jumps > 0) %>%
 ```{r Q4 EDA 4. Micro-level evidence -scagnostic figure}
 #| label: fig-scagnostic
 #| fig-cap: "This figure shows how four scagnostic metrics changed over time across different industries. The red dashed line marks the year 2020 when COVID-19 pandemic occurred. We can see variations in outlying (extreme values), clumpy (clustering patterns), stringy (linear relationships), and monotonic (consistent trends) metrics before and after the pandemic."
+#| warning: false
 
 scag_long <- by_ind_year %>%
   select(industry_group, fy_year, clumpy, outlying, stringy, monotonic) %>%
@@ -1978,7 +1979,7 @@ p <- ggplot(selected_companies_ts, aes(x = current_ratio, y = roa_pct, color = i
   labs(title = "Year: {frame_time}", x = "Current Ratio", y = "ROA (%)") +
   transition_time(fy_year) +
   ease_aes("linear")
-anim <- animate(p, nframes = 200, fps = 10,
+anim <- animate(p, nframes = 100, fps = 6,
                 device = "ragg_png", 
                 renderer = gifski_renderer("images/my_animation.gif"))
 
