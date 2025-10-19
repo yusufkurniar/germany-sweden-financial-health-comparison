@@ -12,6 +12,9 @@ format:
         code-tools: true
         code-summary: "Show code"
         code-line-numbers: true
+        toc: true
+        toc-depth: 3
+        toc-location: left
 editor: 
   markdown: 
     wrap: sentence
@@ -102,8 +105,9 @@ In Germany, the first confirmed case was recorded on 27 January 2020.
 Nationwide contact restrictions began on 22 March 2020.
 Most nationwide measures were lifted between 20 March and 2 April 2022, and the final federal provisions expired on 7 April 2023.
 
-This project examines how German companies responded to these shocks during 2020 – 2021, using financial data from the Bureau van Dijk OSIRIS Database. A reliable global source of harmonised corporate information.
-The dataset available for this study covers 2018 – 2021.
+This project examines how German companies responded to these shocks during 2020 – 2021, using financial data from the Bureau van Dijk OSIRIS Database.
+A reliable global source of harmonised corporate information.
+The dataset available for this study covers 2018 - 2021.
 The period from 2018–2019 provides the pre-pandemic baseline, while 2020 – 2021 captures the pandemic period.
 Data for 2022 are not available in this extract.
 
@@ -115,7 +119,8 @@ All analytical procedures follow the ETC5521 workflow, ensuring reproducibility,
 
 The dataset used in this analysis originates from **the Bureau van Dijk OSIRIS database**, a comprehensive source of harmonised financial information for publicly listed and major private firms worldwide.
 For this study, we extracted firm-level data for **German companies** over the **2018–2021 accounting years**, a period that captures both pre-pandemic and pandemic-era financial performance.
-Each record represents a firm’s reported financials for a specific accounting year, enabling longitudinal exploration of trends in profitability, liquidity, leverage, and resilience. These are the code that we used to load the data and combine them:
+Each record represents a firm’s reported financials for a specific accounting year, enabling longitudinal exploration of trends in profitability, liquidity, leverage, and resilience.
+These are the code that we used to load the data and combine them:
 
 Loading the data.
 
@@ -167,7 +172,9 @@ combined_germany <- {
 }
 ```
 
-After the data is combined, we standardise the raw file into analysis-ready fields. It normalises column names, maps long vendor headers to clear variables by topic, and creates a fiscal-year label from the year-end date. Finally, it keeps only the identifiers, industry codes, and financial variables needed for the analysis.
+After the data is combined, we standardise the raw file into analysis-ready fields.
+It normalises column names, maps long vendor headers to clear variables by topic, and creates a fiscal-year label from the year-end date.
+Finally, it keeps only the identifiers, industry codes, and financial variables needed for the analysis.
 
 ```{r data-cleaning}
 filtered_germany <- combined_germany |>
@@ -281,18 +288,30 @@ data_dictionary |>
   kable_styling(full_width = FALSE, font_size = 11)
 ```
 
-The selected variables encompass four key dimensions of corporate financial health: - **Identification and Location** — company_id, company_name, country, and city provide firm-level identifiers and geographical context.
-- **Balance Sheet Structure** — total_assets_eur, total_liabilities_eur, and total_equity_eur measure firm size and capital composition, reported in euros.
-- **Income and Profitability** — total_revenue_eur, net_sales_eur, and net_income_eur capture income statement outcomes, while ebit_margin_pct, ebitda_margin_pct, roa_pct, and roe_pct reflect operating performance and returns to shareholders.
-- **Solvency and Liquidity** — solvency_pct, gearing_pct, current_ratio, liquidity_ratio, shareholders_liq_pct, and interest_cover assess each firm’s financial stability, leverage, and capacity to meet short-term obligations.
-Industry Classification — industry_nace, industry_icb, and industry_group link firms to their respective economic sectors according to European (NACE) and global (ICB) coding systems.
+The selected variables encompass four key dimensions of corporate financial health:
+
+-   **Identification and Location** - company_id, company_name, country, and city provide firm-level identifiers and geographical context.
+
+<!-- -->
+
+-   **Balance Sheet Structure** - total_assets_eur, total_liabilities_eur, and total_equity_eur measure firm size and capital composition, reported in euros.
+
+<!-- -->
+
+-   **Income and Profitability** - total_revenue_eur, net_sales_eur, and net_income_eur capture income statement outcomes, while ebit_margin_pct, ebitda_margin_pct, roa_pct, and roe_pct reflect operating performance and returns to shareholders.
+
+<!-- -->
+
+-    **Solvency and Liquidity** - solvency_pct, gearing_pct, current_ratio, liquidity_ratio, shareholders_liq_pct, and interest_cover assess each firm’s financial stability, leverage, and capacity to meet short-term obligations.
+
+-    **Industry Classification** - industry_nace, industry_icb, and industry_group link firms to their respective economic sectors according to European (NACE) and global (ICB) coding systems.
 
 It is important to note that the **accounting year** variable in **OSIRIS** reflects **two-year reporting periods**.
 For example, the 2018 accounting year represents financial results spanning 2017–2018, 2019 corresponds to 2018–2019, 2020 covers 2019–2020, and 2021 includes 2020–2021.
 Throughout this report, each accounting year is interpreted as representing the **endpoint of its reporting cycle**.
 Consequently, “2021” is treated as capturing firm performance during the height of the **COVID-19 pandemic**, while 2018–2019 represent pre-pandemic benchmarks.
 
-This dataset structure enables a robust exploration of temporal changes in corporate performance and the role of firm characteristics—particularly **firm size**—in shaping **financial resilience** throughout the pandemic period.
+This dataset structure enables a robust exploration of temporal changes in corporate performance and the role of firm characteristics , particularly **firm size** , in shaping **financial resilience** throughout the pandemic period.
 
 ### Research Question
 
@@ -318,19 +337,12 @@ Overall, firm size and liquidity emerged as key buffers against financial stress
 
 **4. How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic?**
 
-The COVID-19 pandemic from 2020 to 2022 severely disrupted global business activity, placing significant stress on corporate financial structures.
-The core issue was how firms preserved their short-term solvency without sacrificing profitability during the crisis.
-Financial theory typically suggests that maintaining sufficient liquidity supports profitability by ensuring operational stability and investment flexibility.
-However, during the pandemic, this fundamental relationship may have fractured across industries due to uneven economic shocks and varying policy responses.
-
-This question investigates how the relationship between corporate liquidity and profitability evolved and diverged across industries during the pandemic period.
-Using data from the OSIRIS database for Germany between 2017 and 2022, we focus on two key indicators:
-
--   **Return on Assets (ROA)** as a measure of profitability
-
--   **Current Ratio** as a measure of liquidity.
-
-We aim to uncover distinct recovery patterns—such as “K-shaped” rebounds, resilient sectors, and hidden crises—that reveal how the financial health of different industries adapted or deteriorated during the pandemic.
+The COVID-19 pandemic (2020–2022) placed severe pressure on global corporate financial structures.
+Firms faced the challenge of maintaining short-term liquidity without compromising profitability.
+Financial theory suggests that adequate liquidity supports stable profits by ensuring operational continuity.
+However, this relationship may have fractured across industries amid uneven shocks and policy responses.
+This question examines how liquidity (Current Ratio) and profitability (ROA) evolved among German firms during the pandemic.
+It helps reveal whether the pandemic reshaped the traditional balance between liquidity and profitability in corporate financial resilience.
 
 ## IDA
 
@@ -609,7 +621,7 @@ The balance-sheet totals and revenue are essentially complete.
 The pattern is stable across 2018 – 2021, with no pandemic-specific spike.
 This means ratio analyses will have smaller sample sizes than level variables.
 
-After that, we used this code to detect outliers in all numeric variables with two rules—IQR (1.5×) and standardized scores (\|z\| \> 3)—and summarise counts and proportions per variable, ordered by the IQR share.
+After that, we used this code to detect outliers in all numeric variables with two rules - IQR (1.5×) and standardized scores (\|z\| \> 3) - and summarise counts and proportions per variable, ordered by the IQR share.
 It flags variables with heavy tails or extreme values to guide winsorisation, transformation, or sensitivity checks before modelling.
 
 ```{r outliers-check}
@@ -883,7 +895,9 @@ Overall, imputations are minimal, transparent, and unlikely to influence results
 
 ### IDA for Question 2
 
-The analysis focuses on leverage and liquidity indicators for active German firms between 2018 and 2021. Key derived variables include the debt-to-assets ratio and the equity ratio, along with reported measures of gearing, solvency, and the current ratio. Missing and extreme values were excluded to maintain consistency across year-to-year comparisons.
+The analysis focuses on leverage and liquidity indicators for active German firms between 2018 and 2021.
+Key derived variables include the debt-to-assets ratio and the equity ratio, along with reported measures of gearing, solvency, and the current ratio.
+Missing and extreme values were excluded to maintain consistency across year-to-year comparisons.
 
 ```{r}
 # Create leverage and liquidity indicators
@@ -976,7 +990,7 @@ kable(summary_stats_tidy,
 
 ```
 
-This code calculates key summary statistics — including missing values, mean, median, standard deviation, minimum, and maximum — for major financial variables such as profitability, leverage, liquidity, and firm size.
+This code calculates key summary statistics - including missing values, mean, median, standard deviation, minimum, and maximum - for major financial variables such as profitability, leverage, liquidity, and firm size.
 It provides a quick check on data completeness and helps understand the overall distribution of these variables for active German firms between 2020 and 2022.
 
 3.  Outlier detection using IQR for key variables (function) (Lecture 5 & 6)
@@ -1090,9 +1104,7 @@ germany_ts <- germany_q4 |>
   arrange(company_id, fy_year)
 ```
 
-4.  Missing value
-
-**Check for missing value (Tutorial 8)**
+4.  Missing value - Check for missing value (Tutorial 8)
 
 The initial examination of missing values revealed a relatively low proportion of incomplete data in the dataset.
 As shown in @fig-missing_clu, the missing value analysis showed that only 0.7% of the total data was missing, while 99.3% of observations were complete.
@@ -1137,7 +1149,8 @@ m3
 **Address missingness issues**
 
 To address missing data, observations with missing values in either ROA or current ratio were removed from the dataset.
-Additionally, to ensure temporal consistency across the study period, only industry groups that contained data for all three years (2019-2021) were retained. The 'Other / Unmapped' category was removed from the study as it comprises companies without clear industry classification.
+Additionally, to ensure temporal consistency across the study period, only industry groups that contained data for all three years (2019-2021) were retained.
+The 'Other / Unmapped' category was removed from the study as it comprises companies without clear industry classification.
 
 ```{r Q4 IDA 4. Address missingness issues}
 germany_ts <- germany_ts |>
@@ -1179,7 +1192,8 @@ Here are the EDA processes and results for the sub-questions addressing the prim
 
 **1. How did profitability change across industries?**
 
-This code recodes years into Pre (2018 – 2019) versus Pandemic (2020 – 2021), reshapes five profitability measures (EBIT, EBITDA, ROA, ROE, net income) to long format, and plots violin plots with jitter, median, and IQR overlays. It allows us to compare central tendency and spread before versus during the pandemic across all firms; net income uses the asinh function, so negatives remain visible.
+This code recodes years into Pre (2018 – 2019) versus Pandemic (2020 – 2021), reshapes five profitability measures (EBIT, EBITDA, ROA, ROE, net income) to long format, and plots violin plots with jitter, median, and IQR overlays.
+It allows us to compare central tendency and spread before versus during the pandemic across all firms; net income uses the asinh function, so negatives remain visible.
 
 ```{r q1_profitability_distributions_overall}
 #recode period to short labels
@@ -1249,7 +1263,8 @@ ROA and especially ROE show many more extreme negatives in 2020 – 2021, indica
 Net income (asinh) also becomes more dispersed in 2020 –21, with a heavier lower tail, confirming higher volatility.
 A key insight is that central tendencies barely moved while tail risk increased.
 
-This code retains the mapped industries, calculates industry medians for EBITDA margin during the Pre and Pandemic periods, and creates a dumbbell chart showing the two medians and the change (Pandemic – Pre), coloured by increase or decrease. Using medians ensures the comparison is robust against outliers and highlights which sectors improved or worsened the most.
+This code retains the mapped industries, calculates industry medians for EBITDA margin during the Pre and Pandemic periods, and creates a dumbbell chart showing the two medians and the change (Pandemic – Pre), coloured by increase or decrease.
+Using medians ensures the comparison is robust against outliers and highlights which sectors improved or worsened the most.
 
 ```{r q1_industry_ebitda_median_delta}
 #keep only mapped industry
@@ -1441,7 +1456,7 @@ industry_summary <- filtered_germany |>
 ```
 
 **Interpretation**
- 
+
 This code calculates summary financial indicators for German industries during the pandemic years 2020–2022.
 First, it filters the dataset to include only accounting years 2020, 2021, and 2022.
 Then, it groups the data by `nace_num2` (industry code) and accounting year.
@@ -1496,8 +1511,10 @@ ggplotly(p, tooltip = "text")
 
 **Interpretation**
 
-This interactive bubble chart illustrates the **financial resilience of German industries from 2020–2022** by comparing key financial indicators. The **x-axis** represents median profitability (EBIT margin), while the **y-axis** shows median leverage (gearing ratio). Bubble **color** reflects liquidity levels, helping highlight which industries are more financially stable. Industries positioned **to the right and lower** on the chart indicate stronger financial health — combining higher profitability, lower leverage, and higher liquidity — whereas those toward the **left or upper areas** suggest weaker resilience and greater financial risk.
-
+This interactive bubble chart illustrates the **financial resilience of German industries from 2020–2022** by comparing key financial indicators.
+The **x-axis** represents median profitability (EBIT margin), while the **y-axis** shows median leverage (gearing ratio).
+Bubble **color** reflects liquidity levels, helping highlight which industries are more financially stable.
+Industries positioned **to the right and lower** on the chart indicate stronger financial health - combining higher profitability, lower leverage, and higher liquidity - whereas those toward the **left or upper areas** suggest weaker resilience and greater financial risk.
 
 3.  Top and Bottom 10 Industries by Resilience Score (Lecture - 3, 4)
 
@@ -1534,10 +1551,10 @@ ggplot(top_bottom_resilience, aes(
 ```
 
 **Interpretation**
- 
+
 This horizontal bar chart visualizes the distribution of average financial resilience scores across German industries from 2020 to 2022.
 Each bar represents a NACE Level 2 industry, ordered from highest to lowest average resilience score.
-The resilience score integrates key financial metrics—profitability, leverage, and liquidity—to assess how well industries managed financial stability during the pandemic.
+The resilience score integrates key financial metrics- profitability, leverage, and liquidity , to assess how well industries managed financial stability during the pandemic.
 Industries with higher scores demonstrated stronger ability to maintain earnings, control debt levels, and preserve liquidity, indicating greater financial robustness.
 The color gradient emphasizes this ranking, with brighter colors reflecting more resilient sectors.
 This visualization clearly highlights sectors that were comparatively vulnerable or resilient in navigating the economic challenges posed by COVID-19.
@@ -1573,7 +1590,7 @@ top_bottom_resilience |>
 ```
 
 **Interpretation**
- 
+
 This table ranks German industries by their **financial resilience from 2020 to 2022**, combining profitability, leverage, and liquidity into a composite resilience score.
 Higher scores indicate industries that sustained earnings while keeping debt manageable and maintaining strong cash positions during the pandemic.
 The ranking shows that **healthcare, technology, and utilities** were the most resilient sectors, benefitting from steady demand and robust balance sheets.
@@ -1624,14 +1641,16 @@ ggplot(plot_data, aes(x = acct_year, y = median_ebit, color = industry_group)) +
 
 ```
 
- **Interpretation**
+**Interpretation**
 
-The figure shows trends in **median EBIT margins** for four key German industries between **2018 and 2021**. **Health Care** remains the most stable and profitable sector, while **Manufacturing** shows moderate recovery after 2020. **Accommodation & Food** experiences the sharpest decline during 2020, reflecting pandemic effects, whereas **Information & Communication** maintains steady profitability throughout. These patterns highlight clear **sectoral differences in financial resilience and recovery** across the German economy.
+The figure shows trends in **median EBIT margins** for four key German industries between **2018 and 2021**.
+**Health Care** remains the most stable and profitable sector, while **Manufacturing** shows moderate recovery after 2020.
+**Accommodation & Food** experiences the sharpest decline during 2020, reflecting pandemic effects, whereas **Information & Communication** maintains steady profitability throughout.
+These patterns highlight clear **sectoral differences in financial resilience and recovery** across the German economy.
 
 ### Question 4
 
 **4. How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic?**
-
 
 1.  Industry-level trends of ROA and liquidity (2017–2021) (Lecture 9, slide 24-26, feasts and tsibbletalk)
 
@@ -2146,11 +2165,16 @@ These results suggest that the pandemic not only altered the overall financial d
 
 ## Conclusions
 
-According to Q1, median profitability remained broadly stable between 2018 – 2019 and 2020 – 2021, but dispersion increased. The interesting result is that the Accommodation and Food sectors improved despite lockdowns, while the Health Care sector declined sharply, and ROA and ROE exhibited heavier lower tails. Additionally, for Q2, balance sheets remained steady as liquidity changed little and leverage increased only slightly. The key point is that firms did not leverage up even when credit was cheap. 
+According to Q1, median profitability remained broadly stable between 2018 – 2019 and 2020 – 2021, but dispersion increased.
+The interesting result is that the Accommodation and Food sectors improved despite lockdowns, while the Health Care sector declined sharply, and ROA and ROE exhibited heavier lower tails.
+Additionally, for Q2, balance sheets remained steady as liquidity changed little and leverage increased only slightly.
+The key point is that firms did not leverage up even when credit was cheap.
 
-According to Q3 and Q4, resilience correlates with stronger liquidity and moderate leverage, with the Health Care, Technology, and Utilities sectors showing more resilience, while Hospitality, Retail, and Manufacturing are more vulnerable. The interesting part is that the link between liquidity and profitability weakened as many firms protected cash at the expense of near-term margins. 
+According to Q3 and Q4, resilience correlates with stronger liquidity and moderate leverage, with the Health Care, Technology, and Utilities sectors showing more resilience, while Hospitality, Retail, and Manufacturing are more vulnerable.
+The interesting part is that the link between liquidity and profitability weakened as many firms protected cash at the expense of near-term margins.
 
-Overall, the pandemic’s impact on German corporate finances was moderate but uneven: typical profitability was maintained, balance sheets remained steady, and the main changes involved greater dispersion and sectoral divergence. The crisis highlighted existing gaps, strengthening resilient sectors and revealing vulnerabilities in more leveraged, cyclical industries.
+Overall, the pandemic’s impact on German corporate finances was moderate but uneven: typical profitability was maintained, balance sheets remained steady, and the main changes involved greater dispersion and sectoral divergence.
+The crisis highlighted existing gaps, strengthening resilient sectors and revealing vulnerabilities in more leveraged, cyclical industries.
 
 ## Resources
 
@@ -2162,8 +2186,7 @@ Wickham H, Averick M, Bryan J, Chang W, McGowan LD, François R, Grolemund G, Ha
 
 The links to my use of ChatGPT and other AI for help on this assignment are:
 
-Q2: Bhuvana
--   <https://chatgpt.com/share/68f4378d-bb24-8003-8471-ed2147a8fab3> Used for formatting assistance, debugging R code, and improving interpretation flow.
+Q2: Bhuvana - <https://chatgpt.com/share/68f4378d-bb24-8003-8471-ed2147a8fab3> Used for formatting assistance, debugging R code, and improving interpretation flow.
 
 Q4: Jingyi
 
@@ -2172,4 +2195,3 @@ Q4: Jingyi
 -   <https://chatgpt.com/share/68f304c8-a088-800d-be54-939dfcd7e278> helped to evaluate whether the questions are answered adequately and where to make revisions.
 
 -   <https://chatgpt.com/share/68f305ad-f15c-800d-b724-fc917c1a93ef> helped to deal with the problem that package ‘tignostics’ is not available for this version of R and how to use scagnostics.
-
