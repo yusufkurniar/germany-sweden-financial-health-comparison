@@ -1079,12 +1079,13 @@ kable(germany_ts %>%
 
 ## EDA
 
+Here are the EDA processes and results for the sub-questions addressing the primary question "How did the pandemic affect corporate financials in Germany?"
+
 ### Question 1
 
 **1. How did profitability change across industries?**
 
-This code is used to recode years into pre-pandemic and pandemic periods, reshape key profitability metrics to a long format, and visualise their distributions for all firms.
-It is used to compare central tendency (median) and dispersion (IQR, tails) before versus during the pandemic across EBIT, EBITDA, ROA, ROE, and net income.
+This code recodes years into Pre (2018 – 2019) versus Pandemic (2020 – 2021), reshapes five profitability measures (EBIT, EBITDA, ROA, ROE, net income) to long format, and plots violin plots with jitter, median, and IQR overlays. It allows us to compare central tendency and spread before versus during the pandemic across all firms; net income uses the asinh function, so negatives remain visible.
 
 ```{r q1_profitability_distributions_overall}
 #recode period to short labels
@@ -1154,8 +1155,7 @@ ROA and especially ROE show many more extreme negatives in 2020 – 2021, indica
 Net income (asinh) also becomes more dispersed in 2020 –21, with a heavier lower tail, confirming higher volatility.
 A key insight is that central tendencies barely moved while tail risk increased.
 
-This code summarises industry-level median EBITDA margins during the pre-pandemic and pandemic periods, then illustrates the change (Pandemic – Pre) to show the direction and magnitude by sector.
-Using medians ensures a reliable comparison, highlighting typical firms and identifying industries with significant improvements or declines.
+This code retains the mapped industries, calculates industry medians for EBITDA margin during the Pre and Pandemic periods, and creates a dumbbell chart showing the two medians and the change (Pandemic – Pre), coloured by increase or decrease. Using medians ensures the comparison is robust against outliers and highlights which sectors improved or worsened the most.
 
 ```{r q1_industry_ebitda_median_delta}
 #keep only mapped industry
