@@ -1659,7 +1659,7 @@ These patterns highlight clear **sectoral differences in financial resilience an
 This section provides an initial visual overview of the pandemic's impact.
 We begin by plotting the average Return on Assets (ROA) and Current Ratio for each industry from 2017 to 2021.
 
-The interactive ROA trends (@fig-ROA_ploty) reveal distinct pandemic responses across industries:
+The interactive ROA trends (@fig-combined_plot) reveal distinct pandemic responses across industries:
 
 -   Accommodation & Food surged temporarily in 2019 but declined again in 2020.
 
@@ -1667,7 +1667,7 @@ The interactive ROA trends (@fig-ROA_ploty) reveal distinct pandemic responses a
 
 -   Financial & Insurance maintained the highest ROA with steady growth throughout, demonstrating remarkable sector resilience.
 
-Based on the Current Ratio trends (@fig-CR_ploty), most industries demonstrated relative stability throughout the period.
+Based on the Current Ratio trends (@fig-combined_plot), most industries demonstrated relative stability throughout the period.
 However, two sectors exhibited notable deviations:
 
 -   Consumer Services peaked at 8.14 in 2020 then plummeted to 0.21.
@@ -1691,15 +1691,15 @@ industry_ts <- germany_ts |>
 
 ```
 
-```{r Q4 EDA 1. Industry-level trends -ROA}
-#| label: fig-ROA_ploty
+```{r Q4 EDA 1. Industry-level trends}
+#| label: fig-combined_plot
 #| fig-cap: "The interactive plot of ROA trends by industry (2017-2021)"
 
 # ROA
 roa_interactive <- industry_ts |>
   ggplot(aes(x = fy_year, y = industry_roa, group = industry_group)) +
-  geom_line(aes(color = industry_group), size = 0.8, alpha = 0.7) +
-  geom_vline(xintercept = 2020, linetype = "dashed", color = "red", size = 1) +
+  geom_line(aes(color = industry_group), size = 0.3, alpha = 0.7) +
+  geom_vline(xintercept = 2020, linetype = "dashed", color = "red", size = 0.5) +
   labs(title = "Interactive ROA Trends by Industry (2017-2021)<br><sub><i>Vertical line indicates pandemic start (2020)<br><sub><i>",
        x = "Year", y = "ROA (%)") +
   theme_minimal() +
@@ -1707,33 +1707,34 @@ roa_interactive <- industry_ts |>
 
 # Plotly interactive charts -ROA
 roa_plotly <- 
-  ggplotly(roa_interactive, tooltip = c("industry_group", "fy_year", "industry_roa")) |>
-  plotly::layout(hoverlabel = list(bgcolor = "white", font = list(size = 12)))
+  ggplotly(roa_interactive, tooltip = c("industry_group", "fy_year", "industry_roa")) 
 
-roa_plotly
-```
-
-```{r Q4 EDA 1. Industry-level trends -CR}
-#| label: fig-CR_ploty
-#| fig-cap: "The interactive plot of Current Ratio trends by industry (2017-2021)"
 
 # Current ratio
 cr_interactive <- industry_ts |>
   ggplot(aes(x = fy_year, y = industry_cr, group = industry_group)) +
-  geom_line(aes(color = industry_group), size = 0.8, alpha = 0.7) +
-  geom_vline(xintercept = 2020, linetype = "dashed", color = "red", size = 1) +
+  geom_line(aes(color = industry_group), size = 0.3, alpha = 0.7) +
+  geom_vline(xintercept = 2020, linetype = "dashed", color = "red", size = 0.5) +
   labs(title = "Interactive Current Ratio Trends by Industry (2017-2021)<br><sub><i>Vertical line indicates pandemic start (2020) - Hover for details<br><sub><i>",
        x = "Year", y = "Current Ratio") +
   theme_minimal() +
   theme(legend.position = "none")
 
-
 cr_plotly <- 
-  ggplotly(cr_interactive, tooltip = c("industry_group", "fy_year", "industry_cr")) |>
-  plotly::layout(hoverlabel = list(bgcolor = "white", font = list(size = 12)))
+  ggplotly(cr_interactive, tooltip = c("industry_group", "fy_year", "industry_cr")) 
 
+# Combine plots with controlled layout
+combined_plot <- subplot(
+  roa_plotly, cr_plotly,
+  nrows = 2,
+  shareX = TRUE,  
+  titleY = TRUE  
+) |>
+  plotly::layout(
+    title = "Industry Financial Trends (2017-2021)<br><sub>Vertical line indicates pandemic start (2020)</sub>",
+    hoverlabel = list(bgcolor = "white", font = list(size = 10)))
 
-cr_plotly
+combined_plot
 ```
 
 2.  Macro-level evidence: Industry recovery patterns (ROA vs CR) - feasts (Lecture 9, slide 24-26, feasts and tsibbletalk)
@@ -1761,14 +1762,21 @@ focus_features <- industry_features |>
 
 **Trend strength analysis**
 
-The trend strength visualization in @fig-trend_in reveals significant disruptions to industry financial fundamentals.
+The trend strength visualization in @fig-combined_analysis reveals significant disruptions to industry financial fundamentals.
 Five industries in the bottom-left quadrant, indicating severe deterioration in both ROA and Current Ratio trends.
 Accommodation & Food has the largest bubble, reflecting extreme volatility and weak performance during pandemic restrictions.
 This pattern reflects the extreme operational challenges faced by hospitality-related sectors during pandemic restrictions.
 
-```{r Q4 EDA 2. Macro-level evidence -Trend strength analysis}
-#| label: fig-trend_in
-#| fig-cap: "Scatter plot visualizing trend strength disruption across industries during the pandemic period. The 0.3 threshold lines demarcate sectors experiencing significant breakdown in ROA (x-axis) and Current Ratio (y-axis) trends, with bubble size representing ROA spikiness as a measure of financial instability. Industries in bottom-left corner are most severely impacted."
+**Volatility analysis**
+
+After trend strength analysis, the volatility examination in @fig-combined_analysis demonstrates divergent patterns in financial metric instability.
+Five industries show high ROA volatility, but most have moderate Current Ratio spikiness.
+However, Consumer Services is exceptional with the highest Current Ratio spikiness, suggesting unique liquidity challenges.
+
+
+```{r Q4 EDA 2. Macro-level evidence -Combined analysis}
+#| label: fig-combined_analysis
+#| fig-cap: "Combined analysis of trend strength disruption and volatility across industries during the pandemic period. Left: Trend strength analysis with 0.3 threshold lines. Right: Volatility analysis with median lines. Industries in bottom-left quadrant of left plot are most severely impacted, while top-right industries in right plot have highest volatility."
 
 # Trend strength analysis to identify the hardest-hit sectors
 trend_analysis <- focus_features |>
@@ -1779,7 +1787,17 @@ trend_analysis <- focus_features |>
     overall_trend_impact = (roa_trend_strength + cr_trend_strength) / 2
   )
 
-# Create plot
+
+# Volatility analysis to identify the sectors with the greatest volatility during the pandemic
+volatility_analysis <- focus_features |>
+  mutate(
+    high_roa_volatility = roa_spikiness > median(roa_spikiness),
+    high_cr_volatility = cr_spikiness > median(cr_spikiness),
+    overall_volatility = (scale(roa_spikiness) + scale(cr_spikiness)) / 2)
+
+
+
+# Create trend strength plot
 trend_plot <- focus_features |>
   ggplot(aes(x = roa_trend_strength, y = cr_trend_strength)) +
   geom_point(aes(size = roa_spikiness, 
@@ -1794,40 +1812,10 @@ trend_plot <- focus_features |>
   theme(legend.position = "none")
 
 # Convert to interactive plotly
-trend_in <- ggplotly(trend_plot, tooltip = c("text", "x", "y", "size")) |>
-  plotly::layout(
-    hoverlabel = list(bgcolor = "white", font = list(size = 12)),
-    annotations = list(
-      list(
-        x = 0.3, y = 1,
-        xref = "x", yref = "y",
-        text = "Threshold (0.3)",
-        showarrow = FALSE,
-        font = list(color = "red", size = 10)
-      )
-    )
-  )
+trend_in <- ggplotly(trend_plot, tooltip = c("text", "x", "y", "size")) 
 
-trend_in
-```
 
-**Volatility analysis**
-
-After trend strength analysis, the volatility examination in @fig-volatility_in demonstrates divergent patterns in financial metric instability.
-Five industries show high ROA volatility, but most have moderate Current Ratio spikiness.
-However, Consumer Services is exceptional with the highest Current Ratio spikiness, suggesting unique liquidity challenges.
-
-```{r Q4 EDA 2. Macro-level evidence -Volatility analysis}
-#| label: fig-volatility_in
-#| fig-cap: "Volatility analysis of industry financial metrics during pandemic. Plot displays ROA spikiness (x-axis) against Current Ratio spikiness (y-axis), with industry groups color-coded and bubble sizes indicating ROA trend strength. Median values marked with dashed blue lines. Top-right industries have highest volatility. The ROA spikiness of the Accommodation industry exceeds 20,000 and is not shown in the figure."
-
-# Volatility analysis to identify the sectors with the greatest volatility during the pandemic
-volatility_analysis <- focus_features |>
-  mutate(
-    high_roa_volatility = roa_spikiness > median(roa_spikiness),
-    high_cr_volatility = cr_spikiness > median(cr_spikiness),
-    overall_volatility = (scale(roa_spikiness) + scale(cr_spikiness)) / 2)
-
+# Create volatility plot
 volatility_plot <- focus_features |>
   ggplot(aes(x = roa_spikiness, y = cr_spikiness)) +
   geom_point(aes(color = industry_group, 
@@ -1845,31 +1833,56 @@ volatility_plot <- focus_features |>
   theme(legend.position = "none")
 
 
-volatility_in <- ggplotly(volatility_plot, tooltip = c("text", "x", "y", "size")) |>
+volatility_in <- ggplotly(volatility_plot, tooltip = c("text", "x", "y", "size"))
+
+
+
+combined_analysis <- subplot(
+  trend_in, volatility_in,
+  nrows = 1,
+  shareY = FALSE,
+  titleX = TRUE,
+  titleY = TRUE,
+  margin = 0.05 
+) |>
   plotly::layout(
-    hoverlabel = list(bgcolor = "white", font = list(size = 12)),
+    title = list(
+      text = "Industry Financial Impact Analysis During Pandemic<br><sub>Left: Trend strength disruption | Right: Volatility patterns</sub>",
+      font = list(size = 14, color = "black"),
+      x = 0.5,
+      y = 0.95
+    ),
+    hoverlabel = list(
+      bgcolor = "white", 
+      font = list(size = 11, color = "black"),
+      bordercolor = "lightgray"
+    ),
+    margin = list(l = 60, r = 60, b = 80),
+    hovermode = "closest",
     annotations = list(
       list(
-        x = median(focus_features$roa_spikiness),
-        y = 0.9,
-        xref = "x", yref = "paper",
-        text = "Median ROA Spikiness",
+        x = 0, y = -0.15,
+        xref = "paper", yref = "paper",
+        text = "Red lines: 0.3 threshold",
         showarrow = FALSE,
-        font = list(color = "blue", size = 10)
+        font = list(size = 10, color = "red")
       ),
       list(
-        x = 0.5,
-        y = median(focus_features$cr_spikiness),
-        xref = "paper", yref = "y",
-        text = "Median CR Spikiness",
+        x = 0.85, y = -0.15,
+        xref = "paper", yref = "paper",
+        text = "Blue lines: Median volatility values",
         showarrow = FALSE,
-        font = list(color = "blue", size = 10)
+        font = list(size = 10, color = "blue")
       )
     )
   )
 
-volatility_in
+
+combined_analysis
 ```
+
+
+
 
 **Threshold-based industry classification**
 
@@ -1884,7 +1897,7 @@ This approach categorizes industries based on their ROA trend strength and volat
 
 -   All other combinations → "Moderate impact industries"
 
-As shown in @fig-classification, the analysis reveals clear patterns of differential recovery across sectors.
+Based on criteria, the analysis reveals clear patterns of differential recovery across sectors.
 The Construction and Financial & Insurance sectors demonstrate resilient characteristics, maintaining stable performance throughout the pandemic period.
 Arts, Entertainment & Recreation , Accommodation & Food Services, and Information & Communication exhibit K-shaped recovery patterns.
 The Administrative & Support sector falls into the hidden crisis category, suggesting underlying structural issues.
@@ -1912,40 +1925,7 @@ industry_classes <- focus_features |>
   )
 ```
 
-```{r Q4 EDA 2. Macro-level evidence -industry classes figure}
-#| label: fig-classification
-#| fig-cap: "Classification of industry recovery patterns based on ROA trend strength and volatility. Four distinct patterns emerge: Resilient (high trend strength, low volatility), K-shaped (low trend strength, high volatility), Hidden Crisis (high trend strength but high volatility), and Moderate Impact (all others). Dashed lines represent classification thresholds."
 
-classification_plot <- industry_classes |>
-  ggplot(aes(x = roa_trend_strength, y = roa_spikiness, 
-             color = recovery_pattern, 
-             text = paste("Industry:", industry_group,
-                         "<br>Recovery Pattern:", recovery_pattern,
-                         "<br>ROA Trend Strength:", round(roa_trend_strength, 3),
-                         "<br>ROA Spikiness:", round(roa_spikiness, 3)))) +
-  geom_point(size = 2, alpha = 0.7) +
-  geom_vline(xintercept = c(0.3, 0.7), linetype = "dashed", alpha = 0.5) +
-  geom_hline(yintercept = median(industry_classes$roa_spikiness), 
-             linetype = "dashed", alpha = 0.5) +
-  labs(title = "Industry Recovery Patterns Classification",
-       x = "ROA Trend Strength", y = "ROA Spikiness",
-       color = "Recovery Pattern") +
-  theme_minimal() +
-  theme(legend.position = "bottom")
-
-
-classification_plotly <- ggplotly(classification_plot, tooltip = "text") |>
-  plotly::layout(
-    hoverlabel = list(bgcolor = "white", font = list(size = 12)),
-    title = list(
-      text = "Industry Recovery Patterns Classification<br><sub><i>Based on ROA trend strength and volatility analysis</i></sub>",
-      x = 0.05
-    ),
-    margin = list(t = 100)
-  )
-
-classification_plotly
-```
 
 3.  Micro-level evidence of anomalous recovery patterns across industries (ROA and liquidity) - scagnostics (Tignostics) (Lecture 8, 22-27 & Lecture 9, slide 24)
 
@@ -2108,24 +2088,6 @@ ggplot(scag_long, aes(x = fy_year, y = value, color = industry_group)) +
   theme_minimal()
 ```
 
-```{r Q4 EDA 3. Micro-level evidence -animated_plot}
-#| label: fig-animated_plot
-#| fig-cap: "The animated plot shows the yearly scatter of firms in the CR–ROA plane and fitted lines."
-
-p <- ggplot(selected_companies_ts, aes(x = current_ratio, y = roa_pct, color = industry_group)) +
-  geom_point(size = 2, alpha = 0.6) +
-  geom_smooth(method = "lm", se = FALSE) +
-  labs(title = "Year: {frame_time}", x = "Current Ratio", y = "ROA (%)") +
-  transition_time(fy_year) +
-  ease_aes("linear")
-anim <- animate(p, nframes = 100, fps = 6,
-                device = "ragg_png", 
-                renderer = gifski_renderer("images/my_animation.gif"))
-
-
-knitr::include_graphics("images/my_animation.gif")
-
-```
 
 **Main results**
 
@@ -2142,8 +2104,7 @@ Some industries (e.g., Construction, Accommodation & Food, Administrative & Supp
 | **Arts, Entertainment & Recreation** | ↓ *clumpy*, ↑ *outlying*, ↑ *monotonic* | Fewer internal clusters but more extreme performers; stronger monotonic trend indicates clearer performance–liquidity relationship post-pandemic. |
 | **Information & Communication** | ↓ *clumpy*, stable *outlying*, ↑ monotonic | Reduced clustering with no significant outliers; strong monotonic rise implies more uniform and predictable firm behavior. |
 
-The animated plot (@fig-animated_plot) shows the yearly scatter of firms in the CR–ROA plane and fitted lines.
-This animation helps visualise how point clouds split, shift, or tighten around a trend line.
+
 
 **Limitations**
 
