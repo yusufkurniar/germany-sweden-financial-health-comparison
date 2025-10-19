@@ -15,10 +15,12 @@ format:
         toc: true
         toc-depth: 3
         toc-location: left
+        theme: cerulean
 editor: 
   markdown: 
     wrap: sentence
 ---
+:::: {.panel-tabset}
 
 ```{r}
 #| echo: false
@@ -302,9 +304,9 @@ The selected variables encompass four key dimensions of corporate financial heal
 
 <!-- -->
 
--    **Solvency and Liquidity** - solvency_pct, gearing_pct, current_ratio, liquidity_ratio, shareholders_liq_pct, and interest_cover assess each firm’s financial stability, leverage, and capacity to meet short-term obligations.
+-   **Solvency and Liquidity** - solvency_pct, gearing_pct, current_ratio, liquidity_ratio, shareholders_liq_pct, and interest_cover assess each firm’s financial stability, leverage, and capacity to meet short-term obligations.
 
--    **Industry Classification** - industry_nace, industry_icb, and industry_group link firms to their respective economic sectors according to European (NACE) and global (ICB) coding systems.
+-   **Industry Classification** - industry_nace, industry_icb, and industry_group link firms to their respective economic sectors according to European (NACE) and global (ICB) coding systems.
 
 It is important to note that the **accounting year** variable in **OSIRIS** reflects **two-year reporting periods**.
 For example, the 2018 accounting year represents financial results spanning 2017–2018, 2019 corresponds to 2018–2019, 2020 covers 2019–2020, and 2021 includes 2020–2021.
@@ -696,7 +698,7 @@ This indicates that while a small number of firms cannot be classified by NACE a
 After completing the general IDA, we developed the specific IDA to address our sub-questions.
 Here are the details:
 
-### IDA for Question 1
+### Question 1
 
 We first add a period label (Pre-pandemic 2018–2019 vs. Pandemic 2020–2021).
 For visuals, net_income_eur is transformed using asinh() so we can plot both gains and losses on a comparable scale.
@@ -893,7 +895,7 @@ Only about 1% was recomputed (52 pre and 43 pandemic), and less than 0.3% used (
 Moreover, ROE: approximately 96% are reported, around 0.5% are recomputed (16 – 18 rows), and about 3.6 – 3.8% use (industry and year) medians.
 Overall, imputations are minimal, transparent, and unlikely to influence results.
 
-### IDA for Question 2
+### Question 2
 
 The analysis focuses on leverage and liquidity indicators for active German firms between 2018 and 2021.
 Key derived variables include the debt-to-assets ratio and the equity ratio, along with reported measures of gearing, solvency, and the current ratio.
@@ -932,7 +934,7 @@ lev_liq_summary |>
 From 2018 to 2021, the median debt-to-assets ratio remained steady at around 0.50–0.51, while the median current ratio stayed near 1.8×, indicating stable leverage and liquidity levels through the pandemic period.
 A slight rise in gearing (from 62% to 66%) alongside a modest decline in solvency (from 50% to 49%) suggests firms gradually relied more on debt financing but maintained short-term financial health.
 
-### IDA for Question 3
+### Question 3
 
 1.  Filter relevant years and active firms for pandemic analysis (Lecture - 2 & 3)
 
@@ -1055,7 +1057,7 @@ The table is then arranged in ascending order of `nace_num2` for readability.
 Finally, the `kable()` and `kable_styling()` functions are used to display the results in a clean, professional format.
 This table serves as a useful lookup guide, allowing readers to easily understand which industry each NACE code represents when reviewing the subsequent analyses and visualizations.
 
-### IDA for Question 4
+### Question 4
 
 1.  Data Cleaning on Consolidation Codes
 
