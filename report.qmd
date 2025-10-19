@@ -7,15 +7,33 @@ format:
     html: 
         output-file: report.html
         css: "assignment.css"
-        embed-resources: true
+        theme: cerulean
+    
         code-fold: true
-        code-tools: true
         code-summary: "Show code"
-        code-line-numbers: true
+        code-line-numbers: false
+        code-tools: false
+        code-copy: false
+    
+        #big size saver
+        embed-resources: false
+        self-contained: false
+    
+        #trim JS helpers
         toc: true
         toc-depth: 3
         toc-location: left
-        theme: cerulean
+        anchor-sections: false
+        smooth-scroll: false
+    
+        #smaller images
+        fig-width: 6
+        fig-height: 4
+        fig-dpi: 72
+    
+        #lighter code highlighting
+        highlight-style: github
+        df-print: paged
 editor: 
   markdown: 
     wrap: sentence
@@ -347,6 +365,8 @@ This question examines how liquidity (Current Ratio) and profitability (ROA) evo
 It helps reveal whether the pandemic reshaped the traditional balance between liquidity and profitability in corporate financial resilience.
 
 ## IDA
+
+(Lecturer 2, 3, 4, and 5)
 
 Here is the IDA process for this project:
 
@@ -699,6 +719,8 @@ After completing the general IDA, we developed the specific IDA to address our s
 Here are the details:
 
 ### Question 1
+
+(Lecturer 2, 3, 4, and 5)
 
 We first add a period label (Pre-pandemic 2018–2019 vs. Pandemic 2020–2021).
 For visuals, net_income_eur is transformed using asinh() so we can plot both gains and losses on a comparable scale.
@@ -1195,6 +1217,8 @@ kable(germany_ts |>
 Here are the EDA processes and results for the sub-questions addressing the primary question "How did the pandemic affect corporate financials in Germany?"
 
 ### Question 1
+
+(Lecturer 4, 5, and 6)
 
 **1. How did profitability change across industries?**
 
@@ -2149,20 +2173,24 @@ The crisis highlighted existing gaps, strengthening resilient sectors and reveal
 
 ## Resources
 
+### References
+
 The materials used for this report are:
 
 Wickham H, Averick M, Bryan J, Chang W, McGowan LD, François R, Grolemund G, Hayes A, Henry L, Hester J, Kuhn M, Pedersen TL, Miller E, Bache SM, Müller K, Ooms J, Robinson D, Seidel DP, Spinu V, Takahashi K, Vaughan D, Wilke C, Woo K, Yutani H (2019).
 "Welcome to the tidyverse." *Journal of Open Source Software*, *4*(43), 1686.
 [doi:10.21105/joss.01686](https://doi.org/10.21105/joss.01686).
 
+### AI Acknowledgement
+
 The links to my use of ChatGPT and other AI for help on this assignment are:
 
-Q2: Bhuvana - <https://chatgpt.com/share/68f4378d-bb24-8003-8471-ed2147a8fab3> Used for formatting assistance, debugging R code, and improving interpretation flow.
+- <https://chatgpt.com/share/68f563ee-9040-8010-ab1c-4969cfb31ee0> Used to help know when the pandemic happened in Germany, understand the accounting terms related to profitability, how to create a violin chart and jitter, how to make a dumbbell chart for comparison, and perform imputation on the data.
 
-Q4: Jingyi
+- <https://chatgpt.com/share/68f4378d-bb24-8003-8471-ed2147a8fab3> Used for formatting assistance, debugging R code, and improving interpretation flow.
 
--   <https://chatgpt.com/share/68f3046d-1ad8-800d-bc11-1b005a9e600f> helped to implement animated graphics and optimize content.
+- <https://chatgpt.com/share/68f3046d-1ad8-800d-bc11-1b005a9e600f> helped to implement animated graphics and optimize content.
 
--   <https://chatgpt.com/share/68f304c8-a088-800d-be54-939dfcd7e278> helped to evaluate whether the questions are answered adequately and where to make revisions.
+- <https://chatgpt.com/share/68f304c8-a088-800d-be54-939dfcd7e278> helped to evaluate whether the questions are answered adequately and where to make revisions.
 
--   <https://chatgpt.com/share/68f305ad-f15c-800d-b724-fc917c1a93ef> helped to deal with the problem that package ‘tignostics’ is not available for this version of R and how to use scagnostics.
+- <https://chatgpt.com/share/68f305ad-f15c-800d-b724-fc917c1a93ef> helped to deal with the problem that package ‘tignostics’ is not available for this version of R and how to use scagnostics.
