@@ -1095,6 +1095,9 @@ germany_q4 <- germany_q4 |>
   select(company_id, fy_year, roa_pct, current_ratio, industry_group)
 ```
 
+
+The analysis in this study is based on a dataset of company financial information. It is important to note that in this question we use the fiscal year, not the calendar year. A company's fiscal year is its own 12-month reporting period, which may not end in December. Using the fiscal year is more accurate for this research because it matches the company's true business cycle. This means that when we refer to "2020" in the data, we are talking about the fiscal year that was most affected by the pandemic, even if it does not exactly match the calendar year 2020.
+
 3.  Convert data into a tsibble object using the tsibble package (Lecture 9, slide 5 & Reading week 9)
 
 Each company was defined as a key and the financial year as the index.
@@ -1693,7 +1696,7 @@ industry_ts <- germany_ts |>
 
 ```{r Q4 EDA 1. Industry-level trends}
 #| label: fig-combined_plot
-#| fig-cap: "The interactive plot of ROA trends by industry (2017-2021)"
+#| fig-cap: "The interactive plot of ROA and Current Ratio trends by industry (2017-2021)"
 
 # ROA
 roa_interactive <- industry_ts |>
@@ -1701,7 +1704,7 @@ roa_interactive <- industry_ts |>
   geom_line(aes(color = industry_group), size = 0.3, alpha = 0.7) +
   geom_vline(xintercept = 2020, linetype = "dashed", color = "red", size = 0.5) +
   labs(title = "Interactive ROA Trends by Industry (2017-2021)<br><sub><i>Vertical line indicates pandemic start (2020)<br><sub><i>",
-       x = "Year", y = "ROA (%)") +
+       x = "Fiscal Year", y = "ROA (%)") +
   theme_minimal() +
   theme(legend.position = "none") 
 
@@ -1716,7 +1719,7 @@ cr_interactive <- industry_ts |>
   geom_line(aes(color = industry_group), size = 0.3, alpha = 0.7) +
   geom_vline(xintercept = 2020, linetype = "dashed", color = "red", size = 0.5) +
   labs(title = "Interactive Current Ratio Trends by Industry (2017-2021)<br><sub><i>Vertical line indicates pandemic start (2020) - Hover for details<br><sub><i>",
-       x = "Year", y = "Current Ratio") +
+       x = "Fiscal Year", y = "Current Ratio") +
   theme_minimal() +
   theme(legend.position = "none")
 
@@ -2083,7 +2086,7 @@ ggplot(scag_long, aes(x = fy_year, y = value, color = industry_group)) +
   labs(
     title = "Evolution of Scagnostic Metrics over Time",
     subtitle = "Dashed line = COVID year (2020)",
-    x = "Year", y = "Scagnostic Value"
+    x = "Fiscal Year", y = "Scagnostic Value"
   ) +
   theme_minimal()
 ```
