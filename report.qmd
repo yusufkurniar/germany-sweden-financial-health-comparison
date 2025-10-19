@@ -8,6 +8,10 @@ format:
         output-file: report.html
         css: "assignment.css"
         embed-resources: true
+        code-fold: true
+        code-tools: true
+        code-summary: "Show code"
+        code-line-numbers: true
 editor: 
   markdown: 
     wrap: sentence
@@ -64,6 +68,8 @@ theme_set(theme_bw(base_size = 14) +
 )
 ```
 
+This is the detail library that we used for this project.
+
 ```{r load-library}
 library(dplyr)
 library(stringr)
@@ -109,7 +115,9 @@ All analytical procedures follow the ETC5521 workflow, ensuring reproducibility,
 
 The dataset used in this analysis originates from **the Bureau van Dijk OSIRIS database**, a comprehensive source of harmonised financial information for publicly listed and major private firms worldwide.
 For this study, we extracted firm-level data for **German companies** over the **2018–2021 accounting years**, a period that captures both pre-pandemic and pandemic-era financial performance.
-Each record represents a firm’s reported financials for a specific accounting year, enabling longitudinal exploration of trends in profitability, liquidity, leverage, and resilience. These are the processes to load the data and combine them:
+Each record represents a firm’s reported financials for a specific accounting year, enabling longitudinal exploration of trends in profitability, liquidity, leverage, and resilience. These are the code that we used to load the data and combine them:
+
+Loading the data.
 
 ```{r read-data}
 #define the folder
@@ -136,10 +144,9 @@ for (file_index in seq_along(germany_file_paths)) {
   #If the file holds one object, store that object; otherwise store the sub-list
   osiris_germany[[file_index]] <- if (length(loaded_objects) == 1) loaded_objects[[1]] else loaded_objects
 }
-
-#quick check
-str(osiris_germany, max.level = 1)
 ```
+
+Combining the data.
 
 ```{r read-data-2}
 #build a single data frame with a 'year' column taken from the filename
@@ -233,7 +240,7 @@ filtered_germany <- combined_germany |>
 
 This is the table describing the variables we used in this project:
 
-```{r table-description}
+```{r table-description, echo=FALSE}
 data_dictionary <- tribble(
   ~`Column Name`,           ~Description,                                                                    ~`Data Type`, ~`Original Name`,
   "company_id",             "Unique company identifier (Bureau van Dijk ID).",                               "character", "BvD ID Number (os_id_number)",
