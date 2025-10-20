@@ -1,129 +1,180 @@
-/* === FULL-WIDTH CONTENT (figures, code, tables) === */
-
-/* Add top and bottom space for header/footer */
+/* === BODY & PAGE LAYOUT === */
 body {
-  padding-top: 3rem;    /* space before the header/title */
-  padding-bottom: 4rem; /* space after the footer */
-  background-color: #fefefe;
+  font-family: 'Open Sans', 'Segoe UI', Arial, sans-serif;
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: #2c3e50;
+  background-color: #f8f9fb;
+  margin: 0;
+  padding: 0;
 }
 
-/* Quarto/knitr cells */
-.cell,
-.cell > .sourceCode,
-.cell > .sourceCode > pre,
-.cell-output,
-.cell-output-display {
-  max-width: 100% !important;
-  width: 100% !important;
-  margin: 1rem 0;
+/* Main content container */
+main, .main-container, .content, .quarto-document-content {
+  max-width: 900px;
+  margin: 2em auto;
+  padding: 2.5em 3em;
+  background-color: #fff;
+  border-radius: 0.6rem;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.1);
 }
 
-/* Code blocks outside cells */
-pre, code, .sourceCode, .sourceCode > pre {
-  max-width: 100% !important;
-  width: 100% !important;
+/* === TITLES & HEADINGS === */
+h1, h2, h3, h4 {
+  font-family: 'Merriweather', Georgia, serif;
+  color: #333a4d;
+  margin-top: 2em;
+  margin-bottom: 0.6em;
+  line-height: 1.3;
 }
 
-/* Static images & figures */
-figure, .figure, .quarto-figure, .quarto-figure > figure, img {
+h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  border-bottom: 3px solid #e7eaf3;
+  padding-bottom: 0.4em;
+}
+
+h2 {
+  font-size: 1.5rem;
+  border-bottom: 2px solid #e9ecef;
+  padding-bottom: 0.3em;
+}
+
+h3 {
+  font-size: 1.25rem;
+  color: #34495e;
+}
+
+/* === PARAGRAPHS === */
+p {
+  margin-bottom: 1.2em;
+}
+
+/* === LINKS === */
+a {
+  color: #1b74e4;
+  text-decoration: underline;
+}
+
+a:hover {
+  text-decoration: none;
+  color: #004fcc;
+}
+
+/* === TABLES === */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5em 0;
+  font-size: 0.95rem;
+}
+
+caption {
+  caption-side: top;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2d3d50;
+  margin-bottom: 0.5em;
+}
+
+th, td {
+  padding: 0.75em 1em;
+  text-align: left;
+  border: 1px solid #dee2e6;
+}
+
+th {
+  background-color: #f1f4f8;
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+tr:nth-child(even) {
+  background-color: #fafbfc;
+}
+
+/* === CODE & R CHUNKS === */
+pre, code {
+  font-family: 'Fira Code', 'Consolas', monospace;
+  background-color: #f6f8fa;
+  border-radius: 6px;
+  color: #333;
+}
+
+pre {
+  padding: 1em;
+  overflow-x: auto;
+  border: 1px solid #e0e0e0;
+  font-size: 0.95rem;
+}
+
+code {
+  padding: 0.15em 0.3em;
+  background-color: #f6f8fa;
+}
+
+/* === FIGURES & IMAGES === */
+figure, img {
   display: block;
-  margin-left: 0;
-  margin-right: 0;
-  max-width: 100% !important;
-  width: 100% !important;
+  max-width: 100%;
+  margin: 1.5em auto;
+  border-radius: 0.4rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
-/* Plotly/HTML widgets */
-.html-widget, .js-plotly-plot, .plotly, .plotly-html-view {
-  width: 100% !important;
-  max-width: 100% !important;
+figcaption {
+  text-align: center;
+  font-size: 0.9rem;
+  color: #6b6e73;
+  font-style: italic;
 }
 
-/* Patchwork/ggsave images sometimes wrapped in divs */
-.cell-output-display > div {
-  width: 100% !important;
-  max-width: 100% !important;
+/* === BLOCKQUOTES === */
+blockquote {
+  border-left: 4px solid #458ff6;
+  background-color: #f6faff;
+  margin: 1.4em 0;
+  padding: 0.75em 1em;
+  font-style: italic;
+  color: #324356;
 }
 
-/* kable tables */
-.table, table, .kable_wrapper {
-  width: 100% !important;
-  max-width: 100% !important;
+/* === KABLE TABLE SCROLLING === */
+.kable_wrapper, .scroll-box {
+  overflow-x: auto;
 }
 
-/* Tabsets & callouts */
-.tabset, .panel-tabset, .panel-tabset .tab-content, .panel-tabset .tab-pane {
-  width: 100% !important;
-  max-width: 100% !important;
+/* === PAGE BREAKS FOR PDF EXPORT === */
+.page-break {
+  page-break-after: always;
+  break-after: page;
 }
 
-/* Main content container - 4rem side gaps */
-.content {
-  padding-left: 4rem !important;
-  padding-right: 4rem !important;
-  padding-top: 2rem !important;    /* adds space below header */
-  padding-bottom: 2rem !important; /* adds space above footer */
+/* === FOOTER & NOTES === */
+.footnotes, .footnote {
+  font-size: 0.9rem;
+  color: #6c757d;
+  border-top: 1px solid #e9ecef;
+  margin-top: 2em;
+  padding-top: 0.5em;
 }
 
-/* Quarto page columns - use full screen width */
-.page-columns .content {
-  grid-column: screen-start / screen-end !important;
-}
-
-/* Remove any max-width constraints on main content */
-.main-content, 
-.quarto-document-content,
-[role="main"] {
-  max-width: none !important;
-  padding-left: 4rem !important;
-  padding-right: 4rem !important;
-}
-
-/* Ensure body/content containers don't restrict width */
-body .quarto-container,
-body .container,
-body .container-fluid {
-  max-width: none !important;
-  padding-left: 4rem !important;
-  padding-right: 4rem !important;
-}
-
-/* Optional: reduce side gaps on smaller screens */
-@media (max-width: 1200px) {
-  .content,
-  .main-content,
-  .quarto-document-content,
-  [role="main"],
-  body .quarto-container,
-  body .container,
-  body .container-fluid {
-    padding-left: 3rem !important;
-    padding-right: 3rem !important;
-  }
-}
-
+/* === RESPONSIVE DESIGN === */
 @media (max-width: 768px) {
-  .content,
-  .main-content,
-  .quarto-document-content,
-  [role="main"],
-  body .quarto-container,
-  body .container,
-  body .container-fluid {
-    padding-left: 2rem !important;
-    padding-right: 2rem !important;
+  main, .main-container, .content {
+    padding: 1.5em;
   }
-}
 
-@media (max-width: 480px) {
-  .content,
-  .main-content,
-  .quarto-document-content,
-  [role="main"],
-  body .quarto-container,
-  body .container,
-  body .container-fluid {
-    padding-left: 2rem !important;
-    padding-right: 2rem !important;
+  h1 {
+    font-size: 1.75rem;
+  }
+
+  h2 {
+    font-size: 1.35rem;
+  }
+
+  pre {
+    font-size: 0.9rem;
   }
 }
