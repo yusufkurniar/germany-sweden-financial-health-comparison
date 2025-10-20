@@ -9,15 +9,16 @@ body {
   padding: 0;
 }
 
-/* Main content container */
 main, .main-container, .content, .quarto-document-content {
   max-width: 900px;
-  margin: 2em auto;
+  margin: 4em auto 2.5em auto;   /* Top margin is now 4em, tweak higher if you want even more space */
   padding: 2.5em 3em;
   background-color: #fff;
   border-radius: 0.6rem;
-  box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+  border: 5px solid #b7cbe5;
+  box-shadow: 0 5px 22px rgba(44, 62, 80, 0.11);
 }
+
 
 /* === TITLES & HEADINGS === */
 h1, h2, h3, h4 {
