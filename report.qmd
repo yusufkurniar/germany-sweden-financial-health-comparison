@@ -121,7 +121,7 @@ library(viridisLite)
 ## Introduction
 
 The COVID-19 pandemic caused significant disruptions across global markets, testing the financial resilience of firms in every sector.
-In Germany, the first confirmed case was recorded on 27 January 2020.
+In Germany, the first confirmed case was recorded on 27 January 2020 (The Associated Press, 2020).
 Nationwide contact restrictions began on 22 March 2020.
 Most nationwide measures were lifted between 20 March and 2 April 2022, and the final federal provisions expired on 7 April 2023.
 
@@ -137,7 +137,7 @@ All analytical procedures follow the ETC5521 workflow, ensuring reproducibility,
 
 ## Data description
 
-The dataset used in this analysis originates from **the Bureau van Dijk OSIRIS database**, a comprehensive source of harmonised financial information for publicly listed and major private firms worldwide.
+The dataset used in this analysis originates from **the Bureau van Dijk OSIRIS database**, a comprehensive source of harmonised financial information for publicly listed and major private firms worldwide (Bureau van Dijk, 2025).
 For this study, we extracted firm-level data for **German companies** over the **2018–2021 accounting years**, a period that captures both pre-pandemic and pandemic-era financial performance.
 Each record represents a firm’s reported financials for a specific accounting year, enabling longitudinal exploration of trends in profitability, liquidity, leverage, and resilience.
 These are the code that we used to load the data and combine them:
@@ -2163,9 +2163,11 @@ Overall, the pandemic’s impact on German corporate finances was moderate but u
 The crisis highlighted existing gaps, strengthening resilient sectors and revealing vulnerabilities in more leveraged, cyclical industries.
 
 
-### References
+## References
 
 The materials used for this report are:
+
+- Bureau van Dijk. (2025). OSIRIS [Data set: Germany subset]. Bureau van Dijk – A Moody’s Analytics Company. https://www.bvdinfo.com/en-gb/our-products/data/international/osiris 
 
 - **Tidyverse:** Wickham H, Averick M, Bryan J, Chang W, McGowan LD, François R, Grolemund G, Hayes A, Henry L, Hester J,
   Kuhn M, Pedersen TL, Miller E, Bache SM, Müller K, Ooms J, Robinson D, Seidel DP, Spinu V, Takahashi K,
@@ -2272,8 +2274,10 @@ The materials used for this report are:
 
 - **ViridisLite:** Simon Garnier, Noam Ross, Robert Rudis, Antônio P. Camargo, Marco Sciaini, and Cédric Scherer (2023).
   viridis(Lite) - Colorblind-Friendly Color Maps for R. viridisLite package version 0.4.2.
+  
+- The Associated Press. (2020). Europe braces for next wave of coronavirus pandemic in Berlin. AP News. https://apnews.com/article/coronavirus-pandemic-health-europe-epidemics-berlin-b61de99739774c1f52b4ba6860054d6d
 
-### AI Acknowledgement
+## AI Acknowledgement
 
 The links to my use of ChatGPT and other AI for help on this assignment are:
 
