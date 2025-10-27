@@ -5,7 +5,7 @@ date: "Oct 25, 2025"
 quarto-required: ">=1.8.0"
 format:
     html: 
-        output-file: report.html
+        output-file: report_part2.html
         css: "assignment.css"
         theme: cerulean
     
@@ -15,7 +15,7 @@ format:
         code-tools: false
         code-copy: false
     
-        #big size saver
+        #big size save
         embed-resources: false
         self-contained: false
     
