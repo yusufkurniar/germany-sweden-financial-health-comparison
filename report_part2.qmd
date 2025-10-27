@@ -1,0 +1,917 @@
+---
+title: "ETC5521 Diving Deeper into Data Exploration: Project Part 2"
+author: "P2-wallaby"
+date: "Oct 25, 2025"
+quarto-required: ">=1.8.0"
+format:
+    html: 
+        output-file: report.html
+        css: "assignment.css"
+        theme: cerulean
+    
+        code-fold: true
+        code-summary: "Show code"
+        code-line-numbers: false
+        code-tools: false
+        code-copy: false
+    
+        #big size saver
+        embed-resources: false
+        self-contained: false
+    
+        #trim JS helpers
+        toc: true
+        toc-depth: 3
+        toc-location: left
+        anchor-sections: false
+        smooth-scroll: false
+    
+        #smaller images
+        fig-width: 6
+        fig-height: 4
+        fig-dpi: 72
+    
+        #lighter code highlighting
+        highlight-style: github
+        df-print: paged
+editor: 
+  markdown: 
+    wrap: sentence
+---
+
+
+```{r}
+#| echo: false
+# Set up chunk for all slides
+knitr::opts_chunk$set(
+  fig.width = 6,
+  fig.height = 4,
+  fig.align = "center",
+  out.width = "100%",
+  code.line.numbers = FALSE,
+  fig.retina = 4,
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  cache = FALSE,
+  dev.args = list(pointsize = 11)
+)
+```
+
+```{r}
+#| echo: false
+# Load libraries
+library(tidyverse)
+library(conflicted)
+
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(dplyr::select)
+conflicts_prefer(dplyr::slice)
+
+# Plot options and themes
+options(
+  digits = 2,
+  width = 60,
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis",
+  ggplot2.discrete.colour = c("#D55E00", "#0072B2", "#009E73", "#CC79A7", "#E69F00", "#56B4E9", "#F0E442"),
+  ggplot2.discrete.fill = c("#D55E00", "#0072B2", "#009E73", "#CC79A7", "#E69F00", "#56B4E9", "#F0E442")
+)
+
+theme_set(theme_bw(base_size = 14) +
+   theme(
+     aspect.ratio = 1,
+     plot.background = element_rect(fill = 'transparent', colour = NA),
+     plot.title.position = "plot",
+     plot.title = element_text(size = 24),
+     panel.background = element_rect(fill = 'transparent', colour = NA),
+     legend.background = element_rect(fill = 'transparent', colour = NA),
+     legend.key = element_rect(fill = 'transparent', colour = NA)
+   )
+)
+```
+
+This is the detail library that we used for this project.
+
+```{r load-library}
+library(dplyr)
+library(stringr)
+library(janitor)
+library(skimr)
+library(tsibble)
+library(knitr)
+library(naniar)
+library(patchwork)
+library(plotly)
+library(tsibbletalk)
+library(feasts)
+library(broom)
+library(purrr)
+library(cassowaryr)
+library(gganimate)
+library(gifski)
+library(kableExtra)
+library(ggplot2)
+library(scales)
+library(tidyr)
+library(ggrepel)
+library(viridisLite)
+```
+
+## Introduction
+
+AAA
+
+## Data description
+
+The dataset used in this analysis originates from **the Bureau van Dijk OSIRIS database**, a comprehensive source of harmonised financial information for publicly listed and major private firms worldwide (Bureau van Dijk, 2025).
+For this study, we extracted firm-level data for **German companies** over the **2018–2021 accounting years**, a period that captures both pre-pandemic and pandemic-era financial performance.
+Each record represents a firm’s reported financials for a specific accounting year, enabling longitudinal exploration of trends in profitability, liquidity, leverage, and resilience.
+These are the code that we used to load the data and combine them:
+
+Loading the data.
+
+```{r read-data}
+#define the folder
+data_directory <- "osiris"
+
+#filter germany and sweden
+germany_sweden_file_paths <- list.files(
+  data_directory,
+  pattern = "^osiris_?(Germany|Sweden)_(2018|2019|2020|2021)\\.rda$",
+  full.names = TRUE,
+  ignore.case = TRUE
+)
+
+#name the list by file stems
+germany_sweden_file_stems <- tools::file_path_sans_ext(basename(germany_sweden_file_paths))
+osiris_germany_sweden <- setNames(vector("list", length(germany_sweden_file_paths)), germany_sweden_file_stems)
+
+#load each file
+for (file_index in seq_along(germany_sweden_file_paths)) {
+  temporary_environment <- new.env(parent = emptyenv())
+  load(germany_sweden_file_paths[file_index], envir = temporary_environment)
+  loaded_objects <- as.list(temporary_environment)
+
+  #If the file holds one object, store that object, otherwise store the sub-list
+  osiris_germany_sweden[[file_index]] <- if (length(loaded_objects) == 1) loaded_objects[[1]] else loaded_objects
+}
+
+```
+
+Combining the data.
+
+```{r read-data-2}
+#build a single data frame with 'year' and 'source_country' taken from the filename
+combined_germany_sweden <- {
+  parts <- vector("list", length(osiris_germany_sweden))
+  names(parts) <- names(osiris_germany_sweden)
+
+  for (file_stem in names(osiris_germany_sweden)) {
+    data_frame_from_file <- osiris_germany_sweden[[file_stem]]
+
+    extracted_year     <- as.integer(str_extract(file_stem, "\\d{4}"))
+    extracted_country  <- str_extract(file_stem, "(?i)Germany|Sweden") |> stringr::str_to_title()
+
+    parts[[file_stem]] <- mutate(
+      data_frame_from_file,
+      year = extracted_year,
+      source_country = extracted_country #avoid clashing with the raw 'country'
+    )
+  }
+
+  #bind and sort
+  bind_rows(parts) |>
+    arrange(source_country, year)
+}
+
+#unique country–year pairs
+combined_germany_sweden |>
+  dplyr::distinct(source_country, year) |>
+  dplyr::arrange(source_country, year) |>
+  kable(align = "l", booktabs = TRUE) |>
+  kable_styling(full_width = FALSE, font_size = 11)
+
+```
+
+After the data is combined, we standardise the raw file into analysis-ready fields.
+It normalises column names, maps long vendor headers to clear variables by topic, and creates a fiscal-year label from the year-end date.
+Finally, it keeps only the identifiers, industry codes, and financial variables needed for the analysis.
+
+```{r data-cleaning}
+filtered_germany_sweden <- combined_germany_sweden |>
+  clean_names() |>
+  
+  rename(
+    # IDs / scope (used in all questions)
+    company_name       = company_name_name,
+    company_id         = name_id,
+    acct_year          = year,
+    country            = country_country,
+    city               = city_city_city,
+    consolidation_code = consolidation_code_consol_code,
+    status             = status_status,
+    
+    # Industry codes (Q1, Q2, Q4)
+    nace_code = nace_rev_1_core_code_cnacecd,
+    icb_code  = industrial_classification_benchmark_icb,
+    sic_code  = us_sic_core_code_csicuscde,
+    
+    # Scale / balance sheet (Q2, Q3)
+    total_assets_eur      = total_assets_data13077,
+    total_liabilities_eur = total_liabilities_and_debt_data14022,
+    total_equity_eur      = total_shareholders_equity_data14041,
+    
+    # Revenue & profit (Q1, Q3)
+    total_revenue_eur = total_revenues_data13004,
+    net_sales_eur     = net_sales_data13002,
+    gross_sales_eur   = gross_sales_data13000,
+    net_income_eur    = net_income_starting_line_data15500,
+    
+    # Profitability ratios (Q1, Q4)
+    ebit_margin_pct   = ebit_margin_percent_data31055,
+    ebitda_margin_pct = ebitda_margin_percent_data31060,
+    roa_pct           = return_on_total_assets_percent_data31015,
+    roe_pct           = roe_percent_data31065,
+    
+    # Efficiency
+    net_assets_turnover = net_assets_turnover_data31225,
+    stock_turnover      = stock_turnover_data31220,
+    
+    # Leverage, solvency, and liquidity (Q2)
+    solvency_pct        = solvency_ratio_percent_data31310,
+    gearing_pct         = gearing_percent_data31315,
+    current_ratio       = current_ratio_data31105,
+    liquidity_ratio     = liquidity_ratio_data31110,
+    shareholders_liq_pct= shareholders_liquidity_ratio_data31305,
+    interest_cover      = interest_cover_data31115
+  ) |>
+  
+  # Rename fiscal year
+  mutate(
+    fy_end_date = lubridate::ymd(as.character(company_fiscal_year_end_date_closdate)),
+    fy_year     = year(fy_end_date)
+  ) |>
+  
+  # Select only relevant columns
+  select(
+    company_id, company_name, fy_end_date, fy_year, acct_year, status, country, city, consolidation_code,
+    nace_code, icb_code, sic_code,
+    total_assets_eur, total_liabilities_eur, total_equity_eur,
+    total_revenue_eur, net_sales_eur, gross_sales_eur, net_income_eur,
+    ebit_margin_pct, ebitda_margin_pct, roa_pct, roe_pct,
+    net_assets_turnover, stock_turnover,
+    solvency_pct, gearing_pct, current_ratio, liquidity_ratio,
+    shareholders_liq_pct, interest_cover
+  )
+
+```
+
+This is the table describing the variables we used in this project:
+
+```{r table-description, echo=FALSE}
+data_dictionary <- tribble(
+  ~`Column Name`,           ~Description,                                                                    ~`Data Type`, ~`Original Name`,
+  "company_id",             "Unique company identifier (Bureau van Dijk ID).",                               "character", "BvD ID Number (os_id_number)",
+  "company_name",           "Registered company name (label).",                                               "character", "Company Name (name)",
+  "fy_end_date",            "Company fiscal year-end date for the account.",                                  "date",      "Company Fiscal Year End Date (closdate)",
+  "fy_year",                "Year extracted from fiscal year-end date.",                                      "integer",   "derived from Company Fiscal Year End Date (closdate)",
+  "acct_year",              "Reporting year label carried from file name/field.",                             "integer",   "year",
+  "country",                "Country of head office.",                                                         "character", "Country (country)",
+  "city",                   "City of head office.",                                                            "character", "CITY - City (city)",
+  "consolidation_code",     "Consolidation scope of the accounts (e.g., C1/C2/U1/U2).",                        "character", "Consolidation Code (consol_code)",
+  "nace_code",              "NACE core code (EU industry classification).",                                    "character", "NACE Rev 1, Core Code (cnacecd)",
+  "icb_code",               "ICB industry classification code.",                                               "character", "Industrial Classification Benchmark (icb)",
+  "sic_code",               "US SIC core code.",                                                               "character", "US SIC, Core Code (csicuscde)",
+  "total_assets_eur",       "Total assets (EUR).",                                                              "numeric",   "Total Assets (data13077)",
+  "total_liabilities_eur",  "Total liabilities and debt (EUR).",                                               "numeric",   "Total Liabilities and Debt (data14022)",
+  "total_equity_eur",       "Total shareholders’ equity (EUR).",                                               "numeric",   "Total Shareholders Equity (data14041)",
+  "total_revenue_eur",      "Total revenues / operating revenue (EUR).",                                       "numeric",   "Total revenues (data13004)",
+  "net_sales_eur",          "Net sales (EUR).",                                                                 "numeric",   "Net sales (data13002)",
+  "gross_sales_eur",        "Gross sales (EUR).",                                                               "numeric",   "Gross sales (data13000)",
+  "net_income_eur",         "Net income (EUR).",                                                                "numeric",   "Net Income / Starting Line (data15500)",
+  "ebit_margin_pct",        "EBIT margin (% of sales/revenue).",                                               "numeric",   "EBIT Margin (%) (data31055)",
+  "ebitda_margin_pct",      "EBITDA margin (% of sales/revenue).",                                             "numeric",   "EBITDA Margin (%) (data31060)",
+  "roa_pct",                "Return on total assets (%).",                                                     "numeric",   "Return on Total Assets (%) (data31015)",
+  "roe_pct",                "Return on equity (%).",                                                           "numeric",   "ROE (%) (data31065)",
+  "net_assets_turnover",    "Net assets turnover (times).",                                                    "numeric",   "Net Assets Turnover (data31225)",
+  "stock_turnover",         "Stock / inventory turnover (times).",                                             "numeric",   "Stock Turnover (data31220)",
+  "solvency_pct",           "Solvency ratio (%).",                                                             "numeric",   "Solvency ratio (%) (data31310)",
+  "gearing_pct",            "Gearing ratio (%).",                                                              "numeric",   "Gearing (%) (data31315)",
+  "current_ratio",          "Current ratio (times).",                                                          "numeric",   "Current ratio (data31105)",
+  "liquidity_ratio",        "Liquidity / quick ratio (times).",                                                "numeric",   "Liquidity ratio (data31110)",
+  "shareholders_liq_pct",   "Shareholders’ liquidity ratio (%).",                                              "numeric",   "Shareholders Liquidity ratio (data31305)",
+  "interest_cover",         "Interest cover (times).",                                                         "numeric",   "Interest Cover (data31115)"
+)
+
+#show table
+data_dictionary |>
+  kable(align = "l", booktabs = TRUE) |>
+  kable_styling(full_width = FALSE, font_size = 11)
+```
+
+The selected variables encompass four key dimensions of corporate financial health:
+
+-   **Identification and Location** - company_id, company_name, country, and city provide firm-level identifiers and geographical context.
+
+<!-- -->
+
+-   **Balance Sheet Structure** - total_assets_eur, total_liabilities_eur, and total_equity_eur measure firm size and capital composition, reported in euros.
+
+<!-- -->
+
+-   **Income and Profitability** - total_revenue_eur, net_sales_eur, and net_income_eur capture income statement outcomes, while ebit_margin_pct, ebitda_margin_pct, roa_pct, and roe_pct reflect operating performance and returns to shareholders.
+
+<!-- -->
+
+-   **Solvency and Liquidity** - solvency_pct, gearing_pct, current_ratio, liquidity_ratio, shareholders_liq_pct, and interest_cover assess each firm’s financial stability, leverage, and capacity to meet short-term obligations.
+
+-   **Industry Classification** - industry_nace, industry_icb, and industry_group link firms to their respective economic sectors according to European (NACE) and global (ICB) coding systems.
+
+It is important to note that the **accounting year** variable in **OSIRIS** reflects **two-year reporting periods**.
+For example, the 2018 accounting year represents financial results spanning 2017–2018, 2019 corresponds to 2018–2019, 2020 covers 2019–2020, and 2021 includes 2020–2021.
+Throughout this report, each accounting year is interpreted as representing the **endpoint of its reporting cycle**.
+Consequently, “2021” is treated as capturing firm performance during the height of the **COVID-19 pandemic**, while 2018–2019 represent pre-pandemic benchmarks.
+
+This dataset structure enables a robust exploration of temporal changes in corporate performance and the role of firm characteristics , particularly **firm size** , in shaping **financial resilience** throughout the pandemic period.
+
+### Research Question
+
+Here are the research questions (sub-questions) that guide us in analysing and answering the primary question: How did the pandemic affect corporate financials in Germany and Sweden?
+
+**1. How did profitability change across industries?**
+
+AAA
+
+**2. How did leverage (debt-to-assets) and liquidity (current ratio) evolve during pandemic?**
+
+AAA
+
+**3. Which German industries showed unexpected financial resilience or vulnerability from 2020 to 2022, and how were these outcomes shaped by profitability, leverage, liquidity, and firm size?**
+
+AAA
+
+**4. How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic?**
+
+AAA
+
+## IDA
+
+Here is the IDA process for this project:
+
+First, we develop this code to prepare the dataset for analysis by converting numeric columns, standardising text fields, and reporting missing values overall and by year.
+It also performs basic sanity checks for duplicate firm-years, impossible values, and consolidation codes.
+
+```{r table-checking}
+
+num_cols <- c(
+  "total_assets_eur","total_liabilities_eur","total_equity_eur",
+  "total_revenue_eur","net_sales_eur","gross_sales_eur","net_income_eur",
+  "ebit_margin_pct","ebitda_margin_pct","roa_pct","roe_pct",
+  "net_assets_turnover","stock_turnover",
+  "solvency_pct","gearing_pct","current_ratio","liquidity_ratio",
+  "shareholders_liq_pct","interest_cover"
+)
+
+#symbol formatting/coerce numerics
+filtered_germany_sweden <- filtered_germany_sweden |>
+  mutate(
+    across(all_of(num_cols) & where(is.character), readr::parse_number),
+    country = stringr::str_to_title(country),
+    city    = stringr::str_to_title(city)
+  )
+
+#missingness report check (overall and by year)
+missing_overall <- filtered_germany_sweden |>
+  summarise(across(everything(), ~ mean(is.na(.)))) |>
+  pivot_longer(everything(), names_to = "variable", values_to = "missing_rate")
+
+missing_by_year <- filtered_germany_sweden |>
+  group_by(acct_year) |>
+  summarise(across(everything(), ~ mean(is.na(.)))) |>
+  pivot_longer(-acct_year, names_to = "variable", values_to = "missing_rate")
+
+#sanity checks (optional but recommended)
+dup_firm_year <- filtered_germany_sweden |>
+  count(company_id, fy_year, acct_year, country) |>
+  filter(n > 1)
+
+impossible_assets <- filtered_germany_sweden |>
+  filter(!is.na(total_assets_eur) & total_assets_eur < 0)
+
+consol_levels <- filtered_germany_sweden |>
+  count(consolidation_code, sort = TRUE)
+
+```
+
+Then, we create this code to extract the 2-digit NACE code, categorises companies into broad industry groups using NACE and ICB, and creates a unified 'industry_group' factor with a fixed order for plotting purposes.
+It also provides a small sample of unmapped records for verification.
+After checking, there are no duplicates in the data using company_id, fy_year, and acct_year as the primary key.
+
+```{r NACE-column}
+#clean 2-digit NACE as integer
+filtered_germany_sweden <- filtered_germany_sweden |>
+  mutate(
+    nace_num2 = suppressWarnings(as.integer(str_sub(readr::parse_number(as.character(nace_code)), 1, 2)))
+  )
+
+#map NACE divisions to broad section names
+industry_from_nace <- function(x){
+  case_when(
+    x %in% 1:3 ~ "Agriculture, Forestry & Fishing",
+    x %in% 5:9 ~ "Mining & Quarrying",
+    x %in% 10:33 | x %in% 15:37 ~ "Manufacturing",
+    x %in% 35 ~ "Electricity, Gas, Steam",
+    x %in% 36:39 ~ "Water Supply & Waste",
+    x %in% 41:43 ~ "Construction",
+    x %in% 45:47 ~ "Wholesale & Retail Trade",
+    x %in% 49:53 ~ "Transport & Storage",
+    x %in% 55:56 ~ "Accommodation & Food",
+    x %in% 58:63 ~ "Information & Communication",
+    x %in% 64:66 ~ "Financial & Insurance",
+    x %in% 68 ~ "Real Estate",
+    x %in% 69:75 ~ "Professional, Scientific & Technical",
+    x %in% 77:82 ~ "Administrative & Support",
+    x %in% 84 ~ "Public Administration",
+    x %in% 85 ~ "Education",
+    x %in% 86:88 ~ "Human Health & Social Work",
+    x %in% 90:93 ~ "Arts, Entertainment & Recreation",
+    x %in% 94:96 ~ "Other Service Activities",
+    x %in% 97:98 ~ "Household Activities",
+    x %in% 99 ~ "Extraterritorial Organizations",
+    TRUE ~ NA_character_
+  )
+}
+
+#ICB top-level sector labels
+icb_map <- c(
+  "0001" = "Oil & Gas",
+  "1000" = "Basic Materials",
+  "2000" = "Industrials",
+  "3000" = "Consumer Goods",
+  "4000" = "Health Care",
+  "5000" = "Consumer Services",
+  "6000" = "Telecommunications",
+  "7000" = "Utilities",
+  "8000" = "Financials",
+  "9000" = "Technology"
+)
+
+#normalize ICB to a 4-digit “bucket” (example: 2573 to 2000)
+normalize_icb <- function(x){
+  x_chr <- str_extract(as.character(x), "\\d+")
+  ifelse(is.na(x_chr), NA_character_,
+         sprintf("%04d", as.integer(floor(as.numeric(x_chr) / 1000) * 1000)))
+}
+
+filtered_germany_sweden <- filtered_germany_sweden |>
+  mutate(
+    industry_nace = industry_from_nace(nace_num2),
+    icb_bucket    = normalize_icb(icb_code),
+    industry_icb  = icb_map[icb_bucket],
+    industry_group = coalesce(industry_nace, industry_icb, "Other / Unmapped")
+  )
+
+#check
+unmapped_sample <- filtered_germany_sweden |>
+  filter(industry_group == "Other / Unmapped") |>
+  select(company_id, fy_year, acct_year, nace_code, icb_code) |>
+  head(15)
+
+#factor order for plots
+ordered_levels <- c(
+  "Agriculture, Forestry & Fishing","Mining & Quarrying","Manufacturing",
+  "Electricity, Gas, Steam","Water Supply & Waste","Construction",
+  "Wholesale & Retail Trade","Transport & Storage","Accommodation & Food",
+  "Information & Communication","Financial & Insurance","Real Estate",
+  "Professional, Scientific & Technical","Administrative & Support",
+  "Public Administration","Education","Human Health & Social Work",
+  "Arts, Entertainment & Recreation","Other Service Activities",
+  "Household Activities","Extraterritorial Organizations",
+  "Oil & Gas","Basic Materials","Industrials","Consumer Goods","Health Care",
+  "Consumer Services","Telecommunications","Utilities","Financials","Technology",
+  "Other / Unmapped"
+)
+filtered_germany_sweden <- filtered_germany_sweden |>
+  mutate(industry_group = factor(industry_group, levels = ordered_levels))
+```
+
+After that, we use this code to reshape numeric variables into a long format for Initial Data Analysis, separate scale variables from ratios, and assign clear labels for charts.
+The result is a tidy table ready for profiling and visualisation.
+
+```{r prepare-IDA}
+#using long data
+ida_germany_sweden <- filtered_germany_sweden |>
+  dplyr::select(acct_year, country, dplyr::all_of(num_cols)) |>
+  tidyr::pivot_longer(dplyr::all_of(num_cols),
+                      names_to = "variable_orig", values_to = "value") |>
+  tidyr::drop_na()
+
+#split between scale and ratio
+scale_vars <- c("total_assets_eur","total_liabilities_eur","total_equity_eur",
+                "total_revenue_eur","net_sales_eur","gross_sales_eur","net_income_eur")
+ratio_vars <- setdiff(unique(ida_germany_sweden$variable_orig), scale_vars)
+
+#label mapping for the charts
+nice <- c(
+  total_assets_eur   = "Total assets (EUR)",
+  total_liabilities_eur="Total liabilities (EUR)",
+  total_equity_eur   = "Equity (EUR)",
+  total_revenue_eur  = "Total revenue (EUR)",
+  net_sales_eur      = "Net sales (EUR)",
+  gross_sales_eur    = "Gross sales (EUR)",
+  net_income_eur     = "Net income (EUR)",
+  ebit_margin_pct    = "EBIT margin (%)",
+  ebitda_margin_pct  = "EBITDA margin (%)",
+  roa_pct            = "ROA (%)",
+  roe_pct            = "ROE (%)",
+  net_assets_turnover= "Net assets turnover (x)",
+  stock_turnover     = "Stock turnover (x)",
+  solvency_pct       = "Solvency (%)",
+  gearing_pct        = "Gearing (%)",
+  current_ratio      = "Current ratio (x)",
+  liquidity_ratio    = "Liquidity ratio (x)",
+  shareholders_liq_pct = "Shareholders’ liquidity (%)",
+  interest_cover     = "Interest cover (x)"
+)
+
+pretty_var <- function(x) ifelse(x %in% names(nice), nice[x], x)
+
+ida_germany_sweden <- ida_germany_sweden |>
+  mutate(variable = pretty_var(variable_orig),
+         variable = factor(variable, levels = unique(variable)))
+
+```
+
+Then, we create this code to visualise the distribution of scale variables by year using violin and jitter plots on a log scale, with medians highlighted.
+It allows quick checks of spread, skewness, and outliers over time for monetary measures.
+
+```{r IDA-scale}
+#chart for scale variables (log axis) — side-by-side by country
+p_scale <- ida_germany_sweden |>
+  filter(variable_orig %in% scale_vars) |>
+  mutate(
+    y    = if_else(value > 0, value, NA_real_),
+    year = factor(acct_year)
+  ) |>
+  ggplot(aes(x = year, y = y, colour = country,
+             group = interaction(country, year))) +
+  geom_violin(
+    trim = FALSE, fill = NA, linewidth = 0.4, na.rm = TRUE,
+    position = position_dodge(width = 0.75)
+  ) +
+  #use position, jitterdodge only, and remove width/height
+  geom_jitter(
+    alpha = 0.12, size = 0.6, na.rm = TRUE,
+    position = position_jitterdodge(jitter.width = 0.12, jitter.height = 0, dodge.width = 0.75)
+  ) +
+  stat_summary(
+    fun = median, geom = "point", shape = 95, size = 6, na.rm = TRUE,
+    position = position_dodge(width = 0.75)
+  ) +
+  scale_y_log10(labels = scales::label_number(scale_cut = scales::cut_short_scale())) +
+  facet_wrap(~ variable, scales = "free_y", ncol = 3) +
+  labs(x = "Year", y = NULL,
+       title = "Violin + Jitter by Year (log scale)") +
+  theme_minimal(base_size = 11) +
+  theme(axis.text.x = element_text(size = 10),
+        strip.text  = element_text(face = "bold"),
+        panel.grid.minor = element_blank())
+
+p_scale
+
+
+```
+
+AAA
+
+After that, we visualise ratio and percentage metrics by year on a linear scale using violin and jitter plots with median markers, faceted by variable.
+It is used to assess distribution shape, central tendency, spread, and potential outliers across time without log transformation.
+
+```{r IDA-ratio}
+#chart for ratio variables (linear axis) — side-by-side by country
+p_ratio <- ida_germany_sweden |>
+  dplyr::filter(variable_orig %in% ratio_vars) |>
+  dplyr::mutate(year = factor(acct_year)) |>
+  ggplot(aes(x = year, y = value, colour = country,
+             group = interaction(country, year))) +
+  geom_violin(trim = FALSE, fill = NA, linewidth = 0.4,
+              position = position_dodge(width = 0.75), na.rm = TRUE) +
+  #jitter dodged by country
+  geom_jitter(alpha = 0.12, size = 0.6, na.rm = TRUE,
+              position = position_jitterdodge(jitter.width = 0.12,
+                                              jitter.height = 0,
+                                              dodge.width = 0.75)) +
+  stat_summary(fun = median, geom = "point", shape = 95, size = 6, na.rm = TRUE,
+               position = position_dodge(width = 0.75)) +
+  facet_wrap(~ variable, scales = "free_y", ncol = 3) +
+  labs(x = "Year", y = NULL,
+       title = "Violin + Jitter by Year (Ratios & % on Linear Scale)") +
+  theme_minimal(base_size = 11) +
+  theme(axis.text.x = element_text(size = 10),
+        strip.text  = element_text(face = "bold"),
+        panel.grid.minor = element_blank())
+
+p_ratio
+```
+
+AAA
+
+Then, we measure missing data for key numeric variables by industry and by year, then visualise year-wise gaps with a heatmap.
+It highlights variables or periods with substantial missingness, guiding imputation, exclusion, or robustness checks before analysis.
+
+```{r numeric-missingness-check}
+key_vars <- c("total_assets_eur","total_liabilities_eur","total_equity_eur",
+              "total_revenue_eur","net_income_eur",
+              "ebit_margin_pct","ebitda_margin_pct","roa_pct","roe_pct",
+              "current_ratio","liquidity_ratio","gearing_pct","solvency_pct")
+
+# missingness by industry and country
+missing_by_industry <- filtered_germany_sweden |>
+  group_by(country, industry_group) |>
+  summarise(across(all_of(key_vars), ~ mean(is.na(.)), .names = "{.col}"),
+            .groups = "drop") |>
+  pivot_longer(-c(country, industry_group),
+               names_to = "variable", values_to = "missing_rate")
+
+#heatmap by year for numeric variables
+missing_heat <- filtered_germany_sweden |>
+  group_by(country, acct_year) |>
+  summarise(across(all_of(key_vars), ~ mean(is.na(.)), .names = "{.col}"),
+            .groups = "drop") |>
+  pivot_longer(-c(country, acct_year),
+               names_to = "variable", values_to = "missing_rate")
+
+ggplot(missing_heat,
+       aes(variable, factor(acct_year), fill = missing_rate)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient(low = "white", high = "red",
+                      labels = scales::percent_format(accuracy = 1)) +
+  facet_wrap(~ country, nrow = 1) +
+  labs(x = NULL, y = "Year",
+       title = "Missingness by Year & Country (Numeric Variables)") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+AAA
+
+After that, we used this code to detect outliers in all numeric variables with two rules - IQR (1.5×) and standardized scores (\|z\| \> 3) - and summarise counts and proportions per variable, ordered by the IQR share.
+It flags variables with heavy tails or extreme values to guide winsorisation, transformation, or sensitivity checks before modelling.
+
+```{r outliers-check}
+num_cols <- c("total_assets_eur","total_liabilities_eur","total_equity_eur",
+              "total_revenue_eur","net_sales_eur","gross_sales_eur","net_income_eur",
+              "ebit_margin_pct","ebitda_margin_pct","roa_pct","roe_pct",
+              "net_assets_turnover","stock_turnover",
+              "solvency_pct","gearing_pct","current_ratio","liquidity_ratio",
+              "shareholders_liq_pct","interest_cover")
+
+qfun <- function(x,p) quantile(x, probs=p, na.rm=TRUE, names=FALSE)
+
+outliers_by_country <- purrr::map_dfr(num_cols, function(v){
+  x  <- filtered_germany_sweden[[v]]
+  ct <- filtered_germany_sweden$country
+  
+  q1 <- qfun(x,.25); q3 <- qfun(x,.75); iqr <- q3-q1
+  lo <- q1 - 1.5*iqr; hi <- q3 + 1.5*iqr
+  z  <- as.numeric(scale(x))
+  
+  tibble::tibble(
+    variable = v,
+    country  = ct,
+    n        = !is.na(x),
+    iqr_flag = (x < lo | x > hi),
+    z_flag   = abs(z) > 3
+  )
+}) |>
+  dplyr::group_by(variable, country) |>
+  dplyr::summarise(
+    n = sum(n),
+    iqr_outliers = sum(iqr_flag, na.rm = TRUE),
+    z_outliers   = sum(z_flag, na.rm = TRUE),
+    share_iqr    = iqr_outliers/n,
+    share_z      = z_outliers/n,
+    .groups = "drop"
+  ) |>
+  dplyr::arrange(country, desc(share_iqr))
+
+var_levels <- intersect(num_cols, unique(outliers_by_country$variable))
+
+outliers_by_country_ord <- outliers_by_country |>
+  dplyr::mutate(variable = factor(variable, levels = var_levels)) |>
+  dplyr::arrange(variable, country)
+
+outliers_by_country_ord |>
+  kable(align = "l", booktabs = TRUE) |>
+  kable_styling(full_width = FALSE, font_size = 11)
+```
+
+AAA
+
+Then, we standardise key character fields by trimming whitespace, normalising case, and converting blanks to NA, and report missingness for identifiers and classification codes.
+This ensures consistent keys for joins and grouping, and highlights data quality issues to address before analysis.
+
+```{r character-check}
+#character variables to check
+char_vars <- c("company_id","company_name","country","city",
+               "consolidation_code","nace_code","icb_code","sic_code")
+char_vars <- intersect(char_vars, names(filtered_germany_sweden))
+
+#cleaning
+chars_clean <- filtered_germany_sweden |>
+  mutate(
+    across(all_of(char_vars),
+           ~ .x |> as.character() |> str_squish() |> na_if("")),
+    #casing
+    country = str_to_title(country),
+    city    = str_to_title(city),
+    company_name = str_squish(company_name)
+  )
+
+#missingness check
+char_missing <- chars_clean |>
+  summarise(across(all_of(char_vars), ~ mean(is.na(.)))) |>
+  tidyr::pivot_longer(everything(), names_to="variable", values_to="missing_rate")
+
+char_missing |>
+  kable(align = "l", booktabs = TRUE) |>
+  kable_styling(full_width = FALSE, font_size = 11)
+```
+
+AAA
+
+After completing the general IDA, we developed the specific IDA to address our sub-questions.
+Here are the details:
+
+### Question 1
+
+AAA
+
+### Question 2
+
+AAA
+
+### Question 3
+
+AAA
+
+### Question 4
+
+AAA
+
+## EDA
+
+Here are the EDA processes and results for the sub-questions addressing the primary question "How did the pandemic affect corporate financials in Germany?"
+
+### Question 1
+
+AAA
+
+### Question 2
+
+AAA
+
+### Question 3
+
+AAA
+
+
+### Question 4
+
+AAA
+
+## Conclusions
+
+AAA
+
+
+## References
+
+The materials used for this report are:
+
+- Bureau van Dijk. (2025). OSIRIS [Data set: Germany subset]. Bureau van Dijk – A Moody’s Analytics Company. https://www.bvdinfo.com/en-gb/our-products/data/international/osiris 
+
+- **Tidyverse:** Wickham H, Averick M, Bryan J, Chang W, McGowan LD, François R, Grolemund G, Hayes A, Henry L, Hester J,
+  Kuhn M, Pedersen TL, Miller E, Bache SM, Müller K, Ooms J, Robinson D, Seidel DP, Spinu V, Takahashi K,
+  Vaughan D, Wilke C, Woo K, Yutani H (2019). “Welcome to the tidyverse.” _Journal of Open Source
+  Software_, *4*(43), 1686. doi:10.21105/joss.01686 <https://doi.org/10.21105/joss.01686>.
+  
+- **Conflicted:** Wickham H (2023). _conflicted: An Alternative Conflict Resolution Strategy_.
+  doi:10.32614/CRAN.package.conflicted <https://doi.org/10.32614/CRAN.package.conflicted>, R package
+  version 1.2.0, <https://CRAN.R-project.org/package=conflicted>.
+  
+- **Dplyr:** Wickham H, François R, Henry L, Müller K, Vaughan D (2023). _dplyr: A Grammar of Data Manipulation_.
+  doi:10.32614/CRAN.package.dplyr <https://doi.org/10.32614/CRAN.package.dplyr>, R package version 1.1.4,
+  <https://CRAN.R-project.org/package=dplyr>.
+  
+- **Stringr:** Wickham H (2025). _stringr: Simple, Consistent Wrappers for Common String Operations_.
+  doi:10.32614/CRAN.package.stringr <https://doi.org/10.32614/CRAN.package.stringr>, R package version
+  1.5.2, <https://CRAN.R-project.org/package=stringr>.
+  
+- **Janitor:** Firke S (2024). _janitor: Simple Tools for Examining and Cleaning Dirty Data_.
+  doi:10.32614/CRAN.package.janitor <https://doi.org/10.32614/CRAN.package.janitor>, R package version
+  2.2.1, <https://CRAN.R-project.org/package=janitor>.
+
+- **Skimr:** Waring E, Quinn M, McNamara A, Arino de la Rubia E, Zhu H, Ellis S (2025). _skimr: Compact and Flexible
+  Summaries of Data_. doi:10.32614/CRAN.package.skimr <https://doi.org/10.32614/CRAN.package.skimr>, R
+  package version 2.2.1, <https://CRAN.R-project.org/package=skimr>.
+
+- **Tsibble:** Wang, E, D Cook, and RJ Hyndman (2020). A new tidy data structure to support exploration and modeling of
+  temporal data, Journal of Computational and Graphical Statistics, 29:3, 466-478,
+  doi:10.1080/10618600.2019.1695624.
+
+- **Knitr:** Xie Y (2025). _knitr: A General-Purpose Package for Dynamic Report Generation in R_. R package version
+  1.50, <https://yihui.org/knitr/>.
+
+  Yihui Xie (2015) Dynamic Documents with R and knitr. 2nd edition. Chapman and Hall/CRC. ISBN
+  978-1498716963
+
+  Yihui Xie (2014) knitr: A Comprehensive Tool for Reproducible Research in R. In Victoria Stodden,
+  Friedrich Leisch and Roger D. Peng, editors, Implementing Reproducible Computational Research. Chapman
+  and Hall/CRC. ISBN 978-1466561595
+
+- **Naniar:** Tierney N, Cook D (2023). “Expanding Tidy Data Principles to Facilitate Missing Data Exploration,
+  Visualization and Assessment of Imputations.” _Journal of Statistical Software_, *105*(7), 1-31.
+  doi:10.18637/jss.v105.i07 <https://doi.org/10.18637/jss.v105.i07>.
+
+- **Patchwork:** Pedersen T (2025). _patchwork: The Composer of Plots_. doi:10.32614/CRAN.package.patchwork
+  <https://doi.org/10.32614/CRAN.package.patchwork>, R package version 1.3.2,
+  <https://CRAN.R-project.org/package=patchwork>.
+
+- **Plotly:** C. Sievert. Interactive Web-Based Data Visualization with R, plotly, and shiny. Chapman and Hall/CRC
+  Florida, 2020.
+
+- **tsibbletalk:** Wang E, Cook D (2020). _tsibbletalk: Interactive Graphics for Tsibble Objects_.
+  doi:10.32614/CRAN.package.tsibbletalk <https://doi.org/10.32614/CRAN.package.tsibbletalk>, R package
+  version 0.1.0, <https://CRAN.R-project.org/package=tsibbletalk>.
+
+- **Feasts:** O'Hara-Wild M, Hyndman R, Wang E (2025). _feasts: Feature Extraction and Statistics for Time Series_.
+  doi:10.32614/CRAN.package.feasts <https://doi.org/10.32614/CRAN.package.feasts>, R package version 0.4.2,
+  <https://CRAN.R-project.org/package=feasts>.
+
+- **Broom:**  Robinson D, Hayes A, Couch S (2025). _broom: Convert Statistical Objects into Tidy Tibbles_.
+  doi:10.32614/CRAN.package.broom <https://doi.org/10.32614/CRAN.package.broom>, R package version 1.0.9,
+  <https://CRAN.R-project.org/package=broom>.
+
+- **Purrr:**  Wickham H, Henry L (2025). _purrr: Functional Programming Tools_. doi:10.32614/CRAN.package.purrr
+  <https://doi.org/10.32614/CRAN.package.purrr>, R package version 1.1.0,
+  <https://CRAN.R-project.org/package=purrr>.
+
+- **Cassowaryr:**  L. Wilkinson, A. Anand and R. Grossman, Graph-theoretic scagnostics, IEEE Symposium on Information
+  Visualization, 2005. INFOVIS 2005., 2005, pp. 157-164, doi: 10.1109/INFVIS.2005.1532142.
+
+  L. Wilkinson and G. Wills (2008) Scagnostics Distributions, Journal of Computational and Graphical
+  Statistics, 17(2), pp 473-491, doi:10.1198/106186008X320465
+
+  K. Grimm, Kennzahlenbasierte Grafikauswahl, doctoral thesis, Universitat Augsburg, 2016.
+
+  H. Mason, Lee, S., Laa, U. and Cook, D. (2022) cassowaryr: Compute Scagnostics on Pairs of Numeric
+  Variables in a Data Set. R package version 2.0.0. https://CRAN.R-project.org/package=cassowary
+
+- **Gganimate:**  Pedersen T, Robinson D (2025). _gganimate: A Grammar of Animated Graphics_.
+  doi:10.32614/CRAN.package.gganimate <https://doi.org/10.32614/CRAN.package.gganimate>, R package version
+  1.0.11, <https://CRAN.R-project.org/package=gganimate>.
+
+- **Gifski:**  Ooms J, Kornel Lesiński, Authors of the dependency Rust crates (2025). _gifski: Highest Quality GIF
+  Encoder_. doi:10.32614/CRAN.package.gifski <https://doi.org/10.32614/CRAN.package.gifski>, R package
+  version 1.32.0-2, <https://CRAN.R-project.org/package=gifski>.
+
+- **KableExtra:** Zhu H (2024). _kableExtra: Construct Complex Table with 'kable' and Pipe Syntax_.
+  doi:10.32614/CRAN.package.kableExtra <https://doi.org/10.32614/CRAN.package.kableExtra>, R package
+  version 1.4.0, <https://CRAN.R-project.org/package=kableExtra>.
+
+- **Ggplot2:** H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.
+
+- **Scales:** Wickham H, Pedersen T, Seidel D (2025). _scales: Scale Functions for Visualization_.
+  doi:10.32614/CRAN.package.scales <https://doi.org/10.32614/CRAN.package.scales>, R package version 1.4.0,
+  <https://CRAN.R-project.org/package=scales>.
+
+- **Tidyr:** Wickham H, Vaughan D, Girlich M (2024). _tidyr: Tidy Messy Data_. doi:10.32614/CRAN.package.tidyr
+  <https://doi.org/10.32614/CRAN.package.tidyr>, R package version 1.3.1,
+  <https://CRAN.R-project.org/package=tidyr>.
+
+- **Ggrepel:** Slowikowski K (2024). _ggrepel: Automatically Position Non-Overlapping Text Labels with 'ggplot2'_.
+  doi:10.32614/CRAN.package.ggrepel <https://doi.org/10.32614/CRAN.package.ggrepel>, R package version
+  0.9.6, <https://CRAN.R-project.org/package=ggrepel>.
+
+- **ViridisLite:** Simon Garnier, Noam Ross, Robert Rudis, Antônio P. Camargo, Marco Sciaini, and Cédric Scherer (2023).
+  viridis(Lite) - Colorblind-Friendly Color Maps for R. viridisLite package version 0.4.2.
+  
+- The Associated Press. (2020). Europe braces for next wave of coronavirus pandemic in Berlin. AP News. https://apnews.com/article/coronavirus-pandemic-health-europe-epidemics-berlin-b61de99739774c1f52b4ba6860054d6d
+
+## AI Acknowledgement
+
+The links to my use of ChatGPT and other AI for help on this assignment are:
+
+- <https://chatgpt.com/share/68f563ee-9040-8010-ab1c-4969cfb31ee0> Used to help know when the pandemic happened in Germany, understand the accounting terms related to profitability, how to create a violin chart and jitter, how to make a dumbbell chart for comparison, and perform imputation on the data.
+
+- <https://chatgpt.com/share/68f4378d-bb24-8003-8471-ed2147a8fab3> Used for formatting assistance, debugging R code, and improving interpretation flow.
+
+- <https://chatgpt.com/share/68f3046d-1ad8-800d-bc11-1b005a9e600f> helped to implement animated graphics and optimize content.
+
+- <https://chatgpt.com/share/68f304c8-a088-800d-be54-939dfcd7e278> helped to evaluate whether the questions are answered adequately and where to make revisions.
+
+- <https://chatgpt.com/share/68f305ad-f15c-800d-b724-fc917c1a93ef> helped to deal with the problem that package ‘tignostics’ is not available for this version of R and how to use scagnostics.
+
+- <https://chatgpt.com/share/68f571d7-0810-8011-960e-b969c4d9a752> helped us format the explanation in a better and concise manner.
