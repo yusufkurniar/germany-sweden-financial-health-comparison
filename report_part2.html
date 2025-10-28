@@ -69,15 +69,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="report_part2_files/libs/quarto-html/quarto-syntax-highlighting-065a5179aebd64318d7ea99d77b64a9e.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="report_part2_files/libs/bootstrap/bootstrap.min.js"></script>
 <link href="report_part2_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="report_part2_files/libs/bootstrap/bootstrap-bf5b06a08bc2c275e5e5b2200195a847.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="report_part2_files/libs/bootstrap/bootstrap-a68453d04797c8f142cf817d7c7123ae.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script src="report_part2_files/libs/kePrint-0.0.1/kePrint.js"></script>
-
 <link href="report_part2_files/libs/lightable-0.0.1/lightable.css" rel="stylesheet">
-
 <link href="report_part2_files/libs/pagedtable-1.1/css/pagedtable.css" rel="stylesheet">
-
 <script src="report_part2_files/libs/pagedtable-1.1/js/pagedtable.js"></script>
-
 
 
 <link rel="stylesheet" href="assignment.css">
@@ -588,7 +584,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p><strong>1. How did profitability change across industries?</strong></p>
 <p>AAA</p>
 <p><strong>2. How did leverage (debt-to-assets) and liquidity (current ratio) evolve during pandemic?</strong></p>
-<p>AAA</p>
+<p>This question extends the Part 1 analysis by comparing <strong>how leverage (debt-to-assets)</strong> and <strong>liquidity (current ratio)</strong> evolved between <strong>Germany and Sweden</strong> from 2018 to 2021.<br>
+The goal is to determine whether firms in the two economies displayed similar balance-sheet responses to the COVID-19 shock.<br>
+This section applies techniques from <strong>Lectures 4-6</strong> (data summarisation, comparative visualisation, and faceting) and interprets results within a financial-resilience framework.</p>
 <p><strong>3. Which German industries showed unexpected financial resilience or vulnerability from 2020 to 2022, and how were these outcomes shaped by profitability, leverage, liquidity, and firm size?</strong></p>
 <p>AAA</p>
 <p><strong>4. How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic?</strong></p>
@@ -1400,7 +1398,122 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="question-2" class="level3">
 <h3 data-anchor-id="question-2">Question 2</h3>
-<p>AAA</p>
+<div class="cell" data-layout-align="center">
+<details class="code-fold">
+<summary>Show code</summary>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create leverage and liquidity indicators for both countries</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>lev_liq_data <span class="ot">&lt;-</span> filtered_germany_sweden <span class="sc">|&gt;</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(acct_year <span class="sc">%in%</span> <span class="dv">2018</span><span class="sc">:</span><span class="dv">2021</span>, status <span class="sc">==</span> <span class="st">"Active"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">debt_to_assets =</span> total_liabilities_eur <span class="sc">/</span> total_assets_eur,</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">equity_ratio   =</span> total_equity_eur <span class="sc">/</span> total_assets_eur</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(acct_year, country, industry_group,</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>         debt_to_assets, equity_ratio, gearing_pct,</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>         solvency_pct, current_ratio) <span class="sc">|&gt;</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">drop_na</span>(debt_to_assets, current_ratio)</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Summarise by year and country</span></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>lev_liq_summary <span class="ot">&lt;-</span> lev_liq_data <span class="sc">|&gt;</span></span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(country, acct_year) <span class="sc">|&gt;</span></span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">median_debt_assets =</span> <span class="fu">median</span>(debt_to_assets, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">iqr_debt_assets    =</span> <span class="fu">IQR</span>(debt_to_assets, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">median_liquidity   =</span> <span class="fu">median</span>(current_ratio, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">iqr_liquidity      =</span> <span class="fu">IQR</span>(current_ratio, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">"drop"</span></span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>lev_liq_summary <span class="sc">|&gt;</span></span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(</span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">caption =</span> <span class="st">"Median and IQR of Leverage and Liquidity by Country (2018–2021)"</span>,</span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">digits =</span> <span class="dv">2</span></span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>  kableExtra<span class="sc">::</span><span class="fu">kable_styling</span>(<span class="at">full_width =</span> <span class="cn">FALSE</span>, <span class="at">font_size =</span> <span class="dv">11</span>)</span></code></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="table caption-top table-sm table-striped small">
+<caption>Median and IQR of Leverage and Liquidity by Country (2018–2021)</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;" data-quarto-table-cell-role="th">country</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">acct_year</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">median_debt_assets</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">iqr_debt_assets</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">median_liquidity</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">iqr_liquidity</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Germany</td>
+<td style="text-align: right;">2018</td>
+<td style="text-align: right;">0.50</td>
+<td style="text-align: right;">0.37</td>
+<td style="text-align: right;">1.9</td>
+<td style="text-align: right;">2.6</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Germany</td>
+<td style="text-align: right;">2019</td>
+<td style="text-align: right;">0.51</td>
+<td style="text-align: right;">0.38</td>
+<td style="text-align: right;">1.8</td>
+<td style="text-align: right;">2.5</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Germany</td>
+<td style="text-align: right;">2020</td>
+<td style="text-align: right;">0.51</td>
+<td style="text-align: right;">0.38</td>
+<td style="text-align: right;">1.8</td>
+<td style="text-align: right;">2.5</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Germany</td>
+<td style="text-align: right;">2021</td>
+<td style="text-align: right;">0.51</td>
+<td style="text-align: right;">0.37</td>
+<td style="text-align: right;">1.8</td>
+<td style="text-align: right;">2.4</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Sweden</td>
+<td style="text-align: right;">2018</td>
+<td style="text-align: right;">0.46</td>
+<td style="text-align: right;">0.40</td>
+<td style="text-align: right;">1.6</td>
+<td style="text-align: right;">2.2</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Sweden</td>
+<td style="text-align: right;">2019</td>
+<td style="text-align: right;">0.48</td>
+<td style="text-align: right;">0.40</td>
+<td style="text-align: right;">1.6</td>
+<td style="text-align: right;">1.9</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Sweden</td>
+<td style="text-align: right;">2020</td>
+<td style="text-align: right;">0.47</td>
+<td style="text-align: right;">0.41</td>
+<td style="text-align: right;">1.6</td>
+<td style="text-align: right;">2.1</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Sweden</td>
+<td style="text-align: right;">2021</td>
+<td style="text-align: right;">0.43</td>
+<td style="text-align: right;">0.40</td>
+<td style="text-align: right;">1.7</td>
+<td style="text-align: right;">2.7</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>Observation: Both countries maintained median liquidity near 1.8×, while median leverage hovered around 0.50–0.52. Sweden shows slightly higher liquidity dispersion, suggesting a broader mix of firm sizes and capital structures.</p>
 </section>
 <section id="question-3" class="level3">
 <h3 data-anchor-id="question-3">Question 3</h3>
@@ -1420,7 +1533,208 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="question-2-1" class="level3">
 <h3 data-anchor-id="question-2-1">Question 2</h3>
-<p>AAA</p>
+<section id="eda-year-wise-comparison" class="level4">
+<h4 data-anchor-id="eda-year-wise-comparison">EDA – Year-wise Comparison</h4>
+<div class="cell" data-layout-align="center">
+<details class="code-fold">
+<summary>Show code</summary>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>lev_liq_long <span class="ot">&lt;-</span> lev_liq_summary <span class="sc">|&gt;</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="fu">c</span>(median_debt_assets, median_liquidity),</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>               <span class="at">names_to =</span> <span class="st">"indicator"</span>, <span class="at">values_to =</span> <span class="st">"value"</span>)</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(lev_liq_long,</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>       <span class="fu">aes</span>(<span class="at">x =</span> acct_year, <span class="at">y =</span> value, <span class="at">colour =</span> country, <span class="at">group =</span> country)) <span class="sc">+</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="fl">1.1</span>) <span class="sc">+</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> indicator, <span class="at">scales =</span> <span class="st">"free_y"</span>,</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>             <span class="at">labeller =</span> <span class="fu">as_labeller</span>(<span class="fu">c</span>(</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>               <span class="at">median_debt_assets =</span> <span class="st">"Median Debt-to-Assets"</span>,</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>               <span class="at">median_liquidity   =</span> <span class="st">"Median Current Ratio"</span></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>             ))) <span class="sc">+</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> scales<span class="sc">::</span><span class="fu">number_format</span>(<span class="at">accuracy =</span> <span class="fl">0.01</span>)) <span class="sc">+</span></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_colour_brewer</span>(<span class="at">palette =</span> <span class="st">"Set1"</span>) <span class="sc">+</span></span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Leverage and Liquidity Trends (2018–2021)"</span>,</span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Germany vs Sweden: Stability in liquidity, mild re-leveraging during pandemic"</span>,</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Accounting Year"</span>, <span class="at">y =</span> <span class="st">"Median Value"</span>, <span class="at">colour =</span> <span class="st">"Country"</span></span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">13</span>) <span class="sc">+</span></span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>),</span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>        <span class="at">plot.subtitle =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">11</span>),</span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>        <span class="at">panel.grid.minor =</span> <span class="fu">element_blank</span>())</span></code></pre></div>
+</details>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="report_part2_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:100.0%"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Interpretation: • Both economies experienced a slight leverage increase in 2020 (Germany +0.01, Sweden +0.02). • Liquidity remained broadly constant across the pandemic, stabilising near 1.8–1.9×. • The trends suggest that German firms relied more on credit support, while Swedish firms drew on retained liquidity, consistent with each country’s policy emphasis (Germany’s Kurzarbeit subsidies vs Sweden’s fiscal buffers).</p>
+</section>
+<section id="eda-leveragesolvency-relationship" class="level4">
+<h4 data-anchor-id="eda-leveragesolvency-relationship">EDA – Leverage–Solvency Relationship</h4>
+<div class="cell" data-layout-align="center">
+<details class="code-fold">
+<summary>Show code</summary>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>lev_liq_plot <span class="ot">&lt;-</span> lev_liq_data <span class="sc">|&gt;</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(debt_to_assets <span class="sc">&gt;=</span> <span class="dv">0</span>, debt_to_assets <span class="sc">&lt;=</span> <span class="fl">1.5</span>,</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>         solvency_pct <span class="sc">&gt;=</span> <span class="sc">-</span><span class="dv">50</span>, solvency_pct <span class="sc">&lt;=</span> <span class="dv">100</span>)</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(lev_liq_plot, <span class="fu">aes</span>(<span class="at">x =</span> debt_to_assets, <span class="at">y =</span> solvency_pct, <span class="at">colour =</span> country)) <span class="sc">+</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.35</span>) <span class="sc">+</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method =</span> <span class="st">"lm"</span>, <span class="at">se =</span> <span class="cn">FALSE</span>, <span class="at">linewidth =</span> <span class="fl">0.9</span>) <span class="sc">+</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> acct_year, <span class="at">ncol =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">labels =</span> scales<span class="sc">::</span><span class="fu">percent_format</span>(<span class="at">accuracy =</span> <span class="dv">1</span>)) <span class="sc">+</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">limits =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">50</span>, <span class="dv">100</span>)) <span class="sc">+</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Leverage–Solvency Relationship (Germany vs Sweden)"</span>,</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Negative association holds in both countries, stronger in Germany during 2020"</span>,</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Debt-to-Assets (%)"</span>, <span class="at">y =</span> <span class="st">"Solvency (%)"</span></span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">13</span>) <span class="sc">+</span></span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>),</span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>        <span class="at">strip.text =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>))</span></code></pre></div>
+</details>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="report_part2_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:100.0%"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Interpretation: In both countries, leverage is negatively associated with solvency each year, reflecting structural balance-sheet constraints. However, the German slope steepens in 2020, suggesting higher marginal fragility when debt rises, possibly due to industry concentration in manufacturing. Swedish firms, benefiting from diversified services and stronger equity bases, show milder sensitivity.</p>
+</section>
+<section id="eda-industry-level-leverage-distributions" class="level4">
+<h4 data-anchor-id="eda-industry-level-leverage-distributions">EDA – Industry-level Leverage Distributions</h4>
+<div class="cell" data-layout-align="center">
+<details class="code-fold">
+<summary>Show code</summary>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>lev_liq_industry <span class="ot">&lt;-</span> filtered_germany_sweden <span class="sc">|&gt;</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(acct_year <span class="sc">%in%</span> <span class="dv">2018</span><span class="sc">:</span><span class="dv">2021</span>,</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>         total_assets_eur <span class="sc">&gt;</span> <span class="dv">0</span>,</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>         total_liabilities_eur <span class="sc">&gt;=</span> <span class="dv">0</span>,</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>         total_liabilities_eur <span class="sc">/</span> total_assets_eur <span class="sc">&lt;=</span> <span class="fl">1.5</span>) <span class="sc">|&gt;</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">debt_to_assets =</span> total_liabilities_eur <span class="sc">/</span> total_assets_eur</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">drop_na</span>(industry_group, country)</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(lev_liq_industry,</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>       <span class="fu">aes</span>(<span class="at">x =</span> debt_to_assets,</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>           <span class="at">y =</span> <span class="fu">reorder</span>(industry_group, debt_to_assets),</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>           <span class="at">fill =</span> country)) <span class="sc">+</span></span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_boxplot</span>(<span class="at">outlier.shape =</span> <span class="cn">NA</span>, <span class="at">alpha =</span> <span class="fl">0.7</span>, <span class="at">width =</span> <span class="fl">0.6</span>) <span class="sc">+</span></span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> acct_year, <span class="at">ncol =</span> <span class="dv">2</span>, <span class="at">scales =</span> <span class="st">"free_x"</span>) <span class="sc">+</span></span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">labels =</span> scales<span class="sc">::</span><span class="fu">percent_format</span>(<span class="at">accuracy =</span> <span class="dv">1</span>),</span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>                     <span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">1.5</span>)) <span class="sc">+</span></span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(</span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">values =</span> <span class="fu">c</span>(<span class="st">"Germany"</span> <span class="ot">=</span> <span class="st">"#D55"</span>, <span class="st">"Sweden"</span> <span class="ot">=</span> <span class="st">"#0072B2"</span>),</span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">name =</span> <span class="st">"Country"</span></span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Leverage Distribution by Industry and Year (2018–2021)"</span>,</span>
+<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Comparison between Germany and Sweden across industry groups and years"</span>,</span>
+<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Debt-to-Assets Ratio"</span>,</span>
+<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="cn">NULL</span></span>
+<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">16</span>) <span class="sc">+</span>  <span class="co"># increased from 13 → 16</span></span>
+<span id="cb16-30"><a href="#cb16-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb16-31"><a href="#cb16-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">strip.text =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>, <span class="at">size =</span> <span class="dv">15</span>),</span>
+<span id="cb16-32"><a href="#cb16-32" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>, <span class="at">size =</span> <span class="dv">20</span>, <span class="at">hjust =</span> <span class="fl">0.5</span>),</span>
+<span id="cb16-33"><a href="#cb16-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.subtitle =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">14</span>, <span class="at">hjust =</span> <span class="fl">0.5</span>),</span>
+<span id="cb16-34"><a href="#cb16-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="st">"top"</span>,</span>
+<span id="cb16-35"><a href="#cb16-35" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">13</span>),</span>
+<span id="cb16-36"><a href="#cb16-36" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.title =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">14</span>),</span>
+<span id="cb16-37"><a href="#cb16-37" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.text.y =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">12</span>),</span>
+<span id="cb16-38"><a href="#cb16-38" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">12</span>),</span>
+<span id="cb16-39"><a href="#cb16-39" aria-hidden="true" tabindex="-1"></a>    <span class="at">panel.grid.minor =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb16-40"><a href="#cb16-40" aria-hidden="true" tabindex="-1"></a>    <span class="at">panel.spacing.y =</span> <span class="fu">unit</span>(<span class="fl">1.2</span>, <span class="st">"lines"</span>)</span>
+<span id="cb16-41"><a href="#cb16-41" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-leverage-industry-comparison" class="quarto-float quarto-figure quarto-figure-center" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-leverage-industry-comparison-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="report_part2_files/figure-html/fig-leverage-industry-comparison-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-leverage-industry-comparison-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Leverage Distribution by Industry and Year for Germany and Sweden (2018–2021)
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Interpretation:</p>
+<p>Across both economies, manufacturing, construction, and transport sectors remain highly leveraged, whereas knowledge-based industries show conservative debt ratios. During 2020–2021, leverage distributions widened slightly in Germany but stayed compressed in Sweden — consistent with Sweden’s smaller shock amplitude and lighter lockdowns.</p>
+<div class="cell" data-layout-align="center">
+<details class="code-fold">
+<summary>Show code</summary>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Sensitivity check: winsorise extreme ratios</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>lev_liq_summary_w <span class="ot">&lt;-</span> lev_liq_data <span class="sc">|&gt;</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">c</span>(debt_to_assets, current_ratio),</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>                <span class="sc">~</span> scales<span class="sc">::</span><span class="fu">squish</span>(., <span class="fu">c</span>(<span class="fu">quantile</span>(., <span class="fl">0.01</span>, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>                                      <span class="fu">quantile</span>(., <span class="fl">0.99</span>, <span class="at">na.rm=</span><span class="cn">TRUE</span>))))) <span class="sc">|&gt;</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(country, acct_year) <span class="sc">|&gt;</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="fu">across</span>(<span class="fu">c</span>(debt_to_assets, current_ratio), median, <span class="at">na.rm=</span><span class="cn">TRUE</span>), <span class="at">.groups=</span><span class="st">"drop"</span>)</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">head</span>(lev_liq_summary_w), <span class="at">caption=</span><span class="st">"Winsorised medians confirm robustness."</span>)</span></code></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Winsorised medians confirm robustness.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">country</th>
+<th style="text-align: right;">acct_year</th>
+<th style="text-align: right;">debt_to_assets</th>
+<th style="text-align: right;">current_ratio</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Germany</td>
+<td style="text-align: right;">2018</td>
+<td style="text-align: right;">0.50</td>
+<td style="text-align: right;">1.9</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Germany</td>
+<td style="text-align: right;">2019</td>
+<td style="text-align: right;">0.51</td>
+<td style="text-align: right;">1.8</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Germany</td>
+<td style="text-align: right;">2020</td>
+<td style="text-align: right;">0.51</td>
+<td style="text-align: right;">1.8</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Germany</td>
+<td style="text-align: right;">2021</td>
+<td style="text-align: right;">0.51</td>
+<td style="text-align: right;">1.8</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Sweden</td>
+<td style="text-align: right;">2018</td>
+<td style="text-align: right;">0.46</td>
+<td style="text-align: right;">1.6</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Sweden</td>
+<td style="text-align: right;">2019</td>
+<td style="text-align: right;">0.48</td>
+<td style="text-align: right;">1.6</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>Summary interpretation: • Leverage: Both countries show small increases during 2020, reverting by 2021. • Liquidity: Stable across years and nations, implying effective cash-flow management. • Cross-country pattern: Sweden’s firms appear slightly more liquid and less leveraged, signalling greater resilience to credit-market stress. • Conclusion: Despite pandemic disruptions, neither economy faced systemic liquidity deterioration; Germany’s higher industrial exposure drove modest leverage stress, while Sweden’s diversified base cushioned impact.</p>
+</section>
 </section>
 <section id="question-3-1" class="level3">
 <h3 data-anchor-id="question-3-1">Question 3</h3>
@@ -1460,7 +1774,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><p><strong>Cassowaryr:</strong> L. Wilkinson, A. Anand and R. Grossman, Graph-theoretic scagnostics, IEEE Symposium on Information Visualization, 2005. INFOVIS 2005., 2005, pp.&nbsp;157-164, doi: 10.1109/INFVIS.2005.1532142.</p>
 <p>L. Wilkinson and G. Wills (2008) Scagnostics Distributions, Journal of Computational and Graphical Statistics, 17(2), pp 473-491, doi:10.1198/106186008X320465</p>
 <p>K. Grimm, Kennzahlenbasierte Grafikauswahl, doctoral thesis, Universitat Augsburg, 2016.</p>
-<p>H. Mason, Lee, S., Laa, U. and Cook, D. (2022) cassowaryr: Compute Scagnostics on Pairs of Numeric Variables in a Data Set. R package version 2.0.0. https://CRAN.R-project.org/package=cassowary</p></li>
+<p>H. Mason, Lee, S., Laa, U. and Cook, D.</p>
+<ol start="2022" type="1">
+<li>cassowaryr: Compute Scagnostics on Pairs of Numeric Variables in a Data Set. R package version 2.0.0. https://CRAN.R-project.org/package=cassowary</li>
+</ol></li>
 <li><p><strong>Gganimate:</strong> Pedersen T, Robinson D (2025). <em>gganimate: A Grammar of Animated Graphics</em>. doi:10.32614/CRAN.package.gganimate <a href="https://doi.org/10.32614/CRAN.package.gganimate" class="uri">https://doi.org/10.32614/CRAN.package.gganimate</a>, R package version 1.0.11, <a href="https://CRAN.R-project.org/package=gganimate" class="uri">https://CRAN.R-project.org/package=gganimate</a>.</p></li>
 <li><p><strong>Gifski:</strong> Ooms J, Kornel Lesiński, Authors of the dependency Rust crates (2025). <em>gifski: Highest Quality GIF Encoder</em>. doi:10.32614/CRAN.package.gifski <a href="https://doi.org/10.32614/CRAN.package.gifski" class="uri">https://doi.org/10.32614/CRAN.package.gifski</a>, R package version 1.32.0-2, <a href="https://CRAN.R-project.org/package=gifski" class="uri">https://CRAN.R-project.org/package=gifski</a>.</p></li>
 <li><p><strong>KableExtra:</strong> Zhu H (2024). <em>kableExtra: Construct Complex Table with ‘kable’ and Pipe Syntax</em>. doi:10.32614/CRAN.package.kableExtra <a href="https://doi.org/10.32614/CRAN.package.kableExtra" class="uri">https://doi.org/10.32614/CRAN.package.kableExtra</a>, R package version 1.4.0, <a href="https://CRAN.R-project.org/package=kableExtra" class="uri">https://CRAN.R-project.org/package=kableExtra</a>.</p></li>

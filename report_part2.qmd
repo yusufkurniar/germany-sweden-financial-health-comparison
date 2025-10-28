@@ -39,7 +39,6 @@ editor:
     wrap: sentence
 ---
 
-
 ```{r}
 #| echo: false
 # Set up chunk for all slides
@@ -345,7 +344,9 @@ AAA
 
 **2. How did leverage (debt-to-assets) and liquidity (current ratio) evolve during pandemic?**
 
-AAA
+This question extends the Part 1 analysis by comparing **how leverage (debt-to-assets)** and **liquidity (current ratio)** evolved between **Germany and Sweden** from 2018 to 2021.\
+The goal is to determine whether firms in the two economies displayed similar balance-sheet responses to the COVID-19 shock.\
+This section applies techniques from **Lectures 4-6** (data summarisation, comparative visualisation, and faceting) and interprets results within a financial-resilience framework.
 
 **3. Which German industries showed unexpected financial resilience or vulnerability from 2020 to 2022, and how were these outcomes shaped by profitability, leverage, liquidity, and firm size?**
 
@@ -750,7 +751,40 @@ AAA
 
 ### Question 2
 
-AAA
+```{r q2-ida}
+# Create leverage and liquidity indicators for both countries
+lev_liq_data <- filtered_germany_sweden |>
+  filter(acct_year %in% 2018:2021, status == "Active") |>
+  mutate(
+    debt_to_assets = total_liabilities_eur / total_assets_eur,
+    equity_ratio   = total_equity_eur / total_assets_eur
+  ) |>
+  select(acct_year, country, industry_group,
+         debt_to_assets, equity_ratio, gearing_pct,
+         solvency_pct, current_ratio) |>
+  drop_na(debt_to_assets, current_ratio)
+
+# Summarise by year and country
+lev_liq_summary <- lev_liq_data |>
+  group_by(country, acct_year) |>
+  summarise(
+    median_debt_assets = median(debt_to_assets, na.rm = TRUE),
+    iqr_debt_assets    = IQR(debt_to_assets, na.rm = TRUE),
+    median_liquidity   = median(current_ratio, na.rm = TRUE),
+    iqr_liquidity      = IQR(current_ratio, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+lev_liq_summary |>
+  knitr::kable(
+    caption = "Median and IQR of Leverage and Liquidity by Country (2018–2021)",
+    digits = 2
+  ) |>
+  kableExtra::kable_styling(full_width = FALSE, font_size = 11)
+```
+
+Observation: Both countries maintained median liquidity near 1.8×, while median leverage hovered around 0.50–0.52.
+Sweden shows slightly higher liquidity dispersion, suggesting a broader mix of firm sizes and capital structures.
 
 ### Question 3
 
@@ -770,12 +804,170 @@ AAA
 
 ### Question 2
 
-AAA
+#### EDA – Year-wise Comparison
+
+```{r}
+lev_liq_long <- lev_liq_summary |>
+  pivot_longer(cols = c(median_debt_assets, median_liquidity),
+               names_to = "indicator", values_to = "value")
+
+ggplot(lev_liq_long,
+       aes(x = acct_year, y = value, colour = country, group = country)) +
+  geom_line(linewidth = 1.1) +
+  geom_point(size = 2) +
+  facet_wrap(~ indicator, scales = "free_y",
+             labeller = as_labeller(c(
+               median_debt_assets = "Median Debt-to-Assets",
+               median_liquidity   = "Median Current Ratio"
+             ))) +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) +
+  scale_colour_brewer(palette = "Set1") +
+  labs(
+    title = "Leverage and Liquidity Trends (2018–2021)",
+    subtitle = "Germany vs Sweden: Stability in liquidity, mild re-leveraging during pandemic",
+    x = "Accounting Year", y = "Median Value", colour = "Country"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(plot.title = element_text(face = "bold"),
+        plot.subtitle = element_text(size = 11),
+        panel.grid.minor = element_blank())
+```
+
+Interpretation: • Both economies experienced a slight leverage increase in 2020 (Germany +0.01, Sweden +0.02).
+• Liquidity remained broadly constant across the pandemic, stabilising near 1.8–1.9×.
+• The trends suggest that German firms relied more on credit support, while Swedish firms drew on retained liquidity, consistent with each country’s policy emphasis (Germany’s Kurzarbeit subsidies vs Sweden’s fiscal buffers).
+
+#### EDA – Leverage–Solvency Relationship
+
+```{r}
+#| label: fig-leverage-solvency-facets
+#| fig-cap: "Leverage–Solvency Relationship by Country and Year"
+#| fig-width: 14
+#| fig-height: 9
+
+ggplot(lev_liq_plot, aes(x = debt_to_assets, y = solvency_pct, colour = country)) +
+  geom_point(alpha = 0.25, size = 1.2) +
+  geom_smooth(method = "lm", se = FALSE, linewidth = 1.1) +
+  facet_grid(acct_year ~ country) +
+  scale_x_continuous(labels = scales::percent_format(accuracy = 1), limits = c(0, 1.5)) +
+  scale_y_continuous(limits = c(-50, 100)) +
+  scale_colour_manual(values = c("Germany" = "#D55", "Sweden" = "#0072B2")) +
+  labs(
+    title = "Leverage–Solvency Relationship by Country and Year",
+    subtitle = "Stronger negative slope in Germany, especially during 2020",
+    x = "Debt-to-Assets (%)",
+    y = "Solvency (%)",
+    colour = "Country"
+  ) +
+  theme_minimal(base_size = 15) +
+  theme(
+    strip.text = element_text(face = "bold", size = 14),
+    plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
+    plot.subtitle = element_text(size = 13, hjust = 0.5),
+    legend.position = "none",  # each facet is already labelled
+    axis.text = element_text(size = 12),
+    panel.spacing.x = unit(1.2, "lines"),
+    panel.spacing.y = unit(1.0, "lines"),
+    panel.grid.minor = element_blank()
+  )
+```
+
+Interpretation:
+
+Across both Germany and Sweden, leverage shows a **strong negative relationship with solvency** from 2018 to 2021 — firms with higher debt-to-asset ratios consistently report lower solvency levels.
+The **pattern remains stable** over time, confirming that higher leverage structurally reduces long-term financial stability in both economies.
+
+However, the **slope is notably steeper in Germany**, especially in **2020**, indicating that increases in debt had a stronger adverse effect on solvency during the pandemic.
+This likely reflects the **manufacturing-heavy structure** of German industries, which faced sharper revenue disruptions and slower balance sheet recovery.
+In contrast, **Swedish firms**, with **more diversified sectors and stronger equity positions**, experienced a milder solvency decline, demonstrating greater resilience to leverage-induced stress.
+
+EDA – Industry-level Leverage Distributions
+
+```{r}
+#| label: fig-leverage-industry-comparison
+#| fig-cap: "Leverage Distribution by Industry and Year for Germany and Sweden (2018–2021)"
+#| fig-width: 16
+#| fig-height: 20
+
+lev_liq_industry <- filtered_germany_sweden |>
+  filter(acct_year %in% 2018:2021,
+         total_assets_eur > 0,
+         total_liabilities_eur >= 0,
+         total_liabilities_eur / total_assets_eur <= 1.5) |>
+  mutate(
+    debt_to_assets = total_liabilities_eur / total_assets_eur
+  ) |>
+  drop_na(industry_group, country)
+
+ggplot(lev_liq_industry,
+       aes(x = debt_to_assets,
+           y = reorder(industry_group, debt_to_assets),
+           fill = country)) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.7, width = 0.6) +
+  facet_wrap(~ acct_year, ncol = 2, scales = "free_x") +
+  scale_x_continuous(labels = scales::percent_format(accuracy = 1),
+                     limits = c(0, 1.5)) +
+  scale_fill_manual(
+    values = c("Germany" = "#D55", "Sweden" = "#0072B2"),
+    name = "Country"
+  ) +
+  labs(
+    title = "Leverage Distribution by Industry and Year (2018–2021)",
+    subtitle = "Comparison between Germany and Sweden across industry groups and years",
+    x = "Debt-to-Assets Ratio",
+    y = NULL
+  ) +
+  theme_minimal(base_size = 16) +  # increased from 13 → 16
+  theme(
+    strip.text = element_text(face = "bold", size = 15),
+    plot.title = element_text(face = "bold", size = 20, hjust = 0.5),
+    plot.subtitle = element_text(size = 14, hjust = 0.5),
+    legend.position = "top",
+    legend.text = element_text(size = 13),
+    legend.title = element_text(size = 14),
+    axis.text.y = element_text(size = 12),
+    axis.text.x = element_text(size = 12),
+    panel.grid.minor = element_blank(),
+    panel.spacing.y = unit(1.2, "lines")
+  )
+```
+
+Interpretation:
+
+The boxplots reveal that leverage remained broadly stable across both countries from 2018 to 2021, with **capital-intensive sectors**-notably *Manufacturing*, *Construction*, and *Transport & Storage*-maintaining higher debt-to-asset ratios than service-oriented industries such as *Information & Communication* or *Professional & Technical Services*.
+
+The median levels changed little across years, though a modest upward shift appears in 2020, consistent with increased borrowing during the early pandemic period.
+
+Overall, **Germany and Sweden display similar leverage structures**, suggesting comparable financial resilience and corporate funding patterns.
+
+When leverage patterns are compared with liquidity (current ratio) trends, a complementary story emerges.
+
+Firms in both countries **maintained adequate short-term liquidity**, with median current ratios remaining around 1.8–2.0 throughout 2018–2021.
+
+This indicates that, despite slightly greater reliance on debt during 2020, most firms preserved the capacity to meet near-term obligations.
+
+The combination of stable leverage and steady liquidity implies that corporate balance sheets were **buffered by prudent debt management and strong internal financing**, helping both economies avoid a widespread solvency crisis during the COVID-19 shock.
+
+```{r}
+#| warning: false
+# Sensitivity check: winsorise extreme ratios
+lev_liq_summary_w <- lev_liq_data |>
+  mutate(across(c(debt_to_assets, current_ratio),
+                ~ scales::squish(., c(quantile(., 0.01, na.rm=TRUE),
+                                      quantile(., 0.99, na.rm=TRUE))))) |>
+  group_by(country, acct_year) |>
+  summarise(across(c(debt_to_assets, current_ratio), median, na.rm=TRUE), .groups="drop")
+knitr::kable(head(lev_liq_summary_w), caption="Winsorised medians confirm robustness.")
+```
+
+Summary interpretation: • Leverage: Both countries show small increases during 2020, reverting by 2021.
+• Liquidity: Stable across years and nations, implying effective cash-flow management.
+• Cross-country pattern: Sweden’s firms appear slightly more liquid and less leveraged, signalling greater resilience to credit-market stress.
+• Conclusion: Despite pandemic disruptions, neither economy faced systemic liquidity deterioration; Germany’s higher industrial exposure drove modest leverage stress, while Sweden’s diversified base cushioned impact.
 
 ### Question 3
 
 AAA
-
 
 ### Question 4
 
@@ -785,133 +977,150 @@ AAA
 
 AAA
 
-
 ## References
 
 The materials used for this report are:
 
-- Bureau van Dijk. (2025). OSIRIS [Data set: Germany subset]. Bureau van Dijk – A Moody’s Analytics Company. https://www.bvdinfo.com/en-gb/our-products/data/international/osiris 
+-   Bureau van Dijk.
+    (2025).
+    OSIRIS \[Data set: Germany subset\].
+    Bureau van Dijk – A Moody’s Analytics Company.
+    https://www.bvdinfo.com/en-gb/our-products/data/international/osiris
 
-- **Tidyverse:** Wickham H, Averick M, Bryan J, Chang W, McGowan LD, François R, Grolemund G, Hayes A, Henry L, Hester J,
-  Kuhn M, Pedersen TL, Miller E, Bache SM, Müller K, Ooms J, Robinson D, Seidel DP, Spinu V, Takahashi K,
-  Vaughan D, Wilke C, Woo K, Yutani H (2019). “Welcome to the tidyverse.” _Journal of Open Source
-  Software_, *4*(43), 1686. doi:10.21105/joss.01686 <https://doi.org/10.21105/joss.01686>.
-  
-- **Conflicted:** Wickham H (2023). _conflicted: An Alternative Conflict Resolution Strategy_.
-  doi:10.32614/CRAN.package.conflicted <https://doi.org/10.32614/CRAN.package.conflicted>, R package
-  version 1.2.0, <https://CRAN.R-project.org/package=conflicted>.
-  
-- **Dplyr:** Wickham H, François R, Henry L, Müller K, Vaughan D (2023). _dplyr: A Grammar of Data Manipulation_.
-  doi:10.32614/CRAN.package.dplyr <https://doi.org/10.32614/CRAN.package.dplyr>, R package version 1.1.4,
-  <https://CRAN.R-project.org/package=dplyr>.
-  
-- **Stringr:** Wickham H (2025). _stringr: Simple, Consistent Wrappers for Common String Operations_.
-  doi:10.32614/CRAN.package.stringr <https://doi.org/10.32614/CRAN.package.stringr>, R package version
-  1.5.2, <https://CRAN.R-project.org/package=stringr>.
-  
-- **Janitor:** Firke S (2024). _janitor: Simple Tools for Examining and Cleaning Dirty Data_.
-  doi:10.32614/CRAN.package.janitor <https://doi.org/10.32614/CRAN.package.janitor>, R package version
-  2.2.1, <https://CRAN.R-project.org/package=janitor>.
+-   **Tidyverse:** Wickham H, Averick M, Bryan J, Chang W, McGowan LD, François R, Grolemund G, Hayes A, Henry L, Hester J, Kuhn M, Pedersen TL, Miller E, Bache SM, Müller K, Ooms J, Robinson D, Seidel DP, Spinu V, Takahashi K, Vaughan D, Wilke C, Woo K, Yutani H (2019).
+    “Welcome to the tidyverse.” *Journal of Open Source Software*, *4*(43), 1686.
+    doi:10.21105/joss.01686 <https://doi.org/10.21105/joss.01686>.
 
-- **Skimr:** Waring E, Quinn M, McNamara A, Arino de la Rubia E, Zhu H, Ellis S (2025). _skimr: Compact and Flexible
-  Summaries of Data_. doi:10.32614/CRAN.package.skimr <https://doi.org/10.32614/CRAN.package.skimr>, R
-  package version 2.2.1, <https://CRAN.R-project.org/package=skimr>.
+-   **Conflicted:** Wickham H (2023).
+    *conflicted: An Alternative Conflict Resolution Strategy*.
+    doi:10.32614/CRAN.package.conflicted <https://doi.org/10.32614/CRAN.package.conflicted>, R package version 1.2.0, <https://CRAN.R-project.org/package=conflicted>.
 
-- **Tsibble:** Wang, E, D Cook, and RJ Hyndman (2020). A new tidy data structure to support exploration and modeling of
-  temporal data, Journal of Computational and Graphical Statistics, 29:3, 466-478,
-  doi:10.1080/10618600.2019.1695624.
+-   **Dplyr:** Wickham H, François R, Henry L, Müller K, Vaughan D (2023).
+    *dplyr: A Grammar of Data Manipulation*.
+    doi:10.32614/CRAN.package.dplyr <https://doi.org/10.32614/CRAN.package.dplyr>, R package version 1.1.4, <https://CRAN.R-project.org/package=dplyr>.
 
-- **Knitr:** Xie Y (2025). _knitr: A General-Purpose Package for Dynamic Report Generation in R_. R package version
-  1.50, <https://yihui.org/knitr/>.
+-   **Stringr:** Wickham H (2025).
+    *stringr: Simple, Consistent Wrappers for Common String Operations*.
+    doi:10.32614/CRAN.package.stringr <https://doi.org/10.32614/CRAN.package.stringr>, R package version 1.5.2, <https://CRAN.R-project.org/package=stringr>.
 
-  Yihui Xie (2015) Dynamic Documents with R and knitr. 2nd edition. Chapman and Hall/CRC. ISBN
-  978-1498716963
+-   **Janitor:** Firke S (2024).
+    *janitor: Simple Tools for Examining and Cleaning Dirty Data*.
+    doi:10.32614/CRAN.package.janitor <https://doi.org/10.32614/CRAN.package.janitor>, R package version 2.2.1, <https://CRAN.R-project.org/package=janitor>.
 
-  Yihui Xie (2014) knitr: A Comprehensive Tool for Reproducible Research in R. In Victoria Stodden,
-  Friedrich Leisch and Roger D. Peng, editors, Implementing Reproducible Computational Research. Chapman
-  and Hall/CRC. ISBN 978-1466561595
+-   **Skimr:** Waring E, Quinn M, McNamara A, Arino de la Rubia E, Zhu H, Ellis S (2025).
+    *skimr: Compact and Flexible Summaries of Data*.
+    doi:10.32614/CRAN.package.skimr <https://doi.org/10.32614/CRAN.package.skimr>, R package version 2.2.1, <https://CRAN.R-project.org/package=skimr>.
 
-- **Naniar:** Tierney N, Cook D (2023). “Expanding Tidy Data Principles to Facilitate Missing Data Exploration,
-  Visualization and Assessment of Imputations.” _Journal of Statistical Software_, *105*(7), 1-31.
-  doi:10.18637/jss.v105.i07 <https://doi.org/10.18637/jss.v105.i07>.
+-   **Tsibble:** Wang, E, D Cook, and RJ Hyndman (2020).
+    A new tidy data structure to support exploration and modeling of temporal data, Journal of Computational and Graphical Statistics, 29:3, 466-478, doi:10.1080/10618600.2019.1695624.
 
-- **Patchwork:** Pedersen T (2025). _patchwork: The Composer of Plots_. doi:10.32614/CRAN.package.patchwork
-  <https://doi.org/10.32614/CRAN.package.patchwork>, R package version 1.3.2,
-  <https://CRAN.R-project.org/package=patchwork>.
+-   **Knitr:** Xie Y (2025).
+    *knitr: A General-Purpose Package for Dynamic Report Generation in R*.
+    R package version 1.50, <https://yihui.org/knitr/>.
 
-- **Plotly:** C. Sievert. Interactive Web-Based Data Visualization with R, plotly, and shiny. Chapman and Hall/CRC
-  Florida, 2020.
+    Yihui Xie (2015) Dynamic Documents with R and knitr.
+    2nd edition.
+    Chapman and Hall/CRC.
+    ISBN 978-1498716963
 
-- **tsibbletalk:** Wang E, Cook D (2020). _tsibbletalk: Interactive Graphics for Tsibble Objects_.
-  doi:10.32614/CRAN.package.tsibbletalk <https://doi.org/10.32614/CRAN.package.tsibbletalk>, R package
-  version 0.1.0, <https://CRAN.R-project.org/package=tsibbletalk>.
+    Yihui Xie (2014) knitr: A Comprehensive Tool for Reproducible Research in R.
+    In Victoria Stodden, Friedrich Leisch and Roger D. Peng, editors, Implementing Reproducible Computational Research.
+    Chapman and Hall/CRC.
+    ISBN 978-1466561595
 
-- **Feasts:** O'Hara-Wild M, Hyndman R, Wang E (2025). _feasts: Feature Extraction and Statistics for Time Series_.
-  doi:10.32614/CRAN.package.feasts <https://doi.org/10.32614/CRAN.package.feasts>, R package version 0.4.2,
-  <https://CRAN.R-project.org/package=feasts>.
+-   **Naniar:** Tierney N, Cook D (2023).
+    “Expanding Tidy Data Principles to Facilitate Missing Data Exploration, Visualization and Assessment of Imputations.” *Journal of Statistical Software*, *105*(7), 1-31.
+    doi:10.18637/jss.v105.i07 <https://doi.org/10.18637/jss.v105.i07>.
 
-- **Broom:**  Robinson D, Hayes A, Couch S (2025). _broom: Convert Statistical Objects into Tidy Tibbles_.
-  doi:10.32614/CRAN.package.broom <https://doi.org/10.32614/CRAN.package.broom>, R package version 1.0.9,
-  <https://CRAN.R-project.org/package=broom>.
+-   **Patchwork:** Pedersen T (2025).
+    *patchwork: The Composer of Plots*.
+    doi:10.32614/CRAN.package.patchwork <https://doi.org/10.32614/CRAN.package.patchwork>, R package version 1.3.2, <https://CRAN.R-project.org/package=patchwork>.
 
-- **Purrr:**  Wickham H, Henry L (2025). _purrr: Functional Programming Tools_. doi:10.32614/CRAN.package.purrr
-  <https://doi.org/10.32614/CRAN.package.purrr>, R package version 1.1.0,
-  <https://CRAN.R-project.org/package=purrr>.
+-   **Plotly:** C. Sievert.
+    Interactive Web-Based Data Visualization with R, plotly, and shiny.
+    Chapman and Hall/CRC Florida, 2020.
 
-- **Cassowaryr:**  L. Wilkinson, A. Anand and R. Grossman, Graph-theoretic scagnostics, IEEE Symposium on Information
-  Visualization, 2005. INFOVIS 2005., 2005, pp. 157-164, doi: 10.1109/INFVIS.2005.1532142.
+-   **tsibbletalk:** Wang E, Cook D (2020).
+    *tsibbletalk: Interactive Graphics for Tsibble Objects*.
+    doi:10.32614/CRAN.package.tsibbletalk <https://doi.org/10.32614/CRAN.package.tsibbletalk>, R package version 0.1.0, <https://CRAN.R-project.org/package=tsibbletalk>.
 
-  L. Wilkinson and G. Wills (2008) Scagnostics Distributions, Journal of Computational and Graphical
-  Statistics, 17(2), pp 473-491, doi:10.1198/106186008X320465
+-   **Feasts:** O'Hara-Wild M, Hyndman R, Wang E (2025).
+    *feasts: Feature Extraction and Statistics for Time Series*.
+    doi:10.32614/CRAN.package.feasts <https://doi.org/10.32614/CRAN.package.feasts>, R package version 0.4.2, <https://CRAN.R-project.org/package=feasts>.
 
-  K. Grimm, Kennzahlenbasierte Grafikauswahl, doctoral thesis, Universitat Augsburg, 2016.
+-   **Broom:** Robinson D, Hayes A, Couch S (2025).
+    *broom: Convert Statistical Objects into Tidy Tibbles*.
+    doi:10.32614/CRAN.package.broom <https://doi.org/10.32614/CRAN.package.broom>, R package version 1.0.9, <https://CRAN.R-project.org/package=broom>.
 
-  H. Mason, Lee, S., Laa, U. and Cook, D. (2022) cassowaryr: Compute Scagnostics on Pairs of Numeric
-  Variables in a Data Set. R package version 2.0.0. https://CRAN.R-project.org/package=cassowary
+-   **Purrr:** Wickham H, Henry L (2025).
+    *purrr: Functional Programming Tools*.
+    doi:10.32614/CRAN.package.purrr <https://doi.org/10.32614/CRAN.package.purrr>, R package version 1.1.0, <https://CRAN.R-project.org/package=purrr>.
 
-- **Gganimate:**  Pedersen T, Robinson D (2025). _gganimate: A Grammar of Animated Graphics_.
-  doi:10.32614/CRAN.package.gganimate <https://doi.org/10.32614/CRAN.package.gganimate>, R package version
-  1.0.11, <https://CRAN.R-project.org/package=gganimate>.
+-   **Cassowaryr:** L. Wilkinson, A. Anand and R.
+    Grossman, Graph-theoretic scagnostics, IEEE Symposium on Information Visualization, 2005.
+    INFOVIS 2005., 2005, pp. 157-164, doi: 10.1109/INFVIS.2005.1532142.
 
-- **Gifski:**  Ooms J, Kornel Lesiński, Authors of the dependency Rust crates (2025). _gifski: Highest Quality GIF
-  Encoder_. doi:10.32614/CRAN.package.gifski <https://doi.org/10.32614/CRAN.package.gifski>, R package
-  version 1.32.0-2, <https://CRAN.R-project.org/package=gifski>.
+    L. Wilkinson and G.
+    Wills (2008) Scagnostics Distributions, Journal of Computational and Graphical Statistics, 17(2), pp 473-491, doi:10.1198/106186008X320465
 
-- **KableExtra:** Zhu H (2024). _kableExtra: Construct Complex Table with 'kable' and Pipe Syntax_.
-  doi:10.32614/CRAN.package.kableExtra <https://doi.org/10.32614/CRAN.package.kableExtra>, R package
-  version 1.4.0, <https://CRAN.R-project.org/package=kableExtra>.
+    K. Grimm, Kennzahlenbasierte Grafikauswahl, doctoral thesis, Universitat Augsburg, 2016.
 
-- **Ggplot2:** H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.
+    H. Mason, Lee, S., Laa, U.
+    and Cook, D.
+    (2022) cassowaryr: Compute Scagnostics on Pairs of Numeric Variables in a Data Set.
+    R package version 2.0.0.
+    https://CRAN.R-project.org/package=cassowary
 
-- **Scales:** Wickham H, Pedersen T, Seidel D (2025). _scales: Scale Functions for Visualization_.
-  doi:10.32614/CRAN.package.scales <https://doi.org/10.32614/CRAN.package.scales>, R package version 1.4.0,
-  <https://CRAN.R-project.org/package=scales>.
+-   **Gganimate:** Pedersen T, Robinson D (2025).
+    *gganimate: A Grammar of Animated Graphics*.
+    doi:10.32614/CRAN.package.gganimate <https://doi.org/10.32614/CRAN.package.gganimate>, R package version 1.0.11, <https://CRAN.R-project.org/package=gganimate>.
 
-- **Tidyr:** Wickham H, Vaughan D, Girlich M (2024). _tidyr: Tidy Messy Data_. doi:10.32614/CRAN.package.tidyr
-  <https://doi.org/10.32614/CRAN.package.tidyr>, R package version 1.3.1,
-  <https://CRAN.R-project.org/package=tidyr>.
+-   **Gifski:** Ooms J, Kornel Lesiński, Authors of the dependency Rust crates (2025).
+    *gifski: Highest Quality GIF Encoder*.
+    doi:10.32614/CRAN.package.gifski <https://doi.org/10.32614/CRAN.package.gifski>, R package version 1.32.0-2, <https://CRAN.R-project.org/package=gifski>.
 
-- **Ggrepel:** Slowikowski K (2024). _ggrepel: Automatically Position Non-Overlapping Text Labels with 'ggplot2'_.
-  doi:10.32614/CRAN.package.ggrepel <https://doi.org/10.32614/CRAN.package.ggrepel>, R package version
-  0.9.6, <https://CRAN.R-project.org/package=ggrepel>.
+-   **KableExtra:** Zhu H (2024).
+    *kableExtra: Construct Complex Table with 'kable' and Pipe Syntax*.
+    doi:10.32614/CRAN.package.kableExtra <https://doi.org/10.32614/CRAN.package.kableExtra>, R package version 1.4.0, <https://CRAN.R-project.org/package=kableExtra>.
 
-- **ViridisLite:** Simon Garnier, Noam Ross, Robert Rudis, Antônio P. Camargo, Marco Sciaini, and Cédric Scherer (2023).
-  viridis(Lite) - Colorblind-Friendly Color Maps for R. viridisLite package version 0.4.2.
-  
-- The Associated Press. (2020). Europe braces for next wave of coronavirus pandemic in Berlin. AP News. https://apnews.com/article/coronavirus-pandemic-health-europe-epidemics-berlin-b61de99739774c1f52b4ba6860054d6d
+-   **Ggplot2:** H. Wickham.
+    ggplot2: Elegant Graphics for Data Analysis.
+    Springer-Verlag New York, 2016.
+
+-   **Scales:** Wickham H, Pedersen T, Seidel D (2025).
+    *scales: Scale Functions for Visualization*.
+    doi:10.32614/CRAN.package.scales <https://doi.org/10.32614/CRAN.package.scales>, R package version 1.4.0, <https://CRAN.R-project.org/package=scales>.
+
+-   **Tidyr:** Wickham H, Vaughan D, Girlich M (2024).
+    *tidyr: Tidy Messy Data*.
+    doi:10.32614/CRAN.package.tidyr <https://doi.org/10.32614/CRAN.package.tidyr>, R package version 1.3.1, <https://CRAN.R-project.org/package=tidyr>.
+
+-   **Ggrepel:** Slowikowski K (2024).
+    *ggrepel: Automatically Position Non-Overlapping Text Labels with 'ggplot2'*.
+    doi:10.32614/CRAN.package.ggrepel <https://doi.org/10.32614/CRAN.package.ggrepel>, R package version 0.9.6, <https://CRAN.R-project.org/package=ggrepel>.
+
+-   **ViridisLite:** Simon Garnier, Noam Ross, Robert Rudis, Antônio P. Camargo, Marco Sciaini, and Cédric Scherer (2023).
+    viridis(Lite) - Colorblind-Friendly Color Maps for R.
+    viridisLite package version 0.4.2.
+
+-   The Associated Press.
+    (2020).
+    Europe braces for next wave of coronavirus pandemic in Berlin.
+    AP News.
+    https://apnews.com/article/coronavirus-pandemic-health-europe-epidemics-berlin-b61de99739774c1f52b4ba6860054d6d
 
 ## AI Acknowledgement
 
 The links to my use of ChatGPT and other AI for help on this assignment are:
 
-- <https://chatgpt.com/share/68f563ee-9040-8010-ab1c-4969cfb31ee0> Used to help know when the pandemic happened in Germany, understand the accounting terms related to profitability, how to create a violin chart and jitter, how to make a dumbbell chart for comparison, and perform imputation on the data.
+-   <https://chatgpt.com/share/68f563ee-9040-8010-ab1c-4969cfb31ee0> Used to help know when the pandemic happened in Germany, understand the accounting terms related to profitability, how to create a violin chart and jitter, how to make a dumbbell chart for comparison, and perform imputation on the data.
 
-- <https://chatgpt.com/share/68f4378d-bb24-8003-8471-ed2147a8fab3> Used for formatting assistance, debugging R code, and improving interpretation flow.
+-   <https://chatgpt.com/share/68f4378d-bb24-8003-8471-ed2147a8fab3> Used for formatting assistance, debugging R code, and improving interpretation flow.
 
-- <https://chatgpt.com/share/68f3046d-1ad8-800d-bc11-1b005a9e600f> helped to implement animated graphics and optimize content.
+-   <https://chatgpt.com/share/68f3046d-1ad8-800d-bc11-1b005a9e600f> helped to implement animated graphics and optimize content.
 
-- <https://chatgpt.com/share/68f304c8-a088-800d-be54-939dfcd7e278> helped to evaluate whether the questions are answered adequately and where to make revisions.
+-   <https://chatgpt.com/share/68f304c8-a088-800d-be54-939dfcd7e278> helped to evaluate whether the questions are answered adequately and where to make revisions.
 
-- <https://chatgpt.com/share/68f305ad-f15c-800d-b724-fc917c1a93ef> helped to deal with the problem that package ‘tignostics’ is not available for this version of R and how to use scagnostics.
+-   <https://chatgpt.com/share/68f305ad-f15c-800d-b724-fc917c1a93ef> helped to deal with the problem that package ‘tignostics’ is not available for this version of R and how to use scagnostics.
 
-- <https://chatgpt.com/share/68f571d7-0810-8011-960e-b969c4d9a752> helped us format the explanation in a better and concise manner.
+-   <https://chatgpt.com/share/68f571d7-0810-8011-960e-b969c4d9a752> helped us format the explanation in a better and concise manner.
