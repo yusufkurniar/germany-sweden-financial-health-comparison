@@ -850,7 +850,37 @@ Here are the details:
 
 ### Question 1
 
-AAA
+We initially added a period label (Pre-pandemic 2018 – 2019 vs. Pandemic 2020 – 2021). For visualisations, net_income_eur was transformed using asinh() to compare both gains and losses on a consistent scale. When ROA/ROE are missing, we recalculated simple estimates from the accounting totals and noted the sources of the values (reported vs. recomputed).
+
+```{r q1_prepare_profitability_inputs}
+stopifnot("net_income_eur" %in% names(filtered_germany_sweden))
+
+ida_question1 <- filtered_germany_sweden |>
+  mutate(
+    country = country,
+    # period flag
+    period = if_else(acct_year >= 2020, "Pandemic (2020–2021)", "Pre-pandemic (2018–2019)"),
+    # transform for visuals (handles negatives)
+    net_income_eur_asinh = asinh(as.numeric(net_income_eur)),
+    # recompute ROA / ROE (fallbacks)
+    roa_calc = 100 * (net_income_eur / total_assets_eur),
+    roe_calc = if_else(total_equity_eur > 0,
+                       100 * (net_income_eur / total_equity_eur),
+                       NA_real_),
+    roa_use = coalesce(roa_pct, roa_calc),
+    roe_use = coalesce(roe_pct, roe_calc),
+    roa_src = case_when(
+      !is.na(roa_pct) ~ "reported",
+      !is.na(roa_calc) ~ "recomputed",
+      TRUE ~ NA_character_
+    ),
+    roe_src = case_when(
+      !is.na(roe_pct) ~ "reported",
+      !is.na(roe_calc) ~ "recomputed",
+      TRUE ~ NA_character_
+    )
+  )
+```
 
 ### Question 2
 
