@@ -910,6 +910,91 @@ ida_question1 <- ida_question1 |>
   )
 ```
 
+After that, we imputed remaining gaps following a strict hierarchy: first industry and year, then industry and period, and finally period, without crossing period boundaries. This process produced the final Q1 variables (EBIT, EBITDA, ROA, ROE) and records the source of each value.
+
+```{r q1_impute_hierarchy_finalize}
+#median fills in strict order (no cross-period borrowing)
+#country x industry × year medians
+med_ixy <- ida_question1 |>
+  group_by(country, industry_group, acct_year) |>
+  summarise(
+    med_ebit = median(ebit_step1,   na.rm=TRUE),
+    med_ebitda = median(ebitda_step1, na.rm=TRUE),
+    med_roa = median(roa_step1,    na.rm=TRUE),
+    med_roe = median(roe_step1,    na.rm=TRUE),
+    .groups="drop"
+  )
+
+#country x industry × period medians
+med_ip <- ida_question1 |>
+  group_by(country, industry_group, period) |>
+  summarise(
+    med_ebit_ip = median(ebit_step1,   na.rm=TRUE),
+    med_ebitda_ip = median(ebitda_step1, na.rm=TRUE),
+    med_roa_ip = median(roa_step1,    na.rm=TRUE),
+    med_roe_ip = median(roe_step1,    na.rm=TRUE),
+    .groups="drop"
+  )
+
+#country x period medians
+med_p <- ida_question1 |>
+  group_by(country, period) |>
+  summarise(
+    med_ebit_p = median(ebit_step1,   na.rm=TRUE),
+    med_ebitda_p = median(ebitda_step1, na.rm=TRUE),
+    med_roa_p = median(roa_step1,    na.rm=TRUE),
+    med_roe_p = median(roe_step1,    na.rm=TRUE),
+    .groups="drop"
+  )
+
+#join and impute with precedence, also explicit source flags
+ida_question1 <- ida_question1 |>
+  left_join(med_ixy, by = c("country","industry_group","acct_year")) |>
+  left_join(med_ip,  by = c("country","industry_group","period")) |>
+  left_join(med_p,   by = c("country", "period")) |>
+  mutate(
+    #final values, using your precedence
+    ebit_margin_q1   = if_else(is.na(ebitda_step1), ebit_step1, ebit_step1),
+    ebit_margin_q1   = if_else(is.na(ebit_step1),   coalesce(med_ebit,   med_ebit_ip,   med_ebit_p),   ebit_step1),
+    ebitda_margin_q1 = if_else(is.na(ebitda_step1), coalesce(med_ebitda, med_ebitda_ip, med_ebitda_p), ebitda_step1),
+    roa_q1           = if_else(is.na(roa_step1),    coalesce(med_roa,    med_roa_ip,    med_roa_p),    roa_step1),
+    roe_q1           = if_else(is.na(roe_step1),    coalesce(med_roe,    med_roe_ip,    med_roe_p),    roe_step1),
+
+    #provenance for EBIT/EBITDA margins
+    ebit_src = dplyr::case_when(
+      !is.na(ebit_margin_pct) ~ "reported",
+      is.na(ebit_margin_pct) & !is.na(ebit_step1) ~ "firm-1gap(period)",
+      is.na(ebit_step1) & !is.na(med_ebit) ~ "ind×year",
+      is.na(ebit_step1) & is.na(med_ebit) & !is.na(med_ebit_ip) ~ "ind×period",
+      TRUE ~ "period"
+    ),
+    ebitda_src = dplyr::case_when(
+      !is.na(ebitda_margin_pct) ~ "reported",
+      is.na(ebitda_margin_pct) & !is.na(ebitda_step1) ~ "firm-1gap(period)",
+      is.na(ebitda_step1) & !is.na(med_ebitda) ~ "ind×year",
+      is.na(ebitda_step1) & is.na(med_ebitda) & !is.na(med_ebitda_ip) ~ "ind×period",
+      TRUE ~ "period"
+    ),
+
+    #ROA/ROE provenance
+    roa_src = dplyr::case_when(
+      !is.na(roa_src) ~ roa_src,
+      is.na(roa_src) & !is.na(roa_step1) ~ "firm-1gap(period)",
+      is.na(roa_step1) & !is.na(med_roa) ~ "ind×year",
+      is.na(roa_step1) & is.na(med_roa) & !is.na(med_roa_ip) ~ "ind×period",
+      TRUE ~ "period"
+    ),
+    roe_src = dplyr::case_when(
+      !is.na(roe_src) ~ roe_src,
+      is.na(roe_src) & !is.na(roe_step1) ~ "firm-1gap(period)",
+      is.na(roe_step1) & !is.na(med_roe) ~ "ind×year",
+      is.na(roe_step1) & is.na(med_roe) & !is.na(med_roe_ip) ~ "ind×period",
+      TRUE ~ "period"
+    )
+  ) |>
+  select(-ends_with("_step1"))
+```
+
 ### Question 2
 
 ```{r q2-ida}
