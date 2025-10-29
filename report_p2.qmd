@@ -882,6 +882,34 @@ ida_question1 <- filtered_germany_sweden |>
   )
 ```
 
+Then, we carried out a conservative within-firm, within-period “one-gap” fill, only patching a single missing year when adjacent values match. It then restored reported values where available.
+
+```{r q1_firm_one_gap_fill}
+#Firm one-gap fill within the same period only
+
+fill_one_gap <- function(x){
+  f <- dplyr::lag(x); b <- dplyr::lead(x)
+  ifelse(is.na(x) & !is.na(f) & !is.na(b) & (f == b), f, x)
+}
+
+ida_question1 <- ida_question1 |>
+  arrange(company_id, acct_year) |>
+  group_by(company_id, period) |>  #period boundary blocks carryover
+  mutate(
+    ebit_step1   = fill_one_gap(ebit_margin_pct),
+    ebitda_step1 = fill_one_gap(ebitda_margin_pct),
+    roa_step1    = fill_one_gap(roa_use),
+    roe_step1    = fill_one_gap(roe_use)
+  ) |>
+  ungroup() |>
+  mutate(
+    ebit_step1   = coalesce(ebit_margin_pct, ebit_step1),
+    ebitda_step1 = coalesce(ebitda_margin_pct, ebitda_step1),
+    roa_step1    = coalesce(roa_use, roa_step1),
+    roe_step1    = coalesce(roe_use, roe_step1)
+  )
+```
+
 ### Question 2
 
 ```{r q2-ida}
