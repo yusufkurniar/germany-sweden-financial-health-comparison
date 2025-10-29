@@ -497,7 +497,7 @@ filtered_germany_sweden <- filtered_germany_sweden |>
   mutate(industry_group = factor(industry_group, levels = ordered_levels))
 ```
 
-After that, we use this code to reshape numeric variables into a long format for Initial Data Analysis, separate scale variables from ratios, and assign clear labels for charts.
+After that, we create this code to reshape numeric variables into a long format for Initial Data Analysis, separate scale variables from ratios, and assign clear labels for charts.
 The result is a tidy table ready for profiling and visualisation.
 
 ```{r prepare-IDA}
