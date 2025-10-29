@@ -843,7 +843,7 @@ char_missing |>
   kable_styling(full_width = FALSE, font_size = 11)
 ```
 
-AAA
+According to the table, all key identifiers and location fields are complete, with no missing data in company_id, company_name, country, city, or consolidation_code. This confirms that entity tracking and data joins can be performed reliably without risk of key mismatches. Industry classifications are also mostly complete: nace_code shows only about 2% missing values, while icb_code has around 9% missingness, making it the least complete among the coding systems. sic_code is fully populated, ensuring that every firm can still be categorised under at least one industrial classification. Overall, this pattern indicates good metadata quality, and most firms can be consistently classified using either SIC or NACE as the primary identifiers, with ICB serving as a secondary, more detailed but less complete classification.
 
 After completing the general IDA, we developed the specific IDA to address our sub-questions.
 Here are the details:
