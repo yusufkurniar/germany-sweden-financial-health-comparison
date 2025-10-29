@@ -1097,7 +1097,7 @@ Given the comparative focus of our study between Germany and Sweden, we used cou
 
 The comparative analysis reveals significant differences in sectoral recovery patterns between Germany and Sweden during the post-pandemic period. While some industries demonstrate consistent performance across both countries, others exhibit notable variations that highlight distinct economic environments.
 
-A key finding is the divergent performance in several important sectors. Germany shows stronger resilience in Construction and Financial Services, where these sectors maintained stable performance throughout the recovery period. Conversely, Sweden demonstrates more robust recovery in Manufacturing and Administrative Support sectors. This contrast suggests differing national economic priorities and support mechanisms.
+As shown in @tbl-recovery-classification, a key finding is the divergent performance in several important sectors. Germany shows stronger resilience in Construction and Financial Services, where these sectors maintained stable performance throughout the recovery period. Conversely, Sweden demonstrates more robust recovery in Manufacturing and Administrative Support sectors. This contrast suggests differing national economic priorities and support mechanisms.
 
 The analysis also identifies interesting similarities. The Information & Communication sector displays a consistent K-shaped recovery pattern in both countries, indicating that technological industries experienced similar uneven recovery trajectories regardless of national context. This pattern suggests that sector-specific characteristics may sometimes outweigh national economic policies in determining recovery outcomes.
 
@@ -1148,38 +1148,46 @@ classification_comparison <- industry_classes |>
   filter(!(Germany == "Moderate Impact" & Sweden == "Moderate Impact")) |>
   select(industry_group, Germany, Sweden, cross_country_insight)
 
-kable(classification_comparison)
+kable(classification_comparison) |>
+  kable_styling(font_size = 11)
 ```
 
 
 
+2.  Micro-level evidence of anomalous recovery patterns across industries (ROA and liquidity) - scagnostics (Tignostics) (Lecture 8, 22-27 & Lecture 9, slide 24)
 
+In this section, we compare firm-level relationships between liquidity (Current Ratio) and profitability (ROA) across industries in Germany and Sweden.
 
+We focus on the industries that exhibited distinct recovery patterns in the macro analysis (see @tbl-recovery-classification).
+Specifically, we select:
 
+- Information & Communication (K-shaped in both countries)
 
-3.  Micro-level evidence of anomalous recovery patterns across industries (ROA and liquidity) - scagnostics (Tignostics) (Lecture 8, 22-27 & Lecture 9, slide 24)
+- Wholesale & Retail Trade (K-shaped only in Germany)
 
-In this section we track how the firm-level relationship between liquidity (Current Ratio) and profitability (ROA) changed during the COVID-19 period.
-We approach is to treat each firm as a point in the CR–ROA plane, then study the shape of each industry’s point cloud year by year.
-We use scagnostic metrics to quantify those shapes, and we fit a simple linear model (ROA \~ Current Ratio) for every industry × year to extract slope and residual volatility.
-We treat 2020 as the COVID year and compare values before and after 2020.
+- Consumer Services (K-shaped only in Sweden)
+
+- Financial & Insurance (Resilient only in Germany)
 
 **Data and methods**
 
-We select industries previously identified in the macro analysis (industries labelled K-shaped, Resilient, or Hidden Crisis).
-For each industry × fiscal year we:
+For each country × industry × fiscal year, we:
 
--   keep firm-level pairs (current_ratio, roa_pct);
+- keep firm-level pairs (current_ratio, roa_pct);
 
--   calculate scagnostic metrics: outlying, stringy, striated, clumpy, sparse, monotonic, dcor;
+- compute scagnostic metrics (clumpy, outlying, monotonic, stringy);
 
--   fit a linear model roa_pct \~ current_ratio and record slope and residual SD;
+- fit a simple linear model ROA \~ CR to obtain slope and residual SD;
+
+
+- compare distributions between countries using boxplots and ribbon plots to represent variability among firms.
 
 -   compute year-to-year slope changes and count “jumps” (a jump = \|slope change\| \> 0.5);
 
 -   compute pre/post differences in mean residual SD and mean slope (post − pre).
 
 -   When an industry × year has too few firms (\< 3) the scagnostics or regression are not reported (NA).
+
 
 **How to read the scagnostic metrics**
 
@@ -1192,12 +1200,10 @@ For each industry × fiscal year we:
 -   Residual SD: higher residual SD from the linear fit signals more unexplained scatter (higher micro volatility).
 
 ```{r Q4 EDA 3. Micro-level evidence -data}
-selected_industries <- industry_classes |>
-  filter(recovery_pattern %in% c("K-shaped", "Resilient", "Hidden Crisis")) |>
-  pull(industry_group)
+selected_industries <- c("Information & Communication", "Wholesale & Retail Trade", "Consumer Services", "Financial & Insurance")
 
 # Extract the companies time series data of these industries
-selected_companies_ts <- germany_ts |>
+selected_companies_ts <- ger_swe_ts |>
   filter(industry_group %in% selected_industries)
 ```
 
@@ -1302,13 +1308,13 @@ kable(industry_summary |> filter(jumps > 0) |>
 #| warning: false
 
 scag_long <- by_ind_year |>
-  select(industry_group, fy_year, clumpy, outlying, stringy, monotonic) |>
+  select(industry_group, country, fy_year, clumpy, outlying, stringy, monotonic) |>
   pivot_longer(cols = c(clumpy, outlying, stringy, monotonic),
                names_to = "scag_metric", values_to = "value")
 
 ggplot(scag_long, aes(x = fy_year, y = value, color = industry_group)) +
   geom_line(linewidth = 0.7) +
-  facet_wrap(~ scag_metric, scales = "free_y") +
+  facet_grid(country~ scag_metric, scales = "free_y") +
   geom_vline(xintercept = 2020, linetype = "dashed", color = "red") +
   labs(
     title = "Evolution of Scagnostic Metrics over Time",
@@ -1317,6 +1323,7 @@ ggplot(scag_long, aes(x = fy_year, y = value, color = industry_group)) +
   ) +
   theme_minimal()
 ```
+
 
 
 **Main results**
