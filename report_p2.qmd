@@ -756,7 +756,7 @@ ggplot(missing_heat,
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-AAA
+The heatmap indicates that missingness patterns remain consistent across 2018 – 2021, with no significant changes during the pandemic. In both Germany and Sweden, the highest levels of missing data are found in gearing_pct and liquidity_ratio, reaching about 20 – 35%, followed by ebit_margin_pct and ebitda_margin_pct, which have moderate gaps around 10 – 20%. Sweden consistently exhibits slightly higher missingness rates than Germany, especially for gearing and liquidity indicators. Core balance-sheet and flow variables such as assets, liabilities, equity, and revenues are nearly complete, with almost no missing values. Overall, ratio-based metrics are the primary source of data gaps, meaning that profitability and liquidity analyses will be based on smaller samples compared to total-level variables.
 
 After that, we used this code to detect outliers in all numeric variables with two rules - IQR (1.5×) and standardized scores (\|z\| \> 3) - and summarise counts and proportions per variable, ordered by the IQR share.
 It flags variables with heavy tails or extreme values to guide winsorisation, transformation, or sensitivity checks before modelling.
