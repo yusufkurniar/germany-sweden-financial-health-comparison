@@ -1030,6 +1030,21 @@ impute_summary_q1 <- ida_question1 |>
   )
 ```
 
+1. EBIT & EBITDA Imputation
+
+```{r impute-margins}
+impute_margins <- impute_summary_q1 |>
+  select(country, period, n_rows,
+         ebit_reported, ebit_ind_year, ebit_period, ebit_firmgap,
+         ebitda_reported, ebitda_ind_year, ebitda_period, ebitda_firmgap)
+
+impute_margins |>
+  kable(align = "l", booktabs = TRUE) |>
+  kable_styling(full_width = FALSE, font_size = 11)
+```
+
+According to the table, Germany shows strong coverage of EBIT and EBITDA margins in both periods, with about 82 – 84% of values reported directly. The remaining 16 – 18% are filled using industry and year medians, and Germany does not need any firm-gap or period-level imputations. In comparison, Sweden has lower direct reporting, around 69 – 71% across both periods. Approximately 29 – 31% of Swedish records depend on industry and year medians, which is a higher dependence than in Germany. Only four rows in each period use a period-level fallback, indicating that heavy imputations are very limited. Overall, imputations are present in both countries, but Sweden requires more support due to lower direct reporting.
+
 ### Question 2
 
 ```{r q2-ida}
