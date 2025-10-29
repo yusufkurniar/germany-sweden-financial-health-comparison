@@ -995,6 +995,41 @@ ida_question1 <- ida_question1 |>
   select(-ends_with("_step1"))
 ```
 
+Then, we summarised imputation provenance by period, counting observations that are reported, firm-filled, or imputed from industry/year/period medians. It provided a transparent audit of data construction for Question 1.
+
+```{r q1_imputation_summary}
+impute_summary_q1 <- ida_question1 |>
+  summarise(
+    .by = c(country, period),
+    n_rows = n(),
+    ebit_reported   = sum(ebit_src   == "reported",            na.rm=TRUE),
+    ebit_firmgap    = sum(ebit_src   == "firm-1gap(period)",   na.rm=TRUE),
+    ebit_ind_year   = sum(ebit_src   == "ind×year",            na.rm=TRUE),
+    ebit_ind_period = sum(ebit_src   == "ind×period",          na.rm=TRUE),
+    ebit_period     = sum(ebit_src   == "period",              na.rm=TRUE),
+
+    ebitda_reported   = sum(ebitda_src   == "reported",          na.rm=TRUE),
+    ebitda_firmgap    = sum(ebitda_src   == "firm-1gap(period)", na.rm=TRUE),
+    ebitda_ind_year   = sum(ebitda_src   == "ind×year",          na.rm=TRUE),
+    ebitda_ind_period = sum(ebitda_src   == "ind×period",        na.rm=TRUE),
+    ebitda_period     = sum(ebitda_src   == "period",            na.rm=TRUE),
+
+    roa_reported    = sum(roa_src == "reported",            na.rm=TRUE),
+    roa_recomputed  = sum(roa_src == "recomputed",          na.rm=TRUE),
+    roa_firmgap     = sum(roa_src == "firm-1gap(period)",   na.rm=TRUE),
+    roa_ind_year    = sum(roa_src == "ind×year",            na.rm=TRUE),
+    roa_ind_period  = sum(roa_src == "ind×period",          na.rm=TRUE),
+    roa_period      = sum(roa_src == "period",              na.rm=TRUE),
+
+    roe_reported    = sum(roe_src == "reported",            na.rm=TRUE),
+    roe_recomputed  = sum(roe_src == "recomputed",          na.rm=TRUE),
+    roe_firmgap     = sum(roe_src == "firm-1gap(period)",   na.rm=TRUE),
+    roe_ind_year    = sum(roe_src == "ind×year",            na.rm=TRUE),
+    roe_ind_period  = sum(roe_src == "ind×period",          na.rm=TRUE),
+    roe_period      = sum(roe_src == "period",              na.rm=TRUE)
+  )
+```
+
 ### Question 2
 
 ```{r q2-ida}
