@@ -392,7 +392,7 @@ missing_by_year <- filtered_germany_sweden |>
   summarise(across(everything(), ~ mean(is.na(.)))) |>
   pivot_longer(-acct_year, names_to = "variable", values_to = "missing_rate")
 
-#sanity checks (optional but recommended)
+#sanity checks
 dup_firm_year <- filtered_germany_sweden |>
   count(company_id, fy_year, acct_year, country) |>
   filter(n > 1)
