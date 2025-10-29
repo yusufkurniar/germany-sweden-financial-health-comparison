@@ -809,7 +809,9 @@ outliers_by_country_ord |>
   kable_styling(full_width = FALSE, font_size = 11)
 ```
 
-AAA
+According to the table, outliers are common in scale variables such as assets, liabilities, equity, and revenues, with 13 – 22% of observations falling outside the IQR range, reflecting the broad firm-size distribution. Sweden consistently shows a higher proportion of outliers than Germany across most variables, aligning with its wider value dispersion seen in violin plots. Profitability ratios (EBIT, EBITDA, ROA, ROE) also display many outliers. Notably, ROE and EBITDA margins have extreme positive or negative values due to small equity or volatile income. Liquidity and solvency ratios like gearing_pct, liquidity_ratio, and interest_cover have narrower but still significant tails, indicating some firms hold exceptionally high debt or cash reserves. Overall, these findings confirm the presence of heavy-tailed distributions, justifying the later use of median-based summaries, log transformations, or winsorisation for more robust comparison and modelling.
+
+Given these outlier patterns, the next step is to transform or winsorise selected variables (particularly profitability and liquidity ratios) to reduce the impact of extreme values and improve comparability across firms and periods before proceeding with further EDA and modelling.
 
 Then, we standardise key character fields by trimming whitespace, normalising case, and converting blanks to NA, and report missingness for identifiers and classification codes.
 This ensures consistent keys for joins and grouping, and highlights data quality issues to address before analysis.
