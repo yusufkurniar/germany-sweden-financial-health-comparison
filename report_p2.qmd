@@ -639,33 +639,52 @@ After that, we visualise ratio and percentage metrics by year on a linear scale 
 It is used to assess distribution shape, central tendency, spread, and potential outliers across time without log transformation.
 
 ```{r IDA-ratio}
-#chart for ratio variables (linear axis) — side-by-side by country
-p_ratio <- ida_germany_sweden |>
-  dplyr::filter(variable_orig %in% ratio_vars) |>
+#define variable sets
+vars_profit_eff <- c(
+  "ebit_margin_pct", "ebitda_margin_pct",
+  "roa_pct", "roe_pct",
+  "net_assets_turnover", "stock_turnover"
+)
+
+vars_liquidity_solvency <- c(
+  "solvency_pct", "gearing_pct",
+  "current_ratio", "liquidity_ratio",
+  "shareholders_liq_pct", "interest_cover"
+)
+```
+
+**Profit and Efficiency Ratio Variables**
+
+```{r p-ratio-profit-eff}
+p_ratio_profit_eff <- ida_germany_sweden |>
+  dplyr::filter(variable_orig %in% vars_profit_eff) |>
   dplyr::mutate(year = factor(acct_year)) |>
   ggplot(aes(x = year, y = value, colour = country,
              group = interaction(country, year))) +
-  geom_violin(trim = FALSE, fill = NA, linewidth = 0.4,
-              position = position_dodge(width = 0.75), na.rm = TRUE) +
-  #jitter dodged by country
+  geom_violin(trim = FALSE, fill = NA, linewidth = 0.4, na.rm = TRUE,
+              position = position_dodge(width = 0.75)) +
   geom_jitter(alpha = 0.12, size = 0.6, na.rm = TRUE,
               position = position_jitterdodge(jitter.width = 0.12,
                                               jitter.height = 0,
                                               dodge.width = 0.75)) +
-  stat_summary(fun = median, geom = "point", shape = 95, size = 6, na.rm = TRUE,
+  stat_summary(fun = median, geom = "point",
+               shape = 95, size = 6, na.rm = TRUE,
                position = position_dodge(width = 0.75)) +
   facet_wrap(~ variable, scales = "free_y", ncol = 3) +
   labs(x = "Year", y = NULL,
-       title = "Violin + Jitter by Year (Ratios & % on Linear Scale)") +
+       title = "Violin and Jitter by Year for Profitability & Efficiency Ratios") +
   theme_minimal(base_size = 11) +
-  theme(axis.text.x = element_text(size = 10),
-        strip.text  = element_text(face = "bold"),
-        panel.grid.minor = element_blank())
+  theme(
+    axis.text.x = element_text(size = 10),
+    strip.text  = element_text(face = "bold"),
+    panel.grid.minor = element_blank(),
+    legend.position = "top"
+  )
 
-p_ratio
+p_ratio_profit_eff
 ```
 
-AAA
+According to the chart, the profitability ratios (EBIT margin, EBITDA margin, and ROA) are mainly close to zero for most firms in both countries, with many observations slightly positive and some negative. The distributions become wider in 2020 – 2021, indicating increased volatility during the pandemic, especially in ROA, where more firms became negative. ROE shows the greatest extent of variation, including very large negative values, suggesting that equity returns were more affected by shocks. Net asset turnover and stock turnover remain relatively stable over time, suggesting operational efficiency did not change much during the pandemic. Sweden consistently has a broader spread than Germany in these ratios, reflecting greater firm-level variation. Due to the heavy tails and outliers, medians and distribution shapes are more useful than means.
 
 Then, we measure missing data for key numeric variables by industry and by year, then visualise year-wise gaps with a heatmap.
 It highlights variables or periods with substantial missingness, guiding imputation, exclusion, or robustness checks before analysis.
