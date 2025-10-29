@@ -39,7 +39,6 @@ editor:
     wrap: sentence
 ---
 
-
 ```{r}
 #| echo: false
 # Set up chunk for all slides
@@ -758,7 +757,6 @@ AAA
 
 ### Question 4
 
-
 1.  Data Cleaning on Consolidation Codes
 
 The raw data from Orbis contained financial statements under different consolidation codes (C1, C2, C\*, U1, U2).
@@ -795,8 +793,11 @@ ger_swe_q4 <- ger_swe_q4 |>
   select(company_id, fy_year, roa_pct, current_ratio, industry_group, country)
 ```
 
-
-The analysis in this study is based on a dataset of company financial information. It is important to note that in this question we use the fiscal year, not the calendar year. A company's fiscal year is its own 12-month reporting period, which may not end in December. Using the fiscal year is more accurate for this research because it matches the company's true business cycle. This means that when we refer to "2020" in the data, we are talking about the fiscal year that was most affected by the pandemic, even if it does not exactly match the calendar year 2020.
+The analysis in this study is based on a dataset of company financial information.
+It is important to note that in this question we use the fiscal year, not the calendar year.
+A company's fiscal year is its own 12-month reporting period, which may not end in December.
+Using the fiscal year is more accurate for this research because it matches the company's true business cycle.
+This means that when we refer to "2020" in the data, we are talking about the fiscal year that was most affected by the pandemic, even if it does not exactly match the calendar year 2020.
 
 3.  Convert data into a tsibble object using the tsibble package (Lecture 9, slide 5 & Reading week 9)
 
@@ -870,11 +871,20 @@ ger_swe_ts <- ger_swe_ts |>
 
 5.  Summary
 
-The data preparation followed the same cleaning and preprocessing pipeline as described for Germany, ensuring comparability across the two countries. Consolidated financial statements were prioritized, and only industries with complete data for 2019–2021 were retained.
+The data preparation followed the same cleaning and preprocessing pipeline as described for Germany, ensuring comparability across the two countries.
+Consolidated financial statements were prioritized, and only industries with complete data for 2019–2021 were retained.
 
-The comparative analysis of ROA and Current Ratio trends (@tbl-summary) from 2017 to 2021 reveals stark differences between Germany and Sweden, with distinct pandemic-related patterns. German companies demonstrated remarkable resilience in profitability, with ROA recovering strongly from a low of 0.37% in 2020 to peak at 5.00% in 2021. It indicates a robust post-pandemic recovery. In contrast, Swedish firms maintained consistently negative ROA throughout the period, ranging from -9.69% to -11.29%. It suggests persistent profitability challenges unaffected by the pandemic. Regarding liquidity, both countries maintained stable Current Ratios. German companies showed more volatility, dipping to 2.62 in 2019 before recovering to 3.11 in 2020. However, Swedish firms maintained consistently higher ratios between 2.95-3.48, indicating stronger short-term liquidity positions.
+The comparative analysis of ROA and Current Ratio trends (@tbl-summary) from 2017 to 2021 reveals stark differences between Germany and Sweden, with distinct pandemic-related patterns.
+German companies demonstrated remarkable resilience in profitability, with ROA recovering strongly from a low of 0.37% in 2020 to peak at 5.00% in 2021.
+It indicates a robust post-pandemic recovery.
+In contrast, Swedish firms maintained consistently negative ROA throughout the period, ranging from -9.69% to -11.29%.
+It suggests persistent profitability challenges unaffected by the pandemic.
+Regarding liquidity, both countries maintained stable Current Ratios.
+German companies showed more volatility, dipping to 2.62 in 2019 before recovering to 3.11 in 2020.
+However, Swedish firms maintained consistently higher ratios between 2.95-3.48, indicating stronger short-term liquidity positions.
 
-This difference suggests that while the pandemic significantly impacted German profitability with a subsequent strong recovery, Swedish companies faced deeper structural profitability issues. But both maintained adequate short-term financial stability throughout the period.
+This difference suggests that while the pandemic significantly impacted German profitability with a subsequent strong recovery, Swedish companies faced deeper structural profitability issues.
+But both maintained adequate short-term financial stability throughout the period.
 
 ```{r Q4 IDA 5. Summary}
 #| label: tbl-summary
@@ -887,7 +897,6 @@ kable(ger_swe_ts |>
             mean_cr = mean(current_ratio, na.rm = TRUE)) |>
   ungroup())
 ```
-
 
 ## EDA
 
@@ -905,16 +914,13 @@ AAA
 
 AAA
 
-
 ### Question 4
 
 **4. How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic?**
 
-
 1.  Macro-level evidence: Industry recovery patterns (ROA vs CR) - feasts (Lecture 9, slide 24-26, feasts and tsibbletalk)
 
 We will analyze the fundamental relationship between corporate liquidity and profitability across industries during the pandemic period, with particular focus on identifying anomalous recovery patterns.
-
 
 ```{r Q4 EDA 1. Macro-level evidence: Calculate}
 # Calculate the average ROA and current ratio for each industry each year
@@ -928,7 +934,7 @@ industry_ts <- ger_swe_ts |>
   )
 ```
 
-```{r Q4 EDA 2. Macro-level evidence -Calculate}
+```{r Q4 EDA 1. Macro-level evidence -Calculate}
 # Calculating time series features
 industry_features <- industry_ts |>
   group_by(industry_group, country) |>
@@ -961,8 +967,7 @@ After trend strength analysis, the volatility examination in @fig-combined_analy
 Five industries show high ROA volatility, but most have moderate Current Ratio spikiness.
 However, Consumer Services is exceptional with the highest Current Ratio spikiness, suggesting unique liquidity challenges.
 
-
-```{r Q4 EDA 2. Macro-level evidence -Combined analysis}
+```{r Q4 EDA 1. Macro-level evidence -Combined analysis}
 #| label: fig-combined_analysis
 #| fig-cap: "Combined analysis of trend strength disruption and volatility across industries and countries during the pandemic period. Left: Trend strength analysis with 0.3 threshold lines. Right: Volatility analysis with median lines."
 
@@ -1082,10 +1087,10 @@ combined_analysis <- subplot(
 combined_analysis
 ```
 
-
 **Threshold-based industry classification**
 
-Given the comparative focus of our study between Germany and Sweden, we used country-specific threshold-based segmentation to classify industries into recovery archetypes. This approach categorizes industries based on their ROA trend strength and volatility using the following criteria:
+Given the comparative focus of our study between Germany and Sweden, we used country-specific threshold-based segmentation to classify industries into recovery archetypes.
+This approach categorizes industries based on their ROA trend strength and volatility using the following criteria:
 
 -   High trend strength (≥0.7) + Low spikiness (≤country-specific median) → "Resilient industries"
 
@@ -1095,15 +1100,21 @@ Given the comparative focus of our study between Germany and Sweden, we used cou
 
 -   All other combinations → "Moderate impact industries"
 
-The comparative analysis reveals significant differences in sectoral recovery patterns between Germany and Sweden during the post-pandemic period. While some industries demonstrate consistent performance across both countries, others exhibit notable variations that highlight distinct economic environments.
+The comparative analysis reveals significant differences in sectoral recovery patterns between Germany and Sweden during the post-pandemic period.
+While some industries demonstrate consistent performance across both countries, others exhibit notable variations that highlight distinct economic environments.
 
-As shown in @tbl-recovery-classification, a key finding is the divergent performance in several important sectors. Germany shows stronger resilience in Construction and Financial Services, where these sectors maintained stable performance throughout the recovery period. Conversely, Sweden demonstrates more robust recovery in Manufacturing and Administrative Support sectors. This contrast suggests differing national economic priorities and support mechanisms.
+As shown in @tbl-recovery-classification, a key finding is the divergent performance in several important sectors.
+Germany shows stronger resilience in Construction and Financial Services, where these sectors maintained stable performance throughout the recovery period.
+Conversely, Sweden demonstrates more robust recovery in Manufacturing and Administrative Support sectors.
+This contrast suggests differing national economic priorities and support mechanisms.
 
-The analysis also identifies interesting similarities. The Information & Communication sector displays a consistent K-shaped recovery pattern in both countries, indicating that technological industries experienced similar uneven recovery trajectories regardless of national context. This pattern suggests that sector-specific characteristics may sometimes outweigh national economic policies in determining recovery outcomes.
+The analysis also identifies interesting similarities.
+The Information & Communication sector displays a consistent K-shaped recovery pattern in both countries, indicating that technological industries experienced similar uneven recovery trajectories regardless of national context.
+This pattern suggests that sector-specific characteristics may sometimes outweigh national economic policies in determining recovery outcomes.
 
 These comparative insights provide valuable understanding of how similar industries can experience different recovery paths depending on their national economic environment, while also highlighting sectors where recovery patterns transcend national boundaries.
 
-```{r Q4 EDA 2. Macro-level evidence -industry classes}
+```{r Q4 EDA 1. Macro-level evidence -industry classes}
 industry_classes <- focus_features |>
   group_by(country) |>
   mutate(
@@ -1125,7 +1136,6 @@ industry_classes <- focus_features |>
     )
   )
 ```
-
 
 ```{r}
 #| label: tbl-recovery-classification
@@ -1152,8 +1162,6 @@ kable(classification_comparison) |>
   kable_styling(font_size = 11)
 ```
 
-
-
 2.  Micro-level evidence of anomalous recovery patterns across industries (ROA and liquidity) - scagnostics (Tignostics) (Lecture 8, 22-27 & Lecture 9, slide 24)
 
 In this section, we compare firm-level relationships between liquidity (Current Ratio) and profitability (ROA) across industries in Germany and Sweden.
@@ -1161,33 +1169,31 @@ In this section, we compare firm-level relationships between liquidity (Current 
 We focus on the industries that exhibited distinct recovery patterns in the macro analysis (see @tbl-recovery-classification).
 Specifically, we select:
 
-- Information & Communication (K-shaped in both countries)
+-   Information & Communication (K-shaped in both countries)
 
-- Wholesale & Retail Trade (K-shaped only in Germany)
+-   Wholesale & Retail Trade (K-shaped only in Germany)
 
-- Consumer Services (K-shaped only in Sweden)
+-   Consumer Services (K-shaped only in Sweden)
 
-- Financial & Insurance (Resilient only in Germany)
+-   Financial & Insurance (Resilient only in Germany)
 
 **Data and methods**
 
 For each country × industry × fiscal year, we:
 
-- keep firm-level pairs (current_ratio, roa_pct);
+-   keep firm-level pairs (current_ratio, roa_pct);
 
-- compute scagnostic metrics (clumpy, outlying, monotonic, stringy);
+-   compute scagnostic metrics (clumpy, outlying, monotonic, stringy);
 
-- fit a simple linear model ROA \~ CR to obtain slope and residual SD;
+-   fit a simple linear model ROA \~ CR to obtain slope and residual SD;
 
-
-- compare distributions between countries using boxplots and ribbon plots to represent variability among firms.
+-   compare distributions between countries using boxplots and ribbon plots to represent variability among firms.
 
 -   compute year-to-year slope changes and count “jumps” (a jump = \|slope change\| \> 0.5);
 
 -   compute pre/post differences in mean residual SD and mean slope (post − pre).
 
 -   When an industry × year has too few firms (\< 3) the scagnostics or regression are not reported (NA).
-
 
 **How to read the scagnostic metrics**
 
@@ -1199,7 +1205,7 @@ For each country × industry × fiscal year, we:
 
 -   Residual SD: higher residual SD from the linear fit signals more unexplained scatter (higher micro volatility).
 
-```{r Q4 EDA 3. Micro-level evidence -data}
+```{r Q4 EDA 2. Micro-level evidence -data}
 selected_industries <- c("Information & Communication", "Wholesale & Retail Trade", "Consumer Services", "Financial & Insurance")
 
 # Extract the companies time series data of these industries
@@ -1207,7 +1213,7 @@ selected_companies_ts <- ger_swe_ts |>
   filter(industry_group %in% selected_industries)
 ```
 
-```{r Q4 EDA 3. Micro-level evidence -Calculate scagnostic}
+```{r Q4 EDA 2. Micro-level evidence -Calculate scagnostic}
 #| label: tbl-company
 #| tbl-cap: "Summary statistics for industries with significant slope changes (jumps > 0). The table shows average slope, maximum absolute slope change, mean residual standard deviation, number of jumps, and differences in volatility and slope before and after the COVID-19 pandemic for three industries: Wholesale & Retail Trade, Information & Communication, and Financial & Insurance."
 
@@ -1287,7 +1293,7 @@ vol_shift <- by_ind_year |>
 
 # Merge the results to generate the final summary
 industry_summary <- industry_tignostics |>
-  group_by(industry_group) |>
+  group_by(industry_group, country) |>
   summarise(
     n_years = n_distinct(fy_year),
     avg_slope = mean(slope, na.rm = TRUE),
@@ -1299,10 +1305,11 @@ industry_summary <- industry_tignostics |>
   left_join(vol_shift |> select(industry_group, vol_pre_post_diff, slope_pre_post_diff), by = "industry_group")
 
 kable(industry_summary |> filter(jumps > 0) |>
-        select(-n_years))
+        select(-n_years)) |>
+  kable_styling(font_size = 12)
 ```
 
-```{r Q4 EDA 3. Micro-level evidence -scagnostic figure}
+```{r Q4 EDA 2. Micro-level evidence -scagnostic figure}
 #| label: fig-scagnostic
 #| fig-cap: "This figure shows how four scagnostic metrics changed over time across different industries. The red dashed line marks the year 2020 when COVID-19 pandemic occurred. We can see variations in outlying (extreme values), clumpy (clustering patterns), stringy (linear relationships), and monotonic (consistent trends) metrics before and after the pandemic."
 #| warning: false
@@ -1324,31 +1331,44 @@ ggplot(scag_long, aes(x = fy_year, y = value, color = industry_group)) +
   theme_minimal()
 ```
 
-
-
 **Main results**
 
-@tbl-company reports summary statistics for industries with at least one large slope jump (jumps \> 0).
-Three industries experienced jumps: Arts, Entertainment & Recreation, Information & Communication, and Financial & Insurance.
-Some industries (e.g., Construction, Accommodation & Food, Administrative & Support) have too few firms in some years and therefore produce NA for scagnostics.
-@fig-scagnostic shows time series of four metrics (outlying, clumpy, stringy, monotonic) with a vertical line at 2020.
+@tbl-company summarises the scagnostic-based firm-level patterns for three major industries across Germany and Sweden.
+Except for Consumer Services, which has too few firms to generate valid scagnostic values, all other industries experienced at least five major slope jump.
+This indicates significant shifts in the relationship between ROA and CR during the pandemic years.
 
-**Key patterns observed:**
+Overall, Germany shows stronger stability with lower variability after COVID-19, while Sweden displays larger fluctuations and volatility increases, especially in the Information & Communication and Financial & Insurance sectors.
+This suggests that Swedish firms reacted more dynamically to the pandemic shock, whereas German firms maintained more consistent capital structures and profitability relations.
 
-| Industry | Change after 2020 | Interpretation |
-|------------------------|------------------------|------------------------|
-| **Financial & Insurance** | ↑ *clumpy*, ↓ *stringy*, ↑ *monotonic* | Increased fragmentation suggests a K-shaped recovery; weakened linear CR–ROA relationship; stronger monotonic trend implies more structured but divergent performance. |
-| **Arts, Entertainment & Recreation** | ↓ *clumpy*, ↑ *outlying*, ↑ *monotonic* | Fewer internal clusters but more extreme performers; stronger monotonic trend indicates clearer performance–liquidity relationship post-pandemic. |
-| **Information & Communication** | ↓ *clumpy*, stable *outlying*, ↑ monotonic | Reduced clustering with no significant outliers; strong monotonic rise implies more uniform and predictable firm behavior. |
+@fig-scagnostic visualises the evolution of four scagnostic metrics (outlying, clumpy, stringy, and monotonic) over time for both countries.
+The red dashed line marks 2020, when COVID-19 began to affect firm performance and liquidity.
 
+**Key patterns observed (Germany vs. Sweden):**
 
++---------------------------------+--------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Industry                        | Change after 2020                                                                                                              | Interpretation                                                                                                                                                                                        |
++=================================+================================================================================================================================+=======================================================================================================================================================================================================+
+| **Wholesale & Retail Trade**    | Germany: stable *stringy* and ↓ *clumpy*                                                                                       | The sector became more fragmented in both countries, but Sweden’s higher volatility implies a stronger K-shaped recovery where some firms expanded while others declined.                             |
+|                                 |                                                                                                                                |                                                                                                                                                                                                       |
+|                                 | Sweden has a sharper rise in variability (higher residual SD).                                                                 |                                                                                                                                                                                                       |
++---------------------------------+--------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **Information & Communication** | Germany shows ↑ *monotonic* and stable *outlying*; Sweden shows ↑ *monotonic* but much higher volatility and slope difference. | German firms moved toward more predictable performance patterns, while Swedish firms faced wider dispersion — consistent with a “Hidden Crisis” where averages look stable but firm-level gaps widen. |
++---------------------------------+--------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **Financial & Insurance**       | Germany shows moderate ↑ *clumpy* and slight ↓ *stringy*; Sweden shows ↓ *stringy* and higher volatility.                      | German firms maintained resilience with steady ROA–CR relations, while Swedish financial firms experienced more unstable patterns, reflecting exposure to liquidity pressure during the pandemic.     |
++---------------------------------+--------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+**Interpretation**
+
+In summary, German industries generally show resilient recovery patterns — moderate slope changes, smaller variance, and steady scagnostic behaviour.
+Swedish industries, however, demonstrate greater variability and stronger K-shaped dynamics, where firm outcomes diverged more sharply after 2020.
+These findings suggest that national institutional and financial environments may have influenced how firms adjusted liquidity and profitability relationships during the crisis.
 
 **Limitations**
 
 Results are descriptive: scagnostics indicate shape changes but do not prove causality.
 We will triangulate these micro results with macro indicators (feasts features) in the final section.
 
-5.  Summary and interpretation
+3.  Summary and interpretation
 
 The exploratory analysis demonstrates that the relationship between corporate profitability and liquidity evolved unevenly across industries during the pandemic.
 More importantly, the recovery patterns were not the same across or within industries, showing clear evidence of a K-shaped recovery in some sectors.
@@ -1367,133 +1387,149 @@ These results suggest that the pandemic not only altered the overall financial d
 
 AAA
 
-
 ## References
 
 The materials used for this report are:
 
-- Bureau van Dijk. (2025). OSIRIS [Data set: Germany subset]. Bureau van Dijk – A Moody’s Analytics Company. https://www.bvdinfo.com/en-gb/our-products/data/international/osiris 
+-   Bureau van Dijk.
+    (2025).
+    OSIRIS \[Data set: Germany subset\].
+    Bureau van Dijk – A Moody’s Analytics Company.
+    https://www.bvdinfo.com/en-gb/our-products/data/international/osiris
 
-- **Tidyverse:** Wickham H, Averick M, Bryan J, Chang W, McGowan LD, François R, Grolemund G, Hayes A, Henry L, Hester J,
-  Kuhn M, Pedersen TL, Miller E, Bache SM, Müller K, Ooms J, Robinson D, Seidel DP, Spinu V, Takahashi K,
-  Vaughan D, Wilke C, Woo K, Yutani H (2019). “Welcome to the tidyverse.” _Journal of Open Source
-  Software_, *4*(43), 1686. doi:10.21105/joss.01686 <https://doi.org/10.21105/joss.01686>.
-  
-- **Conflicted:** Wickham H (2023). _conflicted: An Alternative Conflict Resolution Strategy_.
-  doi:10.32614/CRAN.package.conflicted <https://doi.org/10.32614/CRAN.package.conflicted>, R package
-  version 1.2.0, <https://CRAN.R-project.org/package=conflicted>.
-  
-- **Dplyr:** Wickham H, François R, Henry L, Müller K, Vaughan D (2023). _dplyr: A Grammar of Data Manipulation_.
-  doi:10.32614/CRAN.package.dplyr <https://doi.org/10.32614/CRAN.package.dplyr>, R package version 1.1.4,
-  <https://CRAN.R-project.org/package=dplyr>.
-  
-- **Stringr:** Wickham H (2025). _stringr: Simple, Consistent Wrappers for Common String Operations_.
-  doi:10.32614/CRAN.package.stringr <https://doi.org/10.32614/CRAN.package.stringr>, R package version
-  1.5.2, <https://CRAN.R-project.org/package=stringr>.
-  
-- **Janitor:** Firke S (2024). _janitor: Simple Tools for Examining and Cleaning Dirty Data_.
-  doi:10.32614/CRAN.package.janitor <https://doi.org/10.32614/CRAN.package.janitor>, R package version
-  2.2.1, <https://CRAN.R-project.org/package=janitor>.
+-   **Tidyverse:** Wickham H, Averick M, Bryan J, Chang W, McGowan LD, François R, Grolemund G, Hayes A, Henry L, Hester J, Kuhn M, Pedersen TL, Miller E, Bache SM, Müller K, Ooms J, Robinson D, Seidel DP, Spinu V, Takahashi K, Vaughan D, Wilke C, Woo K, Yutani H (2019).
+    “Welcome to the tidyverse.” *Journal of Open Source Software*, *4*(43), 1686.
+    doi:10.21105/joss.01686 <https://doi.org/10.21105/joss.01686>.
 
-- **Skimr:** Waring E, Quinn M, McNamara A, Arino de la Rubia E, Zhu H, Ellis S (2025). _skimr: Compact and Flexible
-  Summaries of Data_. doi:10.32614/CRAN.package.skimr <https://doi.org/10.32614/CRAN.package.skimr>, R
-  package version 2.2.1, <https://CRAN.R-project.org/package=skimr>.
+-   **Conflicted:** Wickham H (2023).
+    *conflicted: An Alternative Conflict Resolution Strategy*.
+    doi:10.32614/CRAN.package.conflicted <https://doi.org/10.32614/CRAN.package.conflicted>, R package version 1.2.0, <https://CRAN.R-project.org/package=conflicted>.
 
-- **Tsibble:** Wang, E, D Cook, and RJ Hyndman (2020). A new tidy data structure to support exploration and modeling of
-  temporal data, Journal of Computational and Graphical Statistics, 29:3, 466-478,
-  doi:10.1080/10618600.2019.1695624.
+-   **Dplyr:** Wickham H, François R, Henry L, Müller K, Vaughan D (2023).
+    *dplyr: A Grammar of Data Manipulation*.
+    doi:10.32614/CRAN.package.dplyr <https://doi.org/10.32614/CRAN.package.dplyr>, R package version 1.1.4, <https://CRAN.R-project.org/package=dplyr>.
 
-- **Knitr:** Xie Y (2025). _knitr: A General-Purpose Package for Dynamic Report Generation in R_. R package version
-  1.50, <https://yihui.org/knitr/>.
+-   **Stringr:** Wickham H (2025).
+    *stringr: Simple, Consistent Wrappers for Common String Operations*.
+    doi:10.32614/CRAN.package.stringr <https://doi.org/10.32614/CRAN.package.stringr>, R package version 1.5.2, <https://CRAN.R-project.org/package=stringr>.
 
-  Yihui Xie (2015) Dynamic Documents with R and knitr. 2nd edition. Chapman and Hall/CRC. ISBN
-  978-1498716963
+-   **Janitor:** Firke S (2024).
+    *janitor: Simple Tools for Examining and Cleaning Dirty Data*.
+    doi:10.32614/CRAN.package.janitor <https://doi.org/10.32614/CRAN.package.janitor>, R package version 2.2.1, <https://CRAN.R-project.org/package=janitor>.
 
-  Yihui Xie (2014) knitr: A Comprehensive Tool for Reproducible Research in R. In Victoria Stodden,
-  Friedrich Leisch and Roger D. Peng, editors, Implementing Reproducible Computational Research. Chapman
-  and Hall/CRC. ISBN 978-1466561595
+-   **Skimr:** Waring E, Quinn M, McNamara A, Arino de la Rubia E, Zhu H, Ellis S (2025).
+    *skimr: Compact and Flexible Summaries of Data*.
+    doi:10.32614/CRAN.package.skimr <https://doi.org/10.32614/CRAN.package.skimr>, R package version 2.2.1, <https://CRAN.R-project.org/package=skimr>.
 
-- **Naniar:** Tierney N, Cook D (2023). “Expanding Tidy Data Principles to Facilitate Missing Data Exploration,
-  Visualization and Assessment of Imputations.” _Journal of Statistical Software_, *105*(7), 1-31.
-  doi:10.18637/jss.v105.i07 <https://doi.org/10.18637/jss.v105.i07>.
+-   **Tsibble:** Wang, E, D Cook, and RJ Hyndman (2020).
+    A new tidy data structure to support exploration and modeling of temporal data, Journal of Computational and Graphical Statistics, 29:3, 466-478, doi:10.1080/10618600.2019.1695624.
 
-- **Patchwork:** Pedersen T (2025). _patchwork: The Composer of Plots_. doi:10.32614/CRAN.package.patchwork
-  <https://doi.org/10.32614/CRAN.package.patchwork>, R package version 1.3.2,
-  <https://CRAN.R-project.org/package=patchwork>.
+-   **Knitr:** Xie Y (2025).
+    *knitr: A General-Purpose Package for Dynamic Report Generation in R*.
+    R package version 1.50, <https://yihui.org/knitr/>.
 
-- **Plotly:** C. Sievert. Interactive Web-Based Data Visualization with R, plotly, and shiny. Chapman and Hall/CRC
-  Florida, 2020.
+    Yihui Xie (2015) Dynamic Documents with R and knitr.
+    2nd edition.
+    Chapman and Hall/CRC.
+    ISBN 978-1498716963
 
-- **tsibbletalk:** Wang E, Cook D (2020). _tsibbletalk: Interactive Graphics for Tsibble Objects_.
-  doi:10.32614/CRAN.package.tsibbletalk <https://doi.org/10.32614/CRAN.package.tsibbletalk>, R package
-  version 0.1.0, <https://CRAN.R-project.org/package=tsibbletalk>.
+    Yihui Xie (2014) knitr: A Comprehensive Tool for Reproducible Research in R.
+    In Victoria Stodden, Friedrich Leisch and Roger D. Peng, editors, Implementing Reproducible Computational Research.
+    Chapman and Hall/CRC.
+    ISBN 978-1466561595
 
-- **Feasts:** O'Hara-Wild M, Hyndman R, Wang E (2025). _feasts: Feature Extraction and Statistics for Time Series_.
-  doi:10.32614/CRAN.package.feasts <https://doi.org/10.32614/CRAN.package.feasts>, R package version 0.4.2,
-  <https://CRAN.R-project.org/package=feasts>.
+-   **Naniar:** Tierney N, Cook D (2023).
+    “Expanding Tidy Data Principles to Facilitate Missing Data Exploration, Visualization and Assessment of Imputations.” *Journal of Statistical Software*, *105*(7), 1-31.
+    doi:10.18637/jss.v105.i07 <https://doi.org/10.18637/jss.v105.i07>.
 
-- **Broom:**  Robinson D, Hayes A, Couch S (2025). _broom: Convert Statistical Objects into Tidy Tibbles_.
-  doi:10.32614/CRAN.package.broom <https://doi.org/10.32614/CRAN.package.broom>, R package version 1.0.9,
-  <https://CRAN.R-project.org/package=broom>.
+-   **Patchwork:** Pedersen T (2025).
+    *patchwork: The Composer of Plots*.
+    doi:10.32614/CRAN.package.patchwork <https://doi.org/10.32614/CRAN.package.patchwork>, R package version 1.3.2, <https://CRAN.R-project.org/package=patchwork>.
 
-- **Purrr:**  Wickham H, Henry L (2025). _purrr: Functional Programming Tools_. doi:10.32614/CRAN.package.purrr
-  <https://doi.org/10.32614/CRAN.package.purrr>, R package version 1.1.0,
-  <https://CRAN.R-project.org/package=purrr>.
+-   **Plotly:** C. Sievert.
+    Interactive Web-Based Data Visualization with R, plotly, and shiny.
+    Chapman and Hall/CRC Florida, 2020.
 
-- **Cassowaryr:**  L. Wilkinson, A. Anand and R. Grossman, Graph-theoretic scagnostics, IEEE Symposium on Information
-  Visualization, 2005. INFOVIS 2005., 2005, pp. 157-164, doi: 10.1109/INFVIS.2005.1532142.
+-   **tsibbletalk:** Wang E, Cook D (2020).
+    *tsibbletalk: Interactive Graphics for Tsibble Objects*.
+    doi:10.32614/CRAN.package.tsibbletalk <https://doi.org/10.32614/CRAN.package.tsibbletalk>, R package version 0.1.0, <https://CRAN.R-project.org/package=tsibbletalk>.
 
-  L. Wilkinson and G. Wills (2008) Scagnostics Distributions, Journal of Computational and Graphical
-  Statistics, 17(2), pp 473-491, doi:10.1198/106186008X320465
+-   **Feasts:** O'Hara-Wild M, Hyndman R, Wang E (2025).
+    *feasts: Feature Extraction and Statistics for Time Series*.
+    doi:10.32614/CRAN.package.feasts <https://doi.org/10.32614/CRAN.package.feasts>, R package version 0.4.2, <https://CRAN.R-project.org/package=feasts>.
 
-  K. Grimm, Kennzahlenbasierte Grafikauswahl, doctoral thesis, Universitat Augsburg, 2016.
+-   **Broom:** Robinson D, Hayes A, Couch S (2025).
+    *broom: Convert Statistical Objects into Tidy Tibbles*.
+    doi:10.32614/CRAN.package.broom <https://doi.org/10.32614/CRAN.package.broom>, R package version 1.0.9, <https://CRAN.R-project.org/package=broom>.
 
-  H. Mason, Lee, S., Laa, U. and Cook, D. (2022) cassowaryr: Compute Scagnostics on Pairs of Numeric
-  Variables in a Data Set. R package version 2.0.0. https://CRAN.R-project.org/package=cassowary
+-   **Purrr:** Wickham H, Henry L (2025).
+    *purrr: Functional Programming Tools*.
+    doi:10.32614/CRAN.package.purrr <https://doi.org/10.32614/CRAN.package.purrr>, R package version 1.1.0, <https://CRAN.R-project.org/package=purrr>.
 
-- **Gganimate:**  Pedersen T, Robinson D (2025). _gganimate: A Grammar of Animated Graphics_.
-  doi:10.32614/CRAN.package.gganimate <https://doi.org/10.32614/CRAN.package.gganimate>, R package version
-  1.0.11, <https://CRAN.R-project.org/package=gganimate>.
+-   **Cassowaryr:** L. Wilkinson, A. Anand and R.
+    Grossman, Graph-theoretic scagnostics, IEEE Symposium on Information Visualization, 2005.
+    INFOVIS 2005., 2005, pp. 157-164, doi: 10.1109/INFVIS.2005.1532142.
 
-- **Gifski:**  Ooms J, Kornel Lesiński, Authors of the dependency Rust crates (2025). _gifski: Highest Quality GIF
-  Encoder_. doi:10.32614/CRAN.package.gifski <https://doi.org/10.32614/CRAN.package.gifski>, R package
-  version 1.32.0-2, <https://CRAN.R-project.org/package=gifski>.
+    L. Wilkinson and G.
+    Wills (2008) Scagnostics Distributions, Journal of Computational and Graphical Statistics, 17(2), pp 473-491, doi:10.1198/106186008X320465
 
-- **KableExtra:** Zhu H (2024). _kableExtra: Construct Complex Table with 'kable' and Pipe Syntax_.
-  doi:10.32614/CRAN.package.kableExtra <https://doi.org/10.32614/CRAN.package.kableExtra>, R package
-  version 1.4.0, <https://CRAN.R-project.org/package=kableExtra>.
+    K. Grimm, Kennzahlenbasierte Grafikauswahl, doctoral thesis, Universitat Augsburg, 2016.
 
-- **Ggplot2:** H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.
+    H. Mason, Lee, S., Laa, U.
+    and Cook, D.
 
-- **Scales:** Wickham H, Pedersen T, Seidel D (2025). _scales: Scale Functions for Visualization_.
-  doi:10.32614/CRAN.package.scales <https://doi.org/10.32614/CRAN.package.scales>, R package version 1.4.0,
-  <https://CRAN.R-project.org/package=scales>.
+    (2022) cassowaryr: Compute Scagnostics on Pairs of Numeric Variables in a Data Set. R package version 2.0.0. https://CRAN.R-project.org/package=cassowary
 
-- **Tidyr:** Wickham H, Vaughan D, Girlich M (2024). _tidyr: Tidy Messy Data_. doi:10.32614/CRAN.package.tidyr
-  <https://doi.org/10.32614/CRAN.package.tidyr>, R package version 1.3.1,
-  <https://CRAN.R-project.org/package=tidyr>.
+-   **Gganimate:** Pedersen T, Robinson D (2025).
+    *gganimate: A Grammar of Animated Graphics*.
+    doi:10.32614/CRAN.package.gganimate <https://doi.org/10.32614/CRAN.package.gganimate>, R package version 1.0.11, <https://CRAN.R-project.org/package=gganimate>.
 
-- **Ggrepel:** Slowikowski K (2024). _ggrepel: Automatically Position Non-Overlapping Text Labels with 'ggplot2'_.
-  doi:10.32614/CRAN.package.ggrepel <https://doi.org/10.32614/CRAN.package.ggrepel>, R package version
-  0.9.6, <https://CRAN.R-project.org/package=ggrepel>.
+-   **Gifski:** Ooms J, Kornel Lesiński, Authors of the dependency Rust crates (2025).
+    *gifski: Highest Quality GIF Encoder*.
+    doi:10.32614/CRAN.package.gifski <https://doi.org/10.32614/CRAN.package.gifski>, R package version 1.32.0-2, <https://CRAN.R-project.org/package=gifski>.
 
-- **ViridisLite:** Simon Garnier, Noam Ross, Robert Rudis, Antônio P. Camargo, Marco Sciaini, and Cédric Scherer (2023).
-  viridis(Lite) - Colorblind-Friendly Color Maps for R. viridisLite package version 0.4.2.
-  
-- The Associated Press. (2020). Europe braces for next wave of coronavirus pandemic in Berlin. AP News. https://apnews.com/article/coronavirus-pandemic-health-europe-epidemics-berlin-b61de99739774c1f52b4ba6860054d6d
+-   **KableExtra:** Zhu H (2024).
+    *kableExtra: Construct Complex Table with 'kable' and Pipe Syntax*.
+    doi:10.32614/CRAN.package.kableExtra <https://doi.org/10.32614/CRAN.package.kableExtra>, R package version 1.4.0, <https://CRAN.R-project.org/package=kableExtra>.
+
+-   **Ggplot2:** H. Wickham.
+    ggplot2: Elegant Graphics for Data Analysis.
+    Springer-Verlag New York, 2016.
+
+-   **Scales:** Wickham H, Pedersen T, Seidel D (2025).
+    *scales: Scale Functions for Visualization*.
+    doi:10.32614/CRAN.package.scales <https://doi.org/10.32614/CRAN.package.scales>, R package version 1.4.0, <https://CRAN.R-project.org/package=scales>.
+
+-   **Tidyr:** Wickham H, Vaughan D, Girlich M (2024).
+    *tidyr: Tidy Messy Data*.
+    doi:10.32614/CRAN.package.tidyr <https://doi.org/10.32614/CRAN.package.tidyr>, R package version 1.3.1, <https://CRAN.R-project.org/package=tidyr>.
+
+-   **Ggrepel:** Slowikowski K (2024).
+    *ggrepel: Automatically Position Non-Overlapping Text Labels with 'ggplot2'*.
+    doi:10.32614/CRAN.package.ggrepel <https://doi.org/10.32614/CRAN.package.ggrepel>, R package version 0.9.6, <https://CRAN.R-project.org/package=ggrepel>.
+
+-   **ViridisLite:** Simon Garnier, Noam Ross, Robert Rudis, Antônio P. Camargo, Marco Sciaini, and Cédric Scherer (2023).
+    viridis(Lite) - Colorblind-Friendly Color Maps for R.
+    viridisLite package version 0.4.2.
+
+-   The Associated Press.
+    (2020).
+    Europe braces for next wave of coronavirus pandemic in Berlin.
+    AP News.
+    https://apnews.com/article/coronavirus-pandemic-health-europe-epidemics-berlin-b61de99739774c1f52b4ba6860054d6d
 
 ## AI Acknowledgement
 
 The links to my use of ChatGPT and other AI for help on this assignment are:
 
-- <https://chatgpt.com/share/68f563ee-9040-8010-ab1c-4969cfb31ee0> Used to help know when the pandemic happened in Germany, understand the accounting terms related to profitability, how to create a violin chart and jitter, how to make a dumbbell chart for comparison, and perform imputation on the data.
+-   <https://chatgpt.com/share/68f563ee-9040-8010-ab1c-4969cfb31ee0> Used to help know when the pandemic happened in Germany, understand the accounting terms related to profitability, how to create a violin chart and jitter, how to make a dumbbell chart for comparison, and perform imputation on the data.
 
-- <https://chatgpt.com/share/68f4378d-bb24-8003-8471-ed2147a8fab3> Used for formatting assistance, debugging R code, and improving interpretation flow.
+-   <https://chatgpt.com/share/68f4378d-bb24-8003-8471-ed2147a8fab3> Used for formatting assistance, debugging R code, and improving interpretation flow.
 
-- <https://chatgpt.com/share/68f3046d-1ad8-800d-bc11-1b005a9e600f> helped to implement animated graphics and optimize content.
+-   <https://chatgpt.com/share/68f3046d-1ad8-800d-bc11-1b005a9e600f> helped to implement animated graphics and optimize content.
 
-- <https://chatgpt.com/share/68f304c8-a088-800d-be54-939dfcd7e278> helped to evaluate whether the questions are answered adequately and where to make revisions.
+-   <https://chatgpt.com/share/68f304c8-a088-800d-be54-939dfcd7e278> helped to evaluate whether the questions are answered adequately and where to make revisions.
 
-- <https://chatgpt.com/share/68f305ad-f15c-800d-b724-fc917c1a93ef> helped to deal with the problem that package ‘tignostics’ is not available for this version of R and how to use scagnostics.
+-   <https://chatgpt.com/share/68f305ad-f15c-800d-b724-fc917c1a93ef> helped to deal with the problem that package ‘tignostics’ is not available for this version of R and how to use scagnostics.
 
-- <https://chatgpt.com/share/68f571d7-0810-8011-960e-b969c4d9a752> helped us format the explanation in a better and concise manner.
+-   <https://chatgpt.com/share/68f571d7-0810-8011-960e-b969c4d9a752> helped us format the explanation in a better and concise manner.
