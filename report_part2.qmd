@@ -870,6 +870,8 @@ ger_swe_ts <- ger_swe_ts |>
 
 5.  Summary
 
+The data preparation followed the same cleaning and preprocessing pipeline as described for Germany, ensuring comparability across the two countries. Consolidated financial statements were prioritized, and only industries with complete data for 2019–2021 were retained.
+
 The comparative analysis of ROA and Current Ratio trends (@tbl-summary) from 2017 to 2021 reveals stark differences between Germany and Sweden, with distinct pandemic-related patterns. German companies demonstrated remarkable resilience in profitability, with ROA recovering strongly from a low of 0.37% in 2020 to peak at 5.00% in 2021. It indicates a robust post-pandemic recovery. In contrast, Swedish firms maintained consistently negative ROA throughout the period, ranging from -9.69% to -11.29%. It suggests persistent profitability challenges unaffected by the pandemic. Regarding liquidity, both countries maintained stable Current Ratios. German companies showed more volatility, dipping to 2.62 in 2019 before recovering to 3.11 in 2020. However, Swedish firms maintained consistently higher ratios between 2.95-3.48, indicating stronger short-term liquidity positions.
 
 This difference suggests that while the pandemic significantly impacted German profitability with a subsequent strong recovery, Swedish companies faced deeper structural profitability issues. But both maintained adequate short-term financial stability throughout the period.
@@ -906,7 +908,453 @@ AAA
 
 ### Question 4
 
-AAA
+**4. How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic?**
+
+
+1.  Macro-level evidence: Industry recovery patterns (ROA vs CR) - feasts (Lecture 9, slide 24-26, feasts and tsibbletalk)
+
+We will analyze the fundamental relationship between corporate liquidity and profitability across industries during the pandemic period, with particular focus on identifying anomalous recovery patterns.
+
+
+```{r Q4 EDA 1. Macro-level evidence: Calculate}
+# Calculate the average ROA and current ratio for each industry each year
+industry_ts <- ger_swe_ts |>
+  group_by(industry_group, country) |>
+  index_by(fy_year) |>
+  summarise(
+    industry_roa = mean(roa_pct, na.rm = TRUE),
+    industry_cr = mean(current_ratio, na.rm = TRUE),
+    n_companies = n()  
+  )
+```
+
+```{r Q4 EDA 2. Macro-level evidence -Calculate}
+# Calculating time series features
+industry_features <- industry_ts |>
+  group_by(industry_group, country) |>
+  features(industry_roa, feat_stl) |>
+  rename_with(~ paste0("roa_", .), -c(industry_group, country))  |>
+  left_join(
+    industry_ts |>
+      features(industry_cr, features = feat_stl) |>
+      rename_with(~ paste0("cr_", .), -c(industry_group, country)),
+    by = c("industry_group", "country")
+  )
+
+# Focus on trend_strength and spikiness
+focus_features <- industry_features |>
+  select(industry_group, country,
+         roa_trend_strength, roa_spikiness,
+         cr_trend_strength, cr_spikiness)
+```
+
+**Trend strength analysis**
+
+The trend strength visualization in @fig-combined_analysis reveals significant disruptions to industry financial fundamentals.
+Five industries in the bottom-left quadrant, indicating severe deterioration in both ROA and Current Ratio trends.
+Accommodation & Food has the largest bubble, reflecting extreme volatility and weak performance during pandemic restrictions.
+This pattern reflects the extreme operational challenges faced by hospitality-related sectors during pandemic restrictions.
+
+**Volatility analysis**
+
+After trend strength analysis, the volatility examination in @fig-combined_analysis demonstrates divergent patterns in financial metric instability.
+Five industries show high ROA volatility, but most have moderate Current Ratio spikiness.
+However, Consumer Services is exceptional with the highest Current Ratio spikiness, suggesting unique liquidity challenges.
+
+
+```{r Q4 EDA 2. Macro-level evidence -Combined analysis}
+#| label: fig-combined_analysis
+#| fig-cap: "Combined analysis of trend strength disruption and volatility across industries and countries during the pandemic period. Left: Trend strength analysis with 0.3 threshold lines. Right: Volatility analysis with median lines."
+
+
+# Trend strength analysis to identify the hardest-hit sectors
+trend_analysis <- focus_features |>
+  group_by(country) |>
+  mutate(
+    # Identify sectors where trends are broken (low trend strength)
+    roa_trend_disrupted = roa_trend_strength < 0.3,
+    cr_trend_disrupted = cr_trend_strength < 0.3,
+    overall_trend_impact = (roa_trend_strength + cr_trend_strength) / 2
+  ) |>
+  ungroup()
+
+
+# Volatility analysis to identify the sectors with the greatest volatility during the pandemic
+volatility_analysis <- focus_features |>
+  group_by(country) |>
+  mutate(
+    high_roa_volatility = roa_spikiness > median(roa_spikiness),
+    high_cr_volatility = cr_spikiness > median(cr_spikiness),
+    overall_volatility = (scale(roa_spikiness) + scale(cr_spikiness)) / 2)  |>
+  ungroup()
+
+
+
+# Create trend strength plot
+trend_plot <- focus_features |>
+  ggplot(aes(x = roa_trend_strength, y = cr_trend_strength)) +
+  geom_point(aes(size = roa_spikiness, 
+                 color = industry_group, 
+                 shape = country,  
+                 text = paste("Industry:", industry_group, 
+                             "<br>Country:", country,  
+                             "<br>ROA Trend:", round(roa_trend_strength, 3),
+                             "<br>CR Trend:", round(cr_trend_strength, 3))), 
+             alpha = 0.7) +
+  geom_hline(yintercept = 0.3, linetype = "dashed", color = "red", alpha = 0.7) +
+  geom_vline(xintercept = 0.3, linetype = "dashed", color = "red", alpha = 0.7) +
+  labs(title = "Impact of Pandemic on Industry Trend Strength<br><sub><i>Red dashed lines indicate trend strength threshold (0.3)<br>Different shapes represent different countries</i></sub>",
+       x = "ROA Trend Strength", y = "Current Ratio Trend Strength",
+       size = "ROA Spikiness", shape = "Country") +
+  theme_minimal() + 
+  theme(legend.position = "none") +
+  scale_shape_manual(values = c(16, 17)) 
+
+# Convert to interactive plotly
+trend_in <- ggplotly(trend_plot, tooltip = "text") 
+
+# Create volatility plot
+volatility_plot <- focus_features |>
+  ggplot(aes(x = roa_spikiness, y = cr_spikiness)) +
+  geom_point(aes(color = industry_group, 
+                 size = roa_trend_strength, 
+                 shape = country,  
+                 text = paste("Industry:", industry_group,
+                             "<br>Country:", country,  
+                             "<br>ROA Spikiness:", round(roa_spikiness, 3),
+                             "<br>CR Spikiness:", round(cr_spikiness, 3))), 
+             alpha = 0.7) +
+  geom_hline(yintercept = median(focus_features$cr_spikiness), 
+             linetype = "dashed", color = "blue", alpha = 0.5) +
+  geom_vline(xintercept = median(focus_features$roa_spikiness), 
+             linetype = "dashed", color = "blue", alpha = 0.5) +
+  coord_cartesian(xlim = c(0, quantile(focus_features$roa_spikiness, 0.90))) +
+  labs(title = "Industry Volatility Analysis During Pandemic<br><sub><i>Blue dashed lines represent medians<br>Different shapes represent different countries</i></sub>",
+       x = "ROA Spikiness", y = "Current Ratio Spikiness",
+       size = "ROA Trend Strength", shape = "Country") +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  scale_shape_manual(values = c(16, 17))  
+
+volatility_in <- ggplotly(volatility_plot, tooltip = "text")
+
+# Combined analysis
+combined_analysis <- subplot(
+  trend_in, volatility_in,
+  nrows = 1,
+  shareY = FALSE,
+  titleX = TRUE,
+  titleY = TRUE,
+  margin = 0.05 
+) |>
+  plotly::layout(
+    title = list(
+      text = "Industry Financial Impact Analysis During Pandemic<br><sub>Left: Trend strength disruption | Right: Volatility patterns | Shapes indicate countries</sub>",
+      font = list(size = 14, color = "black"),
+      x = 0.5,
+      y = 0.95
+    ),
+    hoverlabel = list(
+      bgcolor = "white", 
+      font = list(size = 11, color = "black"),
+      bordercolor = "lightgray"
+    ),
+    margin = list(l = 60, r = 60, b = 80),
+    hovermode = "closest",
+    annotations = list(
+      list(
+        x = 0, y = -0.15,
+        xref = "paper", yref = "paper",
+        text = "Red lines: 0.3 threshold",
+        showarrow = FALSE,
+        font = list(size = 10, color = "red")
+      ),
+      list(
+        x = 0.85, y = -0.15,
+        xref = "paper", yref = "paper",
+        text = "Blue lines: Median volatility values",
+        showarrow = FALSE,
+        font = list(size = 10, color = "blue")
+      )
+    )
+  )
+
+combined_analysis
+```
+
+
+**Threshold-based industry classification**
+
+Given the comparative focus of our study between Germany and Sweden, we used country-specific threshold-based segmentation to classify industries into recovery archetypes. This approach categorizes industries based on their ROA trend strength and volatility using the following criteria:
+
+-   High trend strength (≥0.7) + Low spikiness (≤country-specific median) → "Resilient industries"
+
+-   Low trend strength (≤0.3) + High spikiness (≥country-specific 75th percentile) → "K-shaped recovery industries"
+
+-   High trend strength (≥0.7) + High spikiness (≥country-specific 75th percentile) → "Hidden crisis industries"
+
+-   All other combinations → "Moderate impact industries"
+
+The comparative analysis reveals significant differences in sectoral recovery patterns between Germany and Sweden during the post-pandemic period. While some industries demonstrate consistent performance across both countries, others exhibit notable variations that highlight distinct economic environments.
+
+A key finding is the divergent performance in several important sectors. Germany shows stronger resilience in Construction and Financial Services, where these sectors maintained stable performance throughout the recovery period. Conversely, Sweden demonstrates more robust recovery in Manufacturing and Administrative Support sectors. This contrast suggests differing national economic priorities and support mechanisms.
+
+The analysis also identifies interesting similarities. The Information & Communication sector displays a consistent K-shaped recovery pattern in both countries, indicating that technological industries experienced similar uneven recovery trajectories regardless of national context. This pattern suggests that sector-specific characteristics may sometimes outweigh national economic policies in determining recovery outcomes.
+
+These comparative insights provide valuable understanding of how similar industries can experience different recovery paths depending on their national economic environment, while also highlighting sectors where recovery patterns transcend national boundaries.
+
+```{r Q4 EDA 2. Macro-level evidence -industry classes}
+industry_classes <- focus_features |>
+  group_by(country) |>
+  mutate(
+    # Calculate threshold
+    trend_threshold_high = 0.7,
+    trend_threshold_low = 0.3,
+    spikiness_threshold_high = quantile(roa_spikiness, 0.75),
+    spikiness_median = median(roa_spikiness), 
+    
+    # Classification
+    recovery_pattern = case_when(
+      roa_trend_strength >= trend_threshold_high & 
+        roa_spikiness <= median(roa_spikiness) ~ "Resilient",
+      roa_trend_strength <= trend_threshold_low & 
+        roa_spikiness >= spikiness_threshold_high ~ "K-shaped",
+      roa_trend_strength >= trend_threshold_high & 
+        roa_spikiness >= spikiness_threshold_high ~ "Hidden Crisis",
+      TRUE ~ "Moderate Impact"
+    )
+  )
+```
+
+
+```{r}
+#| label: tbl-recovery-classification
+#| tbl-cap: Industry Recovery Classification for Sweden and Germany based on Country-Specific Thresholds
+
+# Comparing the classification differences between the two countries
+classification_comparison <- industry_classes |>
+  select(industry_group, country, recovery_pattern) |>
+  pivot_wider(names_from = country, values_from = recovery_pattern) |>
+  mutate(
+    pattern_match = Germany == Sweden,
+    cross_country_insight = case_when(
+      Germany == "Resilient" & Sweden != "Resilient" ~ "Resilient only in Germany",
+      Sweden == "Resilient" & Germany != "Resilient" ~ "Resilient only in Sweden",
+      Germany == "K-shaped" & Sweden != "K-shaped" ~ "K-shaped only in Germany", 
+      Sweden == "K-shaped" & Germany != "K-shaped" ~ "K-shaped only in Sweden",
+      TRUE ~ "Similar pattern"
+    )
+  ) |>
+  filter(!(Germany == "Moderate Impact" & Sweden == "Moderate Impact")) |>
+  select(industry_group, Germany, Sweden, cross_country_insight)
+
+kable(classification_comparison)
+```
+
+
+
+
+
+
+
+3.  Micro-level evidence of anomalous recovery patterns across industries (ROA and liquidity) - scagnostics (Tignostics) (Lecture 8, 22-27 & Lecture 9, slide 24)
+
+In this section we track how the firm-level relationship between liquidity (Current Ratio) and profitability (ROA) changed during the COVID-19 period.
+We approach is to treat each firm as a point in the CR–ROA plane, then study the shape of each industry’s point cloud year by year.
+We use scagnostic metrics to quantify those shapes, and we fit a simple linear model (ROA \~ Current Ratio) for every industry × year to extract slope and residual volatility.
+We treat 2020 as the COVID year and compare values before and after 2020.
+
+**Data and methods**
+
+We select industries previously identified in the macro analysis (industries labelled K-shaped, Resilient, or Hidden Crisis).
+For each industry × fiscal year we:
+
+-   keep firm-level pairs (current_ratio, roa_pct);
+
+-   calculate scagnostic metrics: outlying, stringy, striated, clumpy, sparse, monotonic, dcor;
+
+-   fit a linear model roa_pct \~ current_ratio and record slope and residual SD;
+
+-   compute year-to-year slope changes and count “jumps” (a jump = \|slope change\| \> 0.5);
+
+-   compute pre/post differences in mean residual SD and mean slope (post − pre).
+
+-   When an industry × year has too few firms (\< 3) the scagnostics or regression are not reported (NA).
+
+**How to read the scagnostic metrics**
+
+-   Clumpy: higher values indicate the points form separate clusters → suggests within-industry divergence (possible K-shaped pattern).
+
+-   Outlying: higher values indicate presence of extreme firms (very strong survivors or very weak firms).
+
+-   Stringy / Monotonic: higher values indicate a clearer linear or monotonic relationship between CR and ROA.
+
+-   Residual SD: higher residual SD from the linear fit signals more unexplained scatter (higher micro volatility).
+
+```{r Q4 EDA 3. Micro-level evidence -data}
+selected_industries <- industry_classes |>
+  filter(recovery_pattern %in% c("K-shaped", "Resilient", "Hidden Crisis")) |>
+  pull(industry_group)
+
+# Extract the companies time series data of these industries
+selected_companies_ts <- germany_ts |>
+  filter(industry_group %in% selected_industries)
+```
+
+```{r Q4 EDA 3. Micro-level evidence -Calculate scagnostic}
+#| label: tbl-company
+#| tbl-cap: "Summary statistics for industries with significant slope changes (jumps > 0). The table shows average slope, maximum absolute slope change, mean residual standard deviation, number of jumps, and differences in volatility and slope before and after the COVID-19 pandemic for three industries: Wholesale & Retail Trade, Information & Communication, and Financial & Insurance."
+
+# Aggregate the original point set by industry × year
+by_ind_year <- selected_companies_ts |>
+  group_by(industry_group) |>
+  index_by(fy_year) |>
+  nest(data = c(company_id, roa_pct, current_ratio)) |>
+  mutate(n_obs = map_int(data, ~ nrow(.x)))
+
+# Calculate scagnostics
+scag_names <- c("outlying", "stringy", "striated", "clumpy", "sparse", "monotonic", "dcor")
+
+by_ind_year <- by_ind_year |>
+  mutate(
+    scags = map(data, ~ {
+      df <- .x
+      # When there are too few samples, return a row of tibble with the same column names and types.
+      if (nrow(df) < 3) {
+        return(as_tibble(set_names(as.list(rep(NA_real_, length(scag_names))), scag_names)))
+      }
+      res <- calc_scags(df$current_ratio, df$roa_pct, scags = scag_names)
+      # Make sure to convert to atomic vectors and name them, then convert to tibble
+      res_vec <- unlist(res)
+      res_named <- set_names(as.numeric(res_vec[scag_names]), scag_names)
+      as_tibble(as.list(res_named))
+    })
+  ) |>
+  unnest(cols = scags)  # Expand into multiple columns
+
+# Fit a linear regression for each industry × year and extract slope, intercept, and resid_sd
+by_ind_year <- by_ind_year |>
+  mutate(
+    fit = map(data, ~ {
+      df <- .x
+      if (nrow(df) < 3 || all(is.na(df$current_ratio)) || all(is.na(df$roa_pct))) return(NULL)
+      lm(roa_pct ~ current_ratio, data = df)
+    }),
+    slope = map_dbl(fit, ~ if (is.null(.x)) NA_real_ else coef(.x)[["current_ratio"]]),
+    intercept = map_dbl(fit, ~ if (is.null(.x)) NA_real_ else coef(.x)[["(Intercept)"]]),
+    resid_sd = map_dbl(fit, ~ if (is.null(.x)) NA_real_ else sd(residuals(.x), na.rm = TRUE))
+  ) |>
+  select(-fit)
+
+# Take industry as a time series and calculate its evolution characteristics
+industry_tignostics <- by_ind_year |>
+  arrange(industry_group, fy_year) |>
+  group_by(industry_group) |>
+  mutate(
+    slope_lag = dplyr::lag(slope),
+    slope_change = slope - slope_lag,   # year-to-year change in slope
+    slope_pct_change = (slope - slope_lag) / abs(slope_lag) * 100,
+    resid_sd_lag = dplyr::lag(resid_sd),
+    resid_sd_change = resid_sd - resid_sd_lag,
+    # jumps: count of year-to-year slope changes bigger than a threshold (e.g. 0.5)
+    big_slope_jump = if_else(abs(slope_change) > 0.5, 1, 0),
+    jumps_cumulative = cumsum(replace_na(big_slope_jump, 0))
+  ) |>
+  ungroup()
+
+# Calculate the overall volatility_shift (post - pre) before and after the epidemic (taking 2020 as the epidemic year)
+vol_shift <- by_ind_year |>
+  mutate(period = case_when(
+    fy_year < 2020 ~ "pre",
+    fy_year == 2020 ~ "covid_year",
+    fy_year > 2020 ~ "post"
+  )) |>
+  group_by(industry_group, period) |>
+  summarise(mean_resid_sd = mean(resid_sd, na.rm = TRUE),
+            mean_slope = mean(slope, na.rm = TRUE),
+            .groups = "drop") |>
+  pivot_wider(names_from = period, values_from = c(mean_resid_sd, mean_slope)) |>
+  mutate(
+    vol_pre_post_diff = mean_resid_sd_post - mean_resid_sd_pre,
+    slope_pre_post_diff = mean_slope_post - mean_slope_pre
+  )
+
+# Merge the results to generate the final summary
+industry_summary <- industry_tignostics |>
+  group_by(industry_group) |>
+  summarise(
+    n_years = n_distinct(fy_year),
+    avg_slope = mean(slope, na.rm = TRUE),
+    max_abs_slope_change = if (all(is.na(slope_change))) NA_real_ else max(abs(slope_change), na.rm = TRUE),
+    mean_resid_sd = mean(resid_sd, na.rm = TRUE),
+    jumps = if (all(is.na(jumps_cumulative))) 0 else max(jumps_cumulative, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  left_join(vol_shift |> select(industry_group, vol_pre_post_diff, slope_pre_post_diff), by = "industry_group")
+
+kable(industry_summary |> filter(jumps > 0) |>
+        select(-n_years))
+```
+
+```{r Q4 EDA 3. Micro-level evidence -scagnostic figure}
+#| label: fig-scagnostic
+#| fig-cap: "This figure shows how four scagnostic metrics changed over time across different industries. The red dashed line marks the year 2020 when COVID-19 pandemic occurred. We can see variations in outlying (extreme values), clumpy (clustering patterns), stringy (linear relationships), and monotonic (consistent trends) metrics before and after the pandemic."
+#| warning: false
+
+scag_long <- by_ind_year |>
+  select(industry_group, fy_year, clumpy, outlying, stringy, monotonic) |>
+  pivot_longer(cols = c(clumpy, outlying, stringy, monotonic),
+               names_to = "scag_metric", values_to = "value")
+
+ggplot(scag_long, aes(x = fy_year, y = value, color = industry_group)) +
+  geom_line(linewidth = 0.7) +
+  facet_wrap(~ scag_metric, scales = "free_y") +
+  geom_vline(xintercept = 2020, linetype = "dashed", color = "red") +
+  labs(
+    title = "Evolution of Scagnostic Metrics over Time",
+    subtitle = "Dashed line = COVID year (2020)",
+    x = "Fiscal Year", y = "Scagnostic Value"
+  ) +
+  theme_minimal()
+```
+
+
+**Main results**
+
+@tbl-company reports summary statistics for industries with at least one large slope jump (jumps \> 0).
+Three industries experienced jumps: Arts, Entertainment & Recreation, Information & Communication, and Financial & Insurance.
+Some industries (e.g., Construction, Accommodation & Food, Administrative & Support) have too few firms in some years and therefore produce NA for scagnostics.
+@fig-scagnostic shows time series of four metrics (outlying, clumpy, stringy, monotonic) with a vertical line at 2020.
+
+**Key patterns observed:**
+
+| Industry | Change after 2020 | Interpretation |
+|------------------------|------------------------|------------------------|
+| **Financial & Insurance** | ↑ *clumpy*, ↓ *stringy*, ↑ *monotonic* | Increased fragmentation suggests a K-shaped recovery; weakened linear CR–ROA relationship; stronger monotonic trend implies more structured but divergent performance. |
+| **Arts, Entertainment & Recreation** | ↓ *clumpy*, ↑ *outlying*, ↑ *monotonic* | Fewer internal clusters but more extreme performers; stronger monotonic trend indicates clearer performance–liquidity relationship post-pandemic. |
+| **Information & Communication** | ↓ *clumpy*, stable *outlying*, ↑ monotonic | Reduced clustering with no significant outliers; strong monotonic rise implies more uniform and predictable firm behavior. |
+
+
+
+**Limitations**
+
+Results are descriptive: scagnostics indicate shape changes but do not prove causality.
+We will triangulate these micro results with macro indicators (feasts features) in the final section.
+
+5.  Summary and interpretation
+
+The exploratory analysis demonstrates that the relationship between corporate profitability and liquidity evolved unevenly across industries during the pandemic.
+More importantly, the recovery patterns were not the same across or within industries, showing clear evidence of a K-shaped recovery in some sectors.
+
+At the macro level, trend strength and volatility analysis revealed clear segmentation: some industries such as Construction and Finance showed resilient recovery, while others, like Accommodation, Information and Recreation, exhibited K-shaped patterns with disrupted ROA trends and high volatility.
+
+The micro-level scagnostic analysis further confirmed this divergence.
+After removing several industries which have small yearly samples (Construction,\
+Accommodation & Food, and Administrative & Support), the industries showing K-shaped tendencies at the macro level exhibited notable shifts in scagnostic measures.
+Specifically, Financial & Insurance displayed a clear rise in clumpiness, signaling within-sector fragmentation, while Arts, Entertainment & Recreation showed growing outlying behavior, reflecting the emergence of extreme performers.
+In contrast, resilient sectors maintained relatively stable and monotonic liquidity–profitability relationships throughout the period.
+
+These results suggest that the pandemic not only altered the overall financial dynamics between liquidity and profitability but also intensified disparities within certain industries, forming a distinct K-shaped recovery pattern.
 
 ## Conclusions
 
