@@ -340,7 +340,7 @@ Here are the research questions (sub-questions) that guide us in analysing and a
 
 **1. How did profitability change across industries?**
 
-AAA
+This question investigates how profitability variables such as ROA, EBITDA margin, and EBIT margin shifted across industries between the pre-pandemic period (2018 to 2019) and the pandemic period (2020 to 2021) in Germany and Sweden. It aims to identify which sectors saw profit declines, remained stable, or grew during the pandemic. By comparing profitability trends across industries, the analysis highlights which sectors proved more resilient to the economic impacts of the pandemic. These insights help explain how the pandemic affected overall corporate performance and provide a clearer understanding of the differences in financial recovery among industries.
 
 **2. How did leverage (debt-to-assets) and liquidity (current ratio) evolve during pandemic?**
 
