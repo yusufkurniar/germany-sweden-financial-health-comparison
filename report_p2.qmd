@@ -1059,6 +1059,20 @@ impute_roa |>
 
 According to the table, ROA is nearly fully available in Germany, with 98 – 99% of rows reported directly in both periods. Only about 1% of observations depend on recomputation from accounting totals, and industry and year replacement is below 0.3%. Sweden also shows strong ROA coverage, around 94 – 95% reported or recomputed. However, Sweden relies more on recomputation, approximately 5% in each period. Industry-level fallback is very limited. Overall, data quality remains stable in both countries, though Sweden requires slightly more reconstruction of ROA than Germany.
 
+3. ROE Imputation
+
+```{r impute-roe}
+impute_roe <- impute_summary_q1 |>
+  select(country, period, n_rows,
+         roe_reported, roe_recomputed, roe_ind_year, roe_ind_period, roe_period)
+
+impute_roe |>
+  kable(align = "l", booktabs = TRUE) |>
+  kable_styling(full_width = FALSE, font_size = 11)
+```
+
+According to the table, Germany had strong ROE availability, with about 96% of records reported directly in both periods. Around 0.4 – 0.5% were recomputed, and roughly 3 – 4% used industry and year fallbacks. Sweden also had good coverage, above 94% reported in both periods. However, Sweden relied more on recomputation and on industry and year fallbacks combined, accounting for around 5 – 6% of observations. No period-level imputations occurred in either country. Overall, both datasets provided reliable ROE values, with Sweden needing slightly more support from industry medians.
+
 ### Question 2
 
 ```{r q2-ida}
