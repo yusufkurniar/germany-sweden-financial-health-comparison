@@ -1124,7 +1124,93 @@ Here are the EDA processes and results for the sub-questions addressing the prim
 
 ### Question 1
 
-AAA
+**1. How did profitability change across industries?**
+
+This code recodes years into Pre (2018 – 2019) versus Pandemic (2020 – 2021), reshapes five profitability measures (EBIT, EBITDA, ROA, ROE, net income) to long format, and plots violin plots with jitter, median, and IQR overlays.
+It allows us to compare central tendency and spread before versus during the pandemic across all firms, and net income uses the asinh function, so negatives remain visible.
+
+```{r q1_profitability_distributions_overall}
+#recode period to short labels
+ida_question1 <- ida_question1 |>
+  mutate(
+    period = if_else(acct_year >= 2020, "Pandemic (2020–21)", "Pre (2018–19)"),
+    period = factor(period, levels = c("Pre (2018–19)", "Pandemic (2020–21)"))
+  )
+
+#build long data
+q1_vars <- c("ebit_margin_q1","ebitda_margin_q1","roa_q1","roe_q1","net_income_eur_asinh")
+
+plot_long <- ida_question1 |>
+  select(company_id, country, period, all_of(q1_vars)) |>
+  pivot_longer(-c(company_id, country, period), names_to = "metric", values_to = "value") |>
+  mutate(
+    metric = factor(
+      metric,
+      levels = q1_vars,
+      labels = c("EBIT margin (%)","EBITDA margin (%)","ROA (%)","ROE (%)","Net income (asinh)")
+    )
+  ) |>
+  drop_na(value)
+
+#helper for IQR bar
+iqr_bar <- function(y) data.frame(
+  y    = median(y, na.rm=TRUE),
+  ymin = quantile(y, 0.25, na.rm=TRUE),
+  ymax = quantile(y, 0.75, na.rm=TRUE)
+)
+
+#helper to draw a panel
+draw_q1_panel_country <- function(data_subset, ncol = 2, title_text = "") {
+  ggplot(
+    data_subset,
+    aes(x = period, y = value, colour = country, group = interaction(country, period))
+  ) +
+    geom_violin(
+      trim = FALSE, fill = NA, linewidth = 0.45, na.rm = TRUE,
+      position = position_dodge(width = 0.75)
+    ) +
+    geom_jitter(
+      alpha = 0.10, size = 0.55, na.rm = TRUE,
+      position = position_jitterdodge(jitter.width = 0.08, jitter.height = 0, dodge.width = 0.75)
+    ) +
+    stat_summary(
+      fun.data = iqr_bar, geom = "errorbar", width = 0.12, linewidth = 0.6, na.rm = TRUE,
+      position = position_dodge(width = 0.75), show.legend = FALSE
+    ) +
+    stat_summary(
+      fun = median, geom = "point", shape = 95, size = 8, na.rm = TRUE,
+      position = position_dodge(width = 0.75), show.legend = FALSE
+    ) +
+    facet_wrap(~ metric, scales = "free_y", ncol = ncol) +
+    scale_x_discrete(labels = c(
+      `Pre (2018–19)`      = "Pre\n(2018 – 2019)",
+      `Pandemic (2020–21)` = "Pandemic\n(2020 – 2021)"
+    )) +
+    labs(x = NULL, y = NULL, colour = "country", title = title_text) +
+    theme_minimal(base_size = 11) +
+    theme(
+      strip.text  = element_text(face = "bold"),
+      axis.text.x = element_text(size = 10, margin = margin(t = 8), lineheight = 0.95),
+      plot.margin = margin(10, 15, 24, 10),
+      legend.position = "top"
+    )
+}
+```
+
+**EBIT & EBITDA Analysis using Median and IQR**
+
+```{r q1-figure1}
+figA_metrics <- c("EBIT margin (%)", "EBITDA margin (%)")
+p_q1_A <- draw_q1_panel_country(
+  dplyr::filter(plot_long, metric %in% figA_metrics),
+  ncol = 2,
+  title_text = "Pre vs Pandemic: Germany vs Sweden\nEBIT & EBITDA Analysis using Median and IQR"
+)
+
+p_q1_A
+```
+
+According to the chart, EBIT and EBITDA margins in both Germany and Sweden remain centred near zero across both periods. The medians stay nearly the same between the pre-pandemic and pandemic years, indicating that the overall level of operating profitability did not change much for most firms. However, the shape of the violins broadens in 2020 – 2021, especially for Sweden, showing increased variation in margins. This suggests that while many firms maintained similar performance, a larger number experienced either significant gains or greater losses during the pandemic. Germany shows a slightly narrower distribution, suggesting more stable profitability than Sweden. Overall, the chart indicates that average profitability remained steady, but performance across firms became more uneven during the pandemic.
 
 ### Question 2
 
