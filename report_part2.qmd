@@ -845,6 +845,16 @@ Interpretation: • Both economies experienced a slight leverage increase in 202
 #| fig-width: 14
 #| fig-height: 9
 
+# build plotting data for the leverage–solvency faceted chart
+lev_liq_plot <- lev_liq_data |>
+  # keep sensible ranges and finite values
+  filter(
+    is.finite(debt_to_assets), is.finite(solvency_pct),
+    between(debt_to_assets, 0, 1.5),   # 0–150%
+    between(solvency_pct, -50, 100)    # -50% to 100%
+  ) |>
+  drop_na(country, acct_year)
+
 ggplot(lev_liq_plot, aes(x = debt_to_assets, y = solvency_pct, colour = country)) +
   geom_point(alpha = 0.25, size = 1.2) +
   geom_smooth(method = "lm", se = FALSE, linewidth = 1.1) +
