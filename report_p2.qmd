@@ -594,6 +594,47 @@ p_scale_balance
 
 According to the chart, most companies in both countries are at the lower end of the asset and liability spectrum, while a small number of very large firms form the long upper tails, indicating strong right skewness. The medians for total assets, liabilities, and equity remain stable over time, suggesting no significant structural shift in balance sheets between 2018 and 2021. Sweden consistently reports higher levels across the balance-sheet variables than Germany, reflecting generally larger firm sizes in the Swedish sample. The range widens in 2020 – 2021 for both countries, showing increased variation during the pandemic. Median equity remains positive and steady across both nations, suggesting that most firms maintained solvency despite the disruptions.
 
+**Flow Scale Variables**
+
+```{r}
+p_scale_flows <- ida_germany_sweden |>
+  dplyr::filter(variable_orig %in% vars_flows) |>
+  dplyr::mutate(
+    y    = dplyr::if_else(value > 0, value, NA_real_),
+    year = factor(acct_year)
+  ) |>
+  ggplot(aes(x = year, y = y, colour = country,
+             group = interaction(country, year))) +
+  geom_violin(trim = FALSE, fill = NA, linewidth = 0.4, na.rm = TRUE,
+              position = position_dodge(width = 0.75)) +
+  geom_jitter(alpha = 0.12, size = 0.6, na.rm = TRUE,
+              position = position_jitterdodge(jitter.width = 0.12,
+                                              jitter.height = 0,
+                                              dodge.width = 0.75)) +
+  stat_summary(fun = median, geom = "point", shape = 95, size = 6, na.rm = TRUE,
+               position = position_dodge(width = 0.75)) +
+  scale_y_log10(labels = scales::label_number(scale_cut = scales::cut_short_scale())) +
+  facet_wrap(~ variable, scales = "free_y", ncol = 2) +
+  labs(x = "Year", y = NULL, title = "Violin and Jitter by Year (log scale) for Flow Variables") +
+  theme_minimal(base_size = 11) +
+  theme(
+  plot.title.position = "plot",
+  legend.position     = "top",
+  legend.spacing.y    = unit(0.3, "lines"),
+  legend.justification = "center",
+  legend.direction     = "horizontal",
+  legend.box           = "horizontal",
+  legend.margin        = margin(t = 6, b = 2),
+  axis.text.x          = element_text(size = 10),
+  strip.text           = element_text(face = "bold"),
+  panel.grid.minor     = element_blank()
+)
+
+p_scale_flows
+```
+
+According to the chart, he flow measures are strongly right-skewed in both countries: most firms are small to mid-sized, with a few very large firms creating long upper tails. Sweden ranks above Germany across all years, with higher medians for total revenue, net/gross sales, and net income. Distributions expand in 2020 – 2021 for both countries. Additionally, the most significant change is in net income, which shows a thicker lower tail, indicating more firms with very small profits or losses during the pandemic. Median revenues and sales remain broadly stable over 2018 – 2021, with only modest year-to-year shifts compared to the cross-country gap. Due to skew and extreme values, the median and IQR (not the mean) are the appropriate summaries, and any modelling should consider robust or winsorised treatments of the tails.
+
 After that, we visualise ratio and percentage metrics by year on a linear scale using violin and jitter plots with median markers, faceted by variable.
 It is used to assess distribution shape, central tendency, spread, and potential outliers across time without log transformation.
 
