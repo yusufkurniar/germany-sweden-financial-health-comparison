@@ -548,43 +548,51 @@ Then, we create this code to visualise the distribution of scale variables by ye
 It allows quick checks of spread, skewness, and outliers over time for monetary measures.
 
 ```{r IDA-scale}
-#chart for scale variables (log axis) — side-by-side by country
-p_scale <- ida_germany_sweden |>
-  filter(variable_orig %in% scale_vars) |>
+#define variables sets
+vars_balance <- c("total_assets_eur","total_liabilities_eur","total_equity_eur")
+vars_flows   <- c("total_revenue_eur","net_sales_eur","gross_sales_eur","net_income_eur")
+```
+
+**Balanced Sheet Scale Variables**
+
+```{r balanced-sheet-scale}
+p_scale_balance <- ida_germany_sweden |>
+  filter(variable_orig %in% vars_balance) |>
   mutate(
     y    = if_else(value > 0, value, NA_real_),
     year = factor(acct_year)
   ) |>
   ggplot(aes(x = year, y = y, colour = country,
              group = interaction(country, year))) +
-  geom_violin(
-    trim = FALSE, fill = NA, linewidth = 0.4, na.rm = TRUE,
-    position = position_dodge(width = 0.75)
-  ) +
-  #use position, jitterdodge only, and remove width/height
-  geom_jitter(
-    alpha = 0.12, size = 0.6, na.rm = TRUE,
-    position = position_jitterdodge(jitter.width = 0.12, jitter.height = 0, dodge.width = 0.75)
-  ) +
-  stat_summary(
-    fun = median, geom = "point", shape = 95, size = 6, na.rm = TRUE,
-    position = position_dodge(width = 0.75)
-  ) +
+  geom_violin(trim = FALSE, fill = NA, linewidth = 0.4, na.rm = TRUE,
+              position = position_dodge(width = 0.75)) +
+  geom_jitter(alpha = 0.12, size = 0.6, na.rm = TRUE,
+              position = position_jitterdodge(jitter.width = 0.12,
+                                              jitter.height = 0,
+                                              dodge.width = 0.75)) +
+  stat_summary(fun = median, geom = "point", shape = 95, size = 6, na.rm = TRUE,
+               position = position_dodge(width = 0.75)) +
   scale_y_log10(labels = scales::label_number(scale_cut = scales::cut_short_scale())) +
   facet_wrap(~ variable, scales = "free_y", ncol = 3) +
-  labs(x = "Year", y = NULL,
-       title = "Violin + Jitter by Year (log scale)") +
+  labs(x = "Year", y = NULL, title = "Violin and Jitter by Year (log scale) for Balance Sheet Variables") +
   theme_minimal(base_size = 11) +
-  theme(axis.text.x = element_text(size = 10),
-        strip.text  = element_text(face = "bold"),
-        panel.grid.minor = element_blank())
+  theme(
+  plot.title.position = "plot",
+  legend.position     = "top",
+  legend.spacing.y    = unit(-0.6, "lines"),
+  legend.justification = "center",
+  legend.direction     = "horizontal",
+  legend.box           = "horizontal",
+  legend.margin        = margin(b = 4),
+  axis.text.x          = element_text(size = 10),
+  strip.text           = element_text(face = "bold"),
+  panel.grid.minor     = element_blank()
+)
 
-p_scale
-
-
+p_scale_balance
 ```
 
-AAA
+According to the chart, most companies in both countries are at the lower end of the asset and liability spectrum, while a small number of very large firms form the long upper tails, indicating strong right skewness. The medians for total assets, liabilities, and equity remain stable over time, suggesting no significant structural shift in balance sheets between 2018 and 2021. Sweden consistently reports higher levels across the balance-sheet variables than Germany, reflecting generally larger firm sizes in the Swedish sample. The range widens in 2020 – 2021 for both countries, showing increased variation during the pandemic. Median equity remains positive and steady across both nations, suggesting that most firms maintained solvency despite the disruptions.
 
 After that, we visualise ratio and percentage metrics by year on a linear scale using violin and jitter plots with median markers, faceted by variable.
 It is used to assess distribution shape, central tendency, spread, and potential outliers across time without log transformation.
