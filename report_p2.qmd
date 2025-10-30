@@ -1931,9 +1931,9 @@ by_ind_year <- by_ind_year |>
   select(-fit)
 
 # Industry time-series features, grouped by industry_group AND country
-industry_tignostics <- by_ind_year %>%
-  arrange(industry_group, country, fy_year) %>%
-  group_by(industry_group, country) %>%
+industry_tignostics <- by_ind_year |>
+  arrange(industry_group, country, fy_year) |>
+  group_by(industry_group, country) |>
   mutate(
     slope_lag = dplyr::lag(slope),
     slope_change = slope - slope_lag,   # year-to-year change in slope
@@ -1944,7 +1944,7 @@ industry_tignostics <- by_ind_year %>%
     resid_sd_change = resid_sd - resid_sd_lag,
     big_slope_jump = if_else(!is.na(slope_change) & abs(slope_change) > 0.5, 1L, 0L),
     jumps_cumulative = cumsum(replace_na(big_slope_jump, 0L))
-  ) %>%
+  ) |>
   ungroup()
 
 # Calculate the overall volatility_shift (post - pre) before and after the epidemic (taking 2020 as the epidemic year)
@@ -1975,7 +1975,7 @@ industry_summary <- industry_tignostics |>
     jumps = if (all(is.na(jumps_cumulative))) 0 else max(jumps_cumulative, na.rm = TRUE),
     .groups = "drop"
   ) |>
-  left_join(vol_shift %>% select(industry_group, country, vol_pre_post_diff, slope_pre_post_diff), 
+  left_join(vol_shift |> select(industry_group, country, vol_pre_post_diff, slope_pre_post_diff), 
             by = c("industry_group", "country"))
 
 kable(industry_summary |> 
@@ -2097,9 +2097,14 @@ Bringing these results together, the comparison highlights that Germany’s corp
 
 ## Conclusions
 
+
+
 Q4:
 
+The analysis shows that the pandemic affected the link between corporate liquidity and profitability in complex and uneven ways. Germany demonstrated overall resilience, with relatively stable adjustments in most industries. Firms maintained consistent ROA–CR structures and showed limited volatility, suggesting strong financial discipline and institutional support.
+In contrast, Sweden experienced more volatile but also more adaptive responses. The stronger fluctuations in scagnostic metrics and residual dispersion indicate that Swedish firms reacted more dynamically, allowing some to recover quickly while others struggled. It is a clear sign of K-shaped recovery in several sectors.
 
+Overall, the comparison suggests that national environments and policy frameworks played an important role in shaping how firms balanced profitability and liquidity during the crisis. Germany’s stability-oriented system promoted consistent recovery, while Sweden’s more flexible market structure encouraged diversity in outcomes. These findings highlight that firm-level resilience depends not only on financial management but also on broader institutional conditions.
 
 ## References
 
