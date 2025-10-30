@@ -1199,7 +1199,7 @@ draw_q1_panel_country <- function(data_subset, ncol = 2, title_text = "") {
 
 **EBIT & EBITDA Analysis using Median and IQR**
 
-```{r q1-figure1}
+```{r q1-ebit-ebitda}
 figA_metrics <- c("EBIT margin (%)", "EBITDA margin (%)")
 p_q1_A <- draw_q1_panel_country(
   dplyr::filter(plot_long, metric %in% figA_metrics),
@@ -1211,6 +1211,20 @@ p_q1_A
 ```
 
 According to the chart, EBIT and EBITDA margins in both Germany and Sweden remain centred near zero across both periods. The medians stay nearly the same between the pre-pandemic and pandemic years, indicating that the overall level of operating profitability did not change much for most firms. However, the shape of the violins broadens in 2020 – 2021, especially for Sweden, showing increased variation in margins. This suggests that while many firms maintained similar performance, a larger number experienced either significant gains or greater losses during the pandemic. Germany shows a slightly narrower distribution, suggesting more stable profitability than Sweden. Overall, the chart indicates that average profitability remained steady, but performance across firms became more uneven during the pandemic.
+
+```{r q1-roa-roe}
+figB_metrics <- c("ROA (%)", "ROE (%)")
+p_q1_B <- draw_q1_panel_country(
+  dplyr::filter(plot_long, metric %in% figB_metrics),
+  ncol = 2,
+  title_text = "Pre vs Pandemic: Germany vs Sweden\nROA & ROE analysis using Median and IQR"
+)
+
+p_q1_B
+```
+
+The chart compares ROA and ROE for Germany and Sweden before the pandemic (2018 – 2019) and during the pandemic (2020 – 2021). For both countries, the medians stay close to zero, indicating that overall profitability on assets and equity did not change significantly between the two periods. However, the range of values widens during the pandemic, especially in Sweden, where several firms exhibit extremely negative ROE. This pattern suggests that while most firms maintained stable returns, some experienced substantial losses or reductions in equity in 2020 – 2021. Germany also shows a wider spread compared to the pre-pandemic period, but the dispersion is less pronounced than in Sweden. Overall, the chart indicates that profitability stability at the centre conceals greater volatility across firms, with Sweden experiencing stronger downside movements in both ROA and ROE during the pandemic.
+
 
 ### Question 2
 
