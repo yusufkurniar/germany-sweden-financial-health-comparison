@@ -1320,6 +1320,8 @@ Here are the EDA processes and results for the sub-questions addressing the prim
 
 **1. How did profitability change across industries?**
 
+#### Profitability Measures Analysis
+
 This code recodes years into Pre (2018 – 2019) versus Pandemic (2020 – 2021), reshapes five profitability measures (EBIT, EBITDA, ROA, ROE, net income) to long format, and plots violin plots with jitter, median, and IQR overlays.
 It allows us to compare central tendency and spread before versus during the pandemic across all firms, and net income uses the asinh function, so negatives remain visible.
 
@@ -1393,7 +1395,7 @@ draw_q1_panel_country <- function(data_subset, ncol = 2, title_text = "") {
 
 **EBIT & EBITDA Analysis using Median and IQR**
 
-```{r q1-figure1}
+```{r q1-ebit-ebitda}
 figA_metrics <- c("EBIT margin (%)", "EBITDA margin (%)")
 p_q1_A <- draw_q1_panel_country(
   dplyr::filter(plot_long, metric %in% figA_metrics),
@@ -1410,6 +1412,106 @@ However, the shape of the violins broadens in 2020 – 2021, especially for Swed
 This suggests that while many firms maintained similar performance, a larger number experienced either significant gains or greater losses during the pandemic.
 Germany shows a slightly narrower distribution, suggesting more stable profitability than Sweden.
 Overall, the chart indicates that average profitability remained steady, but performance across firms became more uneven during the pandemic.
+
+**ROA & ROE Analysis Using Median and IQR**
+
+```{r q1-roa-roe}
+figB_metrics <- c("ROA (%)", "ROE (%)")
+p_q1_B <- draw_q1_panel_country(
+  dplyr::filter(plot_long, metric %in% figB_metrics),
+  ncol = 2,
+  title_text = "Pre vs Pandemic: Germany vs Sweden\nROA & ROE analysis using Median and IQR"
+)
+
+p_q1_B
+```
+
+The chart compares ROA and ROE for Germany and Sweden before the pandemic (2018 – 2019) and during the pandemic (2020 – 2021). For both countries, the medians stay close to zero, indicating that overall profitability on assets and equity did not change significantly between the two periods. However, the range of values widens during the pandemic, especially in Sweden, where several firms exhibit extremely negative ROE. This pattern suggests that while most firms maintained stable returns, some experienced substantial losses or reductions in equity in 2020 – 2021. Germany also shows a wider spread compared to the pre-pandemic period, but the dispersion is less pronounced than in Sweden. Overall, the chart indicates that profitability stability at the centre conceals greater volatility across firms, with Sweden experiencing stronger downside movements in both ROA and ROE during the pandemic.
+
+**Net income (asinh) Analysis Using Median and IQR**
+
+```{r}
+figC_metrics <- c("Net income (asinh)")
+p_q1_C <- draw_q1_panel_country(
+  dplyr::filter(plot_long, metric %in% figC_metrics),
+  ncol = 1,
+  title_text = "Pre vs Pandemic: Germany vs Sweden\nNet income (asinh) Analysis Using Median and IQR"
+)
+
+p_q1_C
+```
+
+The chart compares net income (asinh) between Germany and Sweden before (2018 – 2019) and during the pandemic (2020 – 2021). In both countries, the median values remain close to zero across the two periods, indicating that overall profitability did not change much. However, Sweden shows a wider spread of values in both directions, especially during the pandemic, leading more firms to record stronger profits or deeper losses. Germany’s distribution is narrower and more concentrated around the median, reflecting relatively stable firm performance. The heavier tails in Sweden during 2020 – 2021 suggest increased volatility, with a few firms benefiting while others faced larger setbacks. Overall, the figure shows that while average profitability remained steady, Sweden experienced greater variation in firm outcomes during the pandemic than Germany.
+
+#### Industry Median for EBITDA Margin Analysis
+
+This code retains the mapped industries, calculates industry medians for EBITDA margin during the Pre and Pandemic periods, and creates a dumbbell chart showing the two medians and the change (Pandemic – Pre), coloured by increase or decrease.
+Using medians ensures the comparison is robust against outliers and highlights which sectors improved or worsened the most.
+
+```{r q1_industry_ebitda_median_delta}
+#mapped industries and build period label
+eb_src <- ida_question1 |>
+  filter(
+    !is.na(ebitda_margin_q1),
+    !is.na(industry_group),
+    industry_group != "Other / Unmapped"
+  ) |>
+  mutate(
+    period = ifelse(acct_year >= 2020, "Pandemic", "Pre"),
+    period = factor(period, levels = c("Pre", "Pandemic"))
+  )
+
+#median by country × industry × period, plus delta
+eb_med_cs <- eb_src |>
+  group_by(country, industry_group, period) |>
+  summarise(med = median(ebitda_margin_q1, na.rm = TRUE), .groups = "drop") |>
+  pivot_wider(names_from = period, values_from = med) |>
+  drop_na(Pre, Pandemic) |>
+  mutate(
+    delta     = Pandemic - Pre,
+    direction = factor(ifelse(delta >= 0, "Increase", "Decrease"),
+                       levels = c("Increase", "Decrease"))
+  )
+
+#one common ordering for industries
+order_levels <- eb_med_cs |>
+  group_by(industry_group) |>
+  summarise(delta_mean = mean(delta, na.rm = TRUE), .groups = "drop") |>
+  arrange(delta_mean) |>
+  pull(industry_group)
+
+eb_med_cs <- eb_med_cs |>
+  mutate(industry_group = factor(industry_group, levels = order_levels))
+
+#facet by country
+ggplot(eb_med_cs,
+       aes(y = industry_group)) +
+  geom_segment(aes(x = Pre, xend = Pandemic,
+                   yend = industry_group, colour = direction),
+               linewidth = 1) +
+  geom_point(aes(x = Pre),      colour = "#4E79A7", size = 2) +  #pre (blue)
+  geom_point(aes(x = Pandemic), colour = "#E15759", size = 2) +  #pandemic (red)
+  geom_vline(xintercept = 0, linetype = "dashed", colour = "grey70") +
+  scale_color_manual(values = c("Increase" = "#2CA02C", "Decrease" = "#D62728")) +
+  guides(colour = guide_legend(title = NULL, override.aes = list(linewidth = 3))) +
+  labs(
+    title = "Change in Median EBITDA Margin: Pandemic vs Pre\nGermany and Sweden by Industry",
+    x = "Median EBITDA Margin (%)",
+    y = NULL
+  ) +
+  facet_grid(. ~ country) +
+  theme_minimal(base_size = 11) +
+  theme(
+    legend.position      = "top", #legend below title
+    legend.box           = "vertical",#stack under the title
+    plot.title.position  = "plot",
+    strip.text           = element_text(face = "bold"),
+    panel.grid.minor     = element_blank(),
+    plot.margin          = margin(10, 20, 10, 10)
+  )
+```
+
+This chart compares the median EBITDA margin for each industry between the pre-pandemic period (2018 – 2019) and the pandemic period (2020 – 2021) in Germany and Sweden. Each line shows the change in industry profitability, with the blue dot indicating the pre-pandemic median and the red dot indicating the pandemic median. The line colour reveals whether the median increased or decreased. In both countries, most industries experienced moderate or small shifts. In Germany, Accommodation & Food showed the strongest improvement, moving from a negative to a positive margin, while Health Care recorded the largest decline from its previously high level. Technology and Utilities also performed relatively well, with mild increases. In Sweden, the direction of change is similar across many sectors, but the shifts are generally smaller. Accommodation & Food improved slightly, while Health Care, Consumer Services, and Construction saw reductions in profitability. Overall, both economies demonstrate that the pandemic affected industries unevenly: service-based and cyclical sectors were more volatile, while Technology, Utilities, and Education remained relatively stable. Using medians offers a clearer view of typical firm performance without distortion from extreme values.
 
 ### Question 2
 
@@ -2096,10 +2198,19 @@ Bringing these results together, the comparison highlights that Germany’s corp
 
 
 ## Conclusions
+### Question 1
 
+Overall, the analysis shows that profitability remained mostly stable in both Germany and Sweden during the pandemic years compared with the pre-pandemic period. Median values for EBIT, EBITDA, ROA, ROE, and net income stayed close to zero, indicating that most firms kept similar levels of profitability. However, the variation across firms increased during 2020  – 2021, especially in Sweden, where more companies experienced bigger profits or deeper losses. At the industry level, the median EBITDA margin changed only slightly for most sectors, but Accommodation & Food saw the strongest recovery while Health Care declined the most. Technology, Utilities, and Education remained relatively stable across both countries. These results suggest that although the overall trend in profitability didn’t shift much, the pandemic led to more uneven outcomes across firms and industries, with service-based sectors showing higher volatility.
 
+### Question 2
 
-Q4:
+AAA
+
+### Question 3
+
+AAA
+
+### Question 4
 
 The analysis shows that the pandemic affected the link between corporate liquidity and profitability in complex and uneven ways. Germany demonstrated overall resilience, with relatively stable adjustments in most industries. Firms maintained consistent ROA–CR structures and showed limited volatility, suggesting strong financial discipline and institutional support.
 In contrast, Sweden experienced more volatile but also more adaptive responses. The stronger fluctuations in scagnostic metrics and residual dispersion indicate that Swedish firms reacted more dynamically, allowing some to recover quickly while others struggled. It is a clear sign of K-shaped recovery in several sectors.
