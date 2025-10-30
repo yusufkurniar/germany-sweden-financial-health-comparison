@@ -785,6 +785,7 @@ lev_liq_summary |>
 
 Observation: Both countries maintained median liquidity near 1.8×, while median leverage hovered around 0.50–0.52.
 Sweden shows slightly higher liquidity dispersion, suggesting a broader mix of firm sizes and capital structures.
+Reference: Lecture 4 (Slides 12–16) – Using group_by/summarise for IDA
 
 ### Question 3
 
@@ -833,9 +834,10 @@ ggplot(lev_liq_long,
         panel.grid.minor = element_blank())
 ```
 
-Interpretation: • Both economies experienced a slight leverage increase in 2020 (Germany +0.01, Sweden +0.02).
-• Liquidity remained broadly constant across the pandemic, stabilising near 1.8–1.9×.
-• The trends suggest that German firms relied more on credit support, while Swedish firms drew on retained liquidity, consistent with each country’s policy emphasis (Germany’s Kurzarbeit subsidies vs Sweden’s fiscal buffers).
+Interpretation: 
+- Both economies experienced a slight leverage increase in 2020 (Germany +0.01, Sweden +0.02).
+- Liquidity remained broadly constant across the pandemic, stabilising near 1.8–1.9×.
+- The trends suggest that German firms relied more on credit support, while Swedish firms drew on retained liquidity, consistent with each country’s policy emphasis (Germany’s Kurzarbeit subsidies vs Sweden’s fiscal buffers).
 
 #### EDA – Leverage–Solvency Relationship
 
@@ -891,7 +893,7 @@ However, the **slope is notably steeper in Germany**, especially in **2020**, in
 This likely reflects the **manufacturing-heavy structure** of German industries, which faced sharper revenue disruptions and slower balance sheet recovery.
 In contrast, **Swedish firms**, with **more diversified sectors and stronger equity positions**, experienced a milder solvency decline, demonstrating greater resilience to leverage-induced stress.
 
-EDA – Industry-level Leverage Distributions
+#### EDA – Industry-level Leverage Distributions
 
 ```{r}
 #| label: fig-leverage-industry-comparison
@@ -970,10 +972,14 @@ lev_liq_summary_w <- lev_liq_data |>
 knitr::kable(head(lev_liq_summary_w), caption="Winsorised medians confirm robustness.")
 ```
 
-Summary interpretation: • Leverage: Both countries show small increases during 2020, reverting by 2021.
-• Liquidity: Stable across years and nations, implying effective cash-flow management.
-• Cross-country pattern: Sweden’s firms appear slightly more liquid and less leveraged, signalling greater resilience to credit-market stress.
-• Conclusion: Despite pandemic disruptions, neither economy faced systemic liquidity deterioration; Germany’s higher industrial exposure drove modest leverage stress, while Sweden’s diversified base cushioned impact.
+Summary interpretation: 
+
+- Leverage: Both countries show small increases during 2020, reverting by 2021.
+- Liquidity: Stable across years and nations, implying effective cash-flow management.
+- Cross-country pattern: Sweden’s firms appear slightly more liquid and less leveraged, signalling greater resilience to credit-market stress.
+- Conclusion: Despite pandemic disruptions, neither economy faced systemic liquidity deterioration; Germany’s higher industrial exposure drove modest leverage stress, while Sweden’s diversified base cushioned impact.
+
+Reference: Lecture 6 (Slides 9–14) - ggplot2 facet_grid for multivariate EDA and Lecture 7 (Slide 10) - Interpreting leverage-solvency trade-offs
 
 ### Question 3
 
@@ -985,7 +991,19 @@ AAA
 
 ## Conclusions
 
-AAA
+Q2
+
+Both Germany and Sweden demonstrated financial resilience during the COVID-19 period, but through different balance-sheet strategies.
+	
+-	Liquidity: Firms in both economies maintained stable liquidity (current ratio ≈ 1.8–1.9×), reflecting effective short-term cash management. Sweden’s slightly higher dispersion suggests more diversity in firm size and financing.
+	
+-	Leverage: A mild rise in leverage was observed in 2020 (Germany +0.01, Sweden +0.02). German firms relied more heavily on external borrowing, consistent with strong government credit support (e.g. Kurzarbeit subsidies), whereas Swedish firms drew on internal liquidity buffers.
+
+-	Leverage–Solvency link: Both countries show a strong negative correlation between leverage and solvency, but the slope is steeper for Germany—indicating greater sensitivity to debt accumulation.
+
+-	Industry patterns: Manufacturing, transport & construction remain the most highly leveraged in both countries, while information, health care and professional services maintain conservative positions.
+
+Overall, German firms’ solvency was more exposed to rising leverage, while Swedish firms’ diversified structures supported steadier recovery post-pandemic.
 
 ## References
 
