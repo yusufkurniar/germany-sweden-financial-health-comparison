@@ -357,7 +357,7 @@ AAA
 
 **4. How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic?**
 
-AAA
+This study compares firms in **Germany** and **Sweden**, two advanced European economies with different financial systems and policy responses. The analysis explores how the ROA–CR relationship evolved and fractured within industries during and after the pandemic using time-series features and scagnostic metrics. **ROA** and **Current Ratio** reflect how efficiently firms generate profit and how safely they can cover short-term obligations. The goal is to reveal which sectors were most resilient, which experienced unequal recovery, and how national environments influenced these patterns. Understanding the changing relationship between ROA and CR can provide insight into the financial resilience of different industries. It also helps identify whether recovery followed a stable path or diverged into unequal outcomes, such as K-shaped patterns, where some firms recovered faster while others declined.
 
 ## IDA
 
