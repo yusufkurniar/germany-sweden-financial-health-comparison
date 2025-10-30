@@ -340,7 +340,10 @@ Here are the research questions (sub-questions) that guide us in analysing and a
 
 **1. How did profitability change across industries?**
 
-This question investigates how profitability variables such as ROA, EBITDA margin, and EBIT margin shifted across industries between the pre-pandemic period (2018 to 2019) and the pandemic period (2020 to 2021) in Germany and Sweden. It aims to identify which sectors saw profit declines, remained stable, or grew during the pandemic. By comparing profitability trends across industries, the analysis highlights which sectors proved more resilient to the economic impacts of the pandemic. These insights help explain how the pandemic affected overall corporate performance and provide a clearer understanding of the differences in financial recovery among industries.
+This question investigates how profitability variables such as ROA, EBITDA margin, and EBIT margin shifted across industries between the pre-pandemic period (2018 to 2019) and the pandemic period (2020 to 2021) in Germany and Sweden.
+It aims to identify which sectors saw profit declines, remained stable, or grew during the pandemic.
+By comparing profitability trends across industries, the analysis highlights which sectors proved more resilient to the economic impacts of the pandemic.
+These insights help explain how the pandemic affected overall corporate performance and provide a clearer understanding of the differences in financial recovery among industries.
 
 **2. How did leverage (debt-to-assets) and liquidity (current ratio) evolve during pandemic?**
 
@@ -592,7 +595,11 @@ p_scale_balance <- ida_germany_sweden |>
 p_scale_balance
 ```
 
-According to the chart, most companies in both countries are at the lower end of the asset and liability spectrum, while a small number of very large firms form the long upper tails, indicating strong right skewness. The medians for total assets, liabilities, and equity remain stable over time, suggesting no significant structural shift in balance sheets between 2018 and 2021. Sweden consistently reports higher levels across the balance-sheet variables than Germany, reflecting generally larger firm sizes in the Swedish sample. The range widens in 2020 – 2021 for both countries, showing increased variation during the pandemic. Median equity remains positive and steady across both nations, suggesting that most firms maintained solvency despite the disruptions.
+According to the chart, most companies in both countries are at the lower end of the asset and liability spectrum, while a small number of very large firms form the long upper tails, indicating strong right skewness.
+The medians for total assets, liabilities, and equity remain stable over time, suggesting no significant structural shift in balance sheets between 2018 and 2021.
+Sweden consistently reports higher levels across the balance-sheet variables than Germany, reflecting generally larger firm sizes in the Swedish sample.
+The range widens in 2020 – 2021 for both countries, showing increased variation during the pandemic.
+Median equity remains positive and steady across both nations, suggesting that most firms maintained solvency despite the disruptions.
 
 **Flow Scale Variables**
 
@@ -633,7 +640,12 @@ p_scale_flows <- ida_germany_sweden |>
 p_scale_flows
 ```
 
-According to the chart, he flow measures are strongly right-skewed in both countries: most firms are small to mid-sized, with a few very large firms creating long upper tails. Sweden ranks above Germany across all years, with higher medians for total revenue, net/gross sales, and net income. Distributions expand in 2020 – 2021 for both countries. Additionally, the most significant change is in net income, which shows a thicker lower tail, indicating more firms with very small profits or losses during the pandemic. Median revenues and sales remain broadly stable over 2018 – 2021, with only modest year-to-year shifts compared to the cross-country gap. Due to skew and extreme values, the median and IQR (not the mean) are the appropriate summaries, and any modelling should consider robust or winsorised treatments of the tails.
+According to the chart, he flow measures are strongly right-skewed in both countries: most firms are small to mid-sized, with a few very large firms creating long upper tails.
+Sweden ranks above Germany across all years, with higher medians for total revenue, net/gross sales, and net income.
+Distributions expand in 2020 – 2021 for both countries.
+Additionally, the most significant change is in net income, which shows a thicker lower tail, indicating more firms with very small profits or losses during the pandemic.
+Median revenues and sales remain broadly stable over 2018 – 2021, with only modest year-to-year shifts compared to the cross-country gap.
+Due to skew and extreme values, the median and IQR (not the mean) are the appropriate summaries, and any modelling should consider robust or winsorised treatments of the tails.
 
 After that, we visualise ratio and percentage metrics by year on a linear scale using violin and jitter plots with median markers, faceted by variable.
 It is used to assess distribution shape, central tendency, spread, and potential outliers across time without log transformation.
@@ -684,7 +696,12 @@ p_ratio_profit_eff <- ida_germany_sweden |>
 p_ratio_profit_eff
 ```
 
-According to the chart, the profitability ratios (EBIT margin, EBITDA margin, and ROA) are mainly close to zero for most firms in both countries, with many observations slightly positive and some negative. The distributions become wider in 2020 – 2021, indicating increased volatility during the pandemic, especially in ROA, where more firms became negative. ROE shows the greatest extent of variation, including very large negative values, suggesting that equity returns were more affected by shocks. Net asset turnover and stock turnover remain relatively stable over time, suggesting operational efficiency did not change much during the pandemic. Sweden consistently has a broader spread than Germany in these ratios, reflecting greater firm-level variation. Due to the heavy tails and outliers, medians and distribution shapes are more useful than means.
+According to the chart, the profitability ratios (EBIT margin, EBITDA margin, and ROA) are mainly close to zero for most firms in both countries, with many observations slightly positive and some negative.
+The distributions become wider in 2020 – 2021, indicating increased volatility during the pandemic, especially in ROA, where more firms became negative.
+ROE shows the greatest extent of variation, including very large negative values, suggesting that equity returns were more affected by shocks.
+Net asset turnover and stock turnover remain relatively stable over time, suggesting operational efficiency did not change much during the pandemic.
+Sweden consistently has a broader spread than Germany in these ratios, reflecting greater firm-level variation.
+Due to the heavy tails and outliers, medians and distribution shapes are more useful than means.
 
 **Liquidity and Solvency Ratio Variables**
 
@@ -717,7 +734,12 @@ p_ratio_liq_solv <- ida_germany_sweden |>
 p_ratio_liq_solv
 ```
 
-Solvency ratios for both countries generally range from 40% to 60%, indicating that most firms maintain moderate long-term stability. Sweden's median solvency ratios are slightly higher than Germany's, suggesting stronger capital structures. Gearing ratios are low for the majority of firms but exhibit long right tails, reflecting a few highly leveraged cases in both countries. Liquidity and current ratios are close to 1, consistent with tight short-term asset coverage, although some firms hold extremely high liquidity buffers. Shareholders’ liquidity and interest coverage show wide spreads, with a few large positive outliers indicating firms with strong financial reserves or low debt burdens. Overall, the distributions are heavily skewed, suggesting that medians and IQRs provide more meaningful insights than means for assessing firm solvency and liquidity patterns.
+Solvency ratios for both countries generally range from 40% to 60%, indicating that most firms maintain moderate long-term stability.
+Sweden's median solvency ratios are slightly higher than Germany's, suggesting stronger capital structures.
+Gearing ratios are low for the majority of firms but exhibit long right tails, reflecting a few highly leveraged cases in both countries.
+Liquidity and current ratios are close to 1, consistent with tight short-term asset coverage, although some firms hold extremely high liquidity buffers.
+Shareholders’ liquidity and interest coverage show wide spreads, with a few large positive outliers indicating firms with strong financial reserves or low debt burdens.
+Overall, the distributions are heavily skewed, suggesting that medians and IQRs provide more meaningful insights than means for assessing firm solvency and liquidity patterns.
 
 Then, we measure missing data for key numeric variables by industry and by year, then visualise year-wise gaps with a heatmap.
 It highlights variables or periods with substantial missingness, guiding imputation, exclusion, or robustness checks before analysis.
@@ -756,7 +778,11 @@ ggplot(missing_heat,
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-The heatmap indicates that missingness patterns remain consistent across 2018 – 2021, with no significant changes during the pandemic. In both Germany and Sweden, the highest levels of missing data are found in gearing_pct and liquidity_ratio, reaching about 20 – 35%, followed by ebit_margin_pct and ebitda_margin_pct, which have moderate gaps around 10 – 20%. Sweden consistently exhibits slightly higher missingness rates than Germany, especially for gearing and liquidity indicators. Core balance-sheet and flow variables such as assets, liabilities, equity, and revenues are nearly complete, with almost no missing values. Overall, ratio-based metrics are the primary source of data gaps, meaning that profitability and liquidity analyses will be based on smaller samples compared to total-level variables.
+The heatmap indicates that missingness patterns remain consistent across 2018 – 2021, with no significant changes during the pandemic.
+In both Germany and Sweden, the highest levels of missing data are found in gearing_pct and liquidity_ratio, reaching about 20 – 35%, followed by ebit_margin_pct and ebitda_margin_pct, which have moderate gaps around 10 – 20%.
+Sweden consistently exhibits slightly higher missingness rates than Germany, especially for gearing and liquidity indicators.
+Core balance-sheet and flow variables such as assets, liabilities, equity, and revenues are nearly complete, with almost no missing values.
+Overall, ratio-based metrics are the primary source of data gaps, meaning that profitability and liquidity analyses will be based on smaller samples compared to total-level variables.
 
 After that, we used this code to detect outliers in all numeric variables with two rules - IQR (1.5×) and standardized scores (\|z\| \> 3) - and summarise counts and proportions per variable, ordered by the IQR share.
 It flags variables with heavy tails or extreme values to guide winsorisation, transformation, or sensitivity checks before modelling.
@@ -809,7 +835,12 @@ outliers_by_country_ord |>
   kable_styling(full_width = FALSE, font_size = 11)
 ```
 
-According to the table, outliers are common in scale variables such as assets, liabilities, equity, and revenues, with 13 – 22% of observations falling outside the IQR range, reflecting the broad firm-size distribution. Sweden consistently shows a higher proportion of outliers than Germany across most variables, aligning with its wider value dispersion seen in violin plots. Profitability ratios (EBIT, EBITDA, ROA, ROE) also display many outliers. Notably, ROE and EBITDA margins have extreme positive or negative values due to small equity or volatile income. Liquidity and solvency ratios like gearing_pct, liquidity_ratio, and interest_cover have narrower but still significant tails, indicating some firms hold exceptionally high debt or cash reserves. Overall, these findings confirm the presence of heavy-tailed distributions, justifying the later use of median-based summaries, log transformations, or winsorisation for more robust comparison and modelling.
+According to the table, outliers are common in scale variables such as assets, liabilities, equity, and revenues, with 13 – 22% of observations falling outside the IQR range, reflecting the broad firm-size distribution.
+Sweden consistently shows a higher proportion of outliers than Germany across most variables, aligning with its wider value dispersion seen in violin plots.
+Profitability ratios (EBIT, EBITDA, ROA, ROE) also display many outliers.
+Notably, ROE and EBITDA margins have extreme positive or negative values due to small equity or volatile income.
+Liquidity and solvency ratios like gearing_pct, liquidity_ratio, and interest_cover have narrower but still significant tails, indicating some firms hold exceptionally high debt or cash reserves.
+Overall, these findings confirm the presence of heavy-tailed distributions, justifying the later use of median-based summaries, log transformations, or winsorisation for more robust comparison and modelling.
 
 Given these outlier patterns, the next step is to transform or winsorise selected variables (particularly profitability and liquidity ratios) to reduce the impact of extreme values and improve comparability across firms and periods before proceeding with further EDA and modelling.
 
@@ -843,14 +874,20 @@ char_missing |>
   kable_styling(full_width = FALSE, font_size = 11)
 ```
 
-According to the table, all key identifiers and location fields are complete, with no missing data in company_id, company_name, country, city, or consolidation_code. This confirms that entity tracking and data joins can be performed reliably without risk of key mismatches. Industry classifications are also mostly complete: nace_code shows only about 2% missing values, while icb_code has around 9% missingness, making it the least complete among the coding systems. sic_code is fully populated, ensuring that every firm can still be categorised under at least one industrial classification. Overall, this pattern indicates good metadata quality, and most firms can be consistently classified using either SIC or NACE as the primary identifiers, with ICB serving as a secondary, more detailed but less complete classification.
+According to the table, all key identifiers and location fields are complete, with no missing data in company_id, company_name, country, city, or consolidation_code.
+This confirms that entity tracking and data joins can be performed reliably without risk of key mismatches.
+Industry classifications are also mostly complete: nace_code shows only about 2% missing values, while icb_code has around 9% missingness, making it the least complete among the coding systems.
+sic_code is fully populated, ensuring that every firm can still be categorised under at least one industrial classification.
+Overall, this pattern indicates good metadata quality, and most firms can be consistently classified using either SIC or NACE as the primary identifiers, with ICB serving as a secondary, more detailed but less complete classification.
 
 After completing the general IDA, we developed the specific IDA to address our sub-questions.
 Here are the details:
 
 ### Question 1
 
-We initially added a period label (Pre-pandemic 2018 – 2019 vs. Pandemic 2020 – 2021). For visualisations, net_income_eur was transformed using asinh() to compare both gains and losses on a consistent scale. When ROA/ROE are missing, we recalculated simple estimates from the accounting totals and noted the sources of the values (reported vs. recomputed).
+We initially added a period label (Pre-pandemic 2018 – 2019 vs. Pandemic 2020 – 2021).
+For visualisations, net_income_eur was transformed using asinh() to compare both gains and losses on a consistent scale.
+When ROA/ROE are missing, we recalculated simple estimates from the accounting totals and noted the sources of the values (reported vs. recomputed).
 
 ```{r q1_prepare_profitability_inputs}
 stopifnot("net_income_eur" %in% names(filtered_germany_sweden))
@@ -882,7 +919,8 @@ ida_question1 <- filtered_germany_sweden |>
   )
 ```
 
-Then, we carried out a conservative within-firm, within-period “one-gap” fill, only patching a single missing year when adjacent values match. It then restored reported values where available.
+Then, we carried out a conservative within-firm, within-period “one-gap” fill, only patching a single missing year when adjacent values match.
+It then restored reported values where available.
 
 ```{r q1_firm_one_gap_fill}
 #Firm one-gap fill within the same period only
@@ -910,7 +948,8 @@ ida_question1 <- ida_question1 |>
   )
 ```
 
-After that, we imputed remaining gaps following a strict hierarchy: first industry and year, then industry and period, and finally period, without crossing period boundaries. This process produced the final Q1 variables (EBIT, EBITDA, ROA, ROE) and records the source of each value.
+After that, we imputed remaining gaps following a strict hierarchy: first industry and year, then industry and period, and finally period, without crossing period boundaries.
+This process produced the final Q1 variables (EBIT, EBITDA, ROA, ROE) and records the source of each value.
 
 ```{r q1_impute_hierarchy_finalize}
 #median fills in strict order (no cross-period borrowing)
@@ -995,7 +1034,8 @@ ida_question1 <- ida_question1 |>
   select(-ends_with("_step1"))
 ```
 
-Then, we summarised imputation provenance by period, counting observations that are reported, firm-filled, or imputed from industry/year/period medians. It provided a transparent audit of data construction for Question 1.
+Then, we summarised imputation provenance by period, counting observations that are reported, firm-filled, or imputed from industry/year/period medians.
+It provided a transparent audit of data construction for Question 1.
 
 ```{r q1_imputation_summary}
 impute_summary_q1 <- ida_question1 |>
@@ -1030,7 +1070,7 @@ impute_summary_q1 <- ida_question1 |>
   )
 ```
 
-1. EBIT & EBITDA Imputation
+1.  EBIT & EBITDA Imputation
 
 ```{r impute-margins}
 impute_margins <- impute_summary_q1 |>
@@ -1043,9 +1083,14 @@ impute_margins |>
   kable_styling(full_width = FALSE, font_size = 11)
 ```
 
-According to the table, Germany shows strong coverage of EBIT and EBITDA margins in both periods, with about 82 – 84% of values reported directly. The remaining 16 – 18% are filled using industry and year medians, and Germany does not need any firm-gap or period-level imputations. In comparison, Sweden has lower direct reporting, around 69 – 71% across both periods. Approximately 29 – 31% of Swedish records depend on industry and year medians, which is a higher dependence than in Germany. Only four rows in each period use a period-level fallback, indicating that heavy imputations are very limited. Overall, imputations are present in both countries, but Sweden requires more support due to lower direct reporting.
+According to the table, Germany shows strong coverage of EBIT and EBITDA margins in both periods, with about 82 – 84% of values reported directly.
+The remaining 16 – 18% are filled using industry and year medians, and Germany does not need any firm-gap or period-level imputations.
+In comparison, Sweden has lower direct reporting, around 69 – 71% across both periods.
+Approximately 29 – 31% of Swedish records depend on industry and year medians, which is a higher dependence than in Germany.
+Only four rows in each period use a period-level fallback, indicating that heavy imputations are very limited.
+Overall, imputations are present in both countries, but Sweden requires more support due to lower direct reporting.
 
-2. ROA Imputation
+2.  ROA Imputation
 
 ```{r impute-roa}
 impute_roa <- impute_summary_q1 |>
@@ -1057,9 +1102,14 @@ impute_roa |>
   kable_styling(full_width = FALSE, font_size = 11)
 ```
 
-According to the table, ROA is nearly fully available in Germany, with 98 – 99% of rows reported directly in both periods. Only about 1% of observations depend on recomputation from accounting totals, and industry and year replacement is below 0.3%. Sweden also shows strong ROA coverage, around 94 – 95% reported or recomputed. However, Sweden relies more on recomputation, approximately 5% in each period. Industry-level fallback is very limited. Overall, data quality remains stable in both countries, though Sweden requires slightly more reconstruction of ROA than Germany.
+According to the table, ROA is nearly fully available in Germany, with 98 – 99% of rows reported directly in both periods.
+Only about 1% of observations depend on recomputation from accounting totals, and industry and year replacement is below 0.3%.
+Sweden also shows strong ROA coverage, around 94 – 95% reported or recomputed.
+However, Sweden relies more on recomputation, approximately 5% in each period.
+Industry-level fallback is very limited.
+Overall, data quality remains stable in both countries, though Sweden requires slightly more reconstruction of ROA than Germany.
 
-3. ROE Imputation
+3.  ROE Imputation
 
 ```{r impute-roe}
 impute_roe <- impute_summary_q1 |>
@@ -1071,7 +1121,12 @@ impute_roe |>
   kable_styling(full_width = FALSE, font_size = 11)
 ```
 
-According to the table, Germany had strong ROE availability, with about 96% of records reported directly in both periods. Around 0.4 – 0.5% were recomputed, and roughly 3 – 4% used industry and year fallbacks. Sweden also had good coverage, above 94% reported in both periods. However, Sweden relied more on recomputation and on industry and year fallbacks combined, accounting for around 5 – 6% of observations. No period-level imputations occurred in either country. Overall, both datasets provided reliable ROE values, with Sweden needing slightly more support from industry medians.
+According to the table, Germany had strong ROE availability, with about 96% of records reported directly in both periods.
+Around 0.4 – 0.5% were recomputed, and roughly 3 – 4% used industry and year fallbacks.
+Sweden also had good coverage, above 94% reported in both periods.
+However, Sweden relied more on recomputation and on industry and year fallbacks combined, accounting for around 5 – 6% of observations.
+No period-level imputations occurred in either country.
+Overall, both datasets provided reliable ROE values, with Sweden needing slightly more support from industry medians.
 
 ### Question 2
 
@@ -1257,7 +1312,6 @@ kable(ger_swe_ts |>
   ungroup())
 ```
 
-
 ## EDA
 
 Here are the EDA processes and results for the sub-questions addressing the primary question "How did the pandemic affect corporate financials in Germany?"
@@ -1350,7 +1404,12 @@ p_q1_A <- draw_q1_panel_country(
 p_q1_A
 ```
 
-According to the chart, EBIT and EBITDA margins in both Germany and Sweden remain centred near zero across both periods. The medians stay nearly the same between the pre-pandemic and pandemic years, indicating that the overall level of operating profitability did not change much for most firms. However, the shape of the violins broadens in 2020 – 2021, especially for Sweden, showing increased variation in margins. This suggests that while many firms maintained similar performance, a larger number experienced either significant gains or greater losses during the pandemic. Germany shows a slightly narrower distribution, suggesting more stable profitability than Sweden. Overall, the chart indicates that average profitability remained steady, but performance across firms became more uneven during the pandemic.
+According to the chart, EBIT and EBITDA margins in both Germany and Sweden remain centred near zero across both periods.
+The medians stay nearly the same between the pre-pandemic and pandemic years, indicating that the overall level of operating profitability did not change much for most firms.
+However, the shape of the violins broadens in 2020 – 2021, especially for Sweden, showing increased variation in margins.
+This suggests that while many firms maintained similar performance, a larger number experienced either significant gains or greater losses during the pandemic.
+Germany shows a slightly narrower distribution, suggesting more stable profitability than Sweden.
+Overall, the chart indicates that average profitability remained steady, but performance across firms became more uneven during the pandemic.
 
 ### Question 2
 
@@ -1533,9 +1592,9 @@ AAA
 
 **4. How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic?**
 
-1.  Macro-level evidence: Industry recovery patterns (ROA vs CR) - feasts (Lecture 9, slide 24-26, feasts and tsibbletalk)
+#### 1.  Macro-level evidence: Industry recovery patterns (ROA vs CR) - feasts (Lecture 9, slide 24-26, feasts and tsibbletalk)
 
-We will analyze the fundamental relationship between corporate liquidity and profitability across industries during the pandemic period, with particular focus on identifying anomalous recovery patterns.
+We will analyze the fundamental relationship between corporate liquidity and profitability across industries during the pandemic period in two countries, with particular focus on identifying anomalous recovery patterns.
 
 ```{r Q4 EDA 1. Macro-level evidence: Calculate}
 # Calculate the average ROA and current ratio for each industry each year
@@ -1547,9 +1606,7 @@ industry_ts <- ger_swe_ts |>
     industry_cr = mean(current_ratio, na.rm = TRUE),
     n_companies = n()  
   )
-```
 
-```{r Q4 EDA 1. Macro-level evidence -Calculate}
 # Calculating time series features
 industry_features <- industry_ts |>
   group_by(industry_group, country) |>
@@ -1730,6 +1787,9 @@ This pattern suggests that sector-specific characteristics may sometimes outweig
 These comparative insights provide valuable understanding of how similar industries can experience different recovery paths depending on their national economic environment, while also highlighting sectors where recovery patterns transcend national boundaries.
 
 ```{r Q4 EDA 1. Macro-level evidence -industry classes}
+#| label: tbl-recovery-classification
+#| tbl-cap: Industry Recovery Classification for Sweden and Germany based on Country-Specific Thresholds
+
 industry_classes <- focus_features |>
   group_by(country) |>
   mutate(
@@ -1750,11 +1810,6 @@ industry_classes <- focus_features |>
       TRUE ~ "Moderate Impact"
     )
   )
-```
-
-```{r}
-#| label: tbl-recovery-classification
-#| tbl-cap: Industry Recovery Classification for Sweden and Germany based on Country-Specific Thresholds
 
 # Comparing the classification differences between the two countries
 classification_comparison <- industry_classes |>
@@ -1777,7 +1832,7 @@ kable(classification_comparison) |>
   kable_styling(font_size = 11)
 ```
 
-2.  Micro-level evidence of anomalous recovery patterns across industries (ROA and liquidity) - scagnostics (Tignostics) (Lecture 8, 22-27 & Lecture 9, slide 24)
+#### 2.  Micro-level evidence of anomalous recovery patterns across industries (ROA and liquidity) - scagnostics (Tignostics) (Lecture 8, 22-27 & Lecture 9, slide 24)
 
 In this section, we compare firm-level relationships between liquidity (Current Ratio) and profitability (ROA) across industries in Germany and Sweden.
 
@@ -1802,7 +1857,7 @@ For each country × industry × fiscal year, we:
 
 -   fit a simple linear model ROA \~ CR to obtain slope and residual SD;
 
--   compare distributions between countries using boxplots and ribbon plots to represent variability among firms.
+-   compare scagnostic between countries to represent variability among firms.
 
 -   compute year-to-year slope changes and count “jumps” (a jump = \|slope change\| \> 0.5);
 
@@ -1873,20 +1928,21 @@ by_ind_year <- by_ind_year |>
   ) |>
   select(-fit)
 
-# Take industry as a time series and calculate its evolution characteristics
-industry_tignostics <- by_ind_year |>
-  arrange(industry_group, fy_year) |>
-  group_by(industry_group) |>
+# Industry time-series features, grouped by industry_group AND country
+industry_tignostics <- by_ind_year %>%
+  arrange(industry_group, country, fy_year) %>%
+  group_by(industry_group, country) %>%
   mutate(
     slope_lag = dplyr::lag(slope),
     slope_change = slope - slope_lag,   # year-to-year change in slope
-    slope_pct_change = (slope - slope_lag) / abs(slope_lag) * 100,
+    slope_pct_change = if_else(!is.na(slope_lag) & slope_lag != 0,
+                               (slope - slope_lag) / abs(slope_lag) * 100,
+                               NA_real_),
     resid_sd_lag = dplyr::lag(resid_sd),
     resid_sd_change = resid_sd - resid_sd_lag,
-    # jumps: count of year-to-year slope changes bigger than a threshold (e.g. 0.5)
-    big_slope_jump = if_else(abs(slope_change) > 0.5, 1, 0),
-    jumps_cumulative = cumsum(replace_na(big_slope_jump, 0))
-  ) |>
+    big_slope_jump = if_else(!is.na(slope_change) & abs(slope_change) > 0.5, 1L, 0L),
+    jumps_cumulative = cumsum(replace_na(big_slope_jump, 0L))
+  ) %>%
   ungroup()
 
 # Calculate the overall volatility_shift (post - pre) before and after the epidemic (taking 2020 as the epidemic year)
@@ -1896,7 +1952,7 @@ vol_shift <- by_ind_year |>
     fy_year == 2020 ~ "covid_year",
     fy_year > 2020 ~ "post"
   )) |>
-  group_by(industry_group, period) |>
+  group_by(industry_group, country, period) |>
   summarise(mean_resid_sd = mean(resid_sd, na.rm = TRUE),
             mean_slope = mean(slope, na.rm = TRUE),
             .groups = "drop") |>
@@ -1917,7 +1973,8 @@ industry_summary <- industry_tignostics |>
     jumps = if (all(is.na(jumps_cumulative))) 0 else max(jumps_cumulative, na.rm = TRUE),
     .groups = "drop"
   ) |>
-  left_join(vol_shift |> select(industry_group, vol_pre_post_diff, slope_pre_post_diff), by = "industry_group")
+  left_join(vol_shift %>% select(industry_group, country, vol_pre_post_diff, slope_pre_post_diff), 
+            by = c("industry_group", "country"))
 
 kable(industry_summary |> filter(jumps > 0) |>
         select(-n_years)) |>
@@ -1949,30 +2006,30 @@ ggplot(scag_long, aes(x = fy_year, y = value, color = industry_group)) +
 **Main results**
 
 @tbl-company summarises the scagnostic-based firm-level patterns for three major industries across Germany and Sweden.
-Except for Consumer Services, which has too few firms to generate valid scagnostic values, all other industries experienced at least five major slope jump.
+Except for Consumer Services, which has too few firms to generate valid scagnostic values, all other industries experienced at least three major slope jump.
 This indicates significant shifts in the relationship between ROA and CR during the pandemic years.
-
-Overall, Germany shows stronger stability with lower variability after COVID-19, while Sweden displays larger fluctuations and volatility increases, especially in the Information & Communication and Financial & Insurance sectors.
-This suggests that Swedish firms reacted more dynamically to the pandemic shock, whereas German firms maintained more consistent capital structures and profitability relations.
 
 @fig-scagnostic visualises the evolution of four scagnostic metrics (outlying, clumpy, stringy, and monotonic) over time for both countries.
 The red dashed line marks 2020, when COVID-19 began to affect firm performance and liquidity.
 
-**Key patterns observed (Germany vs. Sweden):**
+Overall, Germany shows stronger stability with lower variability after COVID-19, while Sweden displays larger fluctuations and volatility increases, especially in the Information & Communication and Financial & Insurance sectors.
 
-+---------------------------------+--------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Industry                        | Change after 2020                                                                                                              | Interpretation                                                                                                                                                                                        |
-+=================================+================================================================================================================================+=======================================================================================================================================================================================================+
-| **Wholesale & Retail Trade**    | Germany: stable *stringy* and ↓ *clumpy*                                                                                       | The sector became more fragmented in both countries, but Sweden’s higher volatility implies a stronger K-shaped recovery where some firms expanded while others declined.                             |
-|                                 |                                                                                                                                |                                                                                                                                                                                                       |
-|                                 | Sweden has a sharper rise in variability (higher residual SD).                                                                 |                                                                                                                                                                                                       |
-+---------------------------------+--------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| **Information & Communication** | Germany shows ↑ *monotonic* and stable *outlying*; Sweden shows ↑ *monotonic* but much higher volatility and slope difference. | German firms moved toward more predictable performance patterns, while Swedish firms faced wider dispersion — consistent with a “Hidden Crisis” where averages look stable but firm-level gaps widen. |
-+---------------------------------+--------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| **Financial & Insurance**       | Germany shows moderate ↑ *clumpy* and slight ↓ *stringy*; Sweden shows ↓ *stringy* and higher volatility.                      | German firms maintained resilience with steady ROA–CR relations, while Swedish financial firms experienced more unstable patterns, reflecting exposure to liquidity pressure during the pandemic.     |
-+---------------------------------+--------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+**Key patterns observed by industry (Germany vs. Sweden):**
+
+**Wholesale & Retail Trade**   ↑
+
+-   Germany: avg_slope ≈ 2.08, max_abs_slope_change ≈ 2.97, mean_resid_sd ≈ 7.79. Scagnostics: stable *stringy* and ↓ *clumpy*
+
+    Interpretation: Germany shows moderate slope changes but fairly stable structure; many firms kept similar ROA–CR patterns, and the sector did not become strongly outlying.
+
+- Sweden: avg_slope ≈ -1.23, max_abs_slope_change ≈ 4.00, mean_resid_sd ≈ 15.61. Scagnostics: ↓ *clumpy* and ↓ *stringy* after 2020; ↑ outlying in 2019–2021 up to about 0.8.
+
+    Interpretation: Sweden experienced larger volatility and dispersion. This is consistent with a K-shaped response where some firms did much better while others worsened.
+
 
 **Interpretation**
+
+This suggests that Swedish firms reacted more dynamically to the pandemic shock, whereas German firms maintained more consistent capital structures and profitability relations.
 
 In summary, German industries generally show resilient recovery patterns — moderate slope changes, smaller variance, and steady scagnostic behaviour.
 Swedish industries, however, demonstrate greater variability and stronger K-shaped dynamics, where firm outcomes diverged more sharply after 2020.
@@ -1983,7 +2040,7 @@ These findings suggest that national institutional and financial environments ma
 Results are descriptive: scagnostics indicate shape changes but do not prove causality.
 We will triangulate these micro results with macro indicators (feasts features) in the final section.
 
-3.  Summary and interpretation
+#### 3.  Summary and interpretation
 
 The exploratory analysis demonstrates that the relationship between corporate profitability and liquidity evolved unevenly across industries during the pandemic.
 More importantly, the recovery patterns were not the same across or within industries, showing clear evidence of a K-shaped recovery in some sectors.
@@ -1997,7 +2054,6 @@ Specifically, Financial & Insurance displayed a clear rise in clumpiness, signal
 In contrast, resilient sectors maintained relatively stable and monotonic liquidity–profitability relationships throughout the period.
 
 These results suggest that the pandemic not only altered the overall financial dynamics between liquidity and profitability but also intensified disparities within certain industries, forming a distinct K-shaped recovery pattern.
-
 
 ## Conclusions
 
@@ -2093,9 +2149,8 @@ The materials used for this report are:
 
     H. Mason, Lee, S., Laa, U.
     and Cook, D.
-    (2022) cassowaryr: Compute Scagnostics on Pairs of Numeric Variables in a Data Set.
-    R package version 2.0.0.
-    https://CRAN.R-project.org/package=cassowary
+
+    (2022) cassowaryr: Compute Scagnostics on Pairs of Numeric Variables in a Data Set. R package version 2.0.0. https://CRAN.R-project.org/package=cassowary
 
 -   **Gganimate:** Pedersen T, Robinson D (2025).
     *gganimate: A Grammar of Animated Graphics*.
