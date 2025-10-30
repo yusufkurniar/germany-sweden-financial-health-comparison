@@ -2083,6 +2083,16 @@ These findings suggest that national institutional and financial environments ma
 Results are descriptive: scagnostics indicate shape changes but do not prove causality.
 We will triangulate these micro results with macro indicators (feasts features) in the final section.
 
+#### 3. Comparative Analysis: Macro-Level Dynamics vs. Micro-Level Firm Relationships
+
+
+This section combines both macro-level and micro-level results to explain how firm recovery patterns differed between Germany and Sweden during and after the COVID-19 crisis. Overall, the two countries showed distinct adjustment behaviours in profitability (ROA) and liquidity (Current Ratio, CR), reflecting their financial and institutional environments.
+
+At the macro level, Germany displayed stronger resilience. Several industries, such as Financial & Insurance and Manufacturing, showed steady or quickly recovering ROA–CR relationships. It suggests that firms maintained more stable capital and liquidity structures. In contrast, Sweden exhibited larger variability and stronger K-shaped dynamics, especially in Information & Communication and Consumer Services, where some firms recovered rapidly while others experienced severe declines. These results indicate that Swedish industries were more sensitive to shocks and policy uncertainty.
+
+At the micro level, scagnostic patterns further support this interpretation. German industries showed more stable or even declining variability in metrics such as clumpy and stringy, suggesting relatively coherent behaviour among firms. Meanwhile, Swedish industries showed rising outlying and higher residual dispersion, revealing more fragmented recovery paths. In other words, Swedish firms reacted more heterogeneously within the same sector, consistent with the idea of uneven or K-shaped recovery.
+
+Bringing these results together, the comparison highlights that Germany’s corporate environment may have provided stronger structural support for liquidity management and profitability recovery, while Sweden’s more market-driven system allowed greater flexibility but also led to higher volatility. This difference suggests that national financial systems and policy responses played a key role in shaping how firms adjusted after the pandemic shock.
 
 
 ## Conclusions
