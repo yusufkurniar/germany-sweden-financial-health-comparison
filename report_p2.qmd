@@ -357,7 +357,12 @@ AAA
 
 **4. How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic?**
 
-This study compares firms in **Germany** and **Sweden**, two advanced European economies with different financial systems and policy responses. The analysis explores how the ROA–CR relationship evolved and fractured within industries during and after the pandemic using time-series features and scagnostic metrics. **ROA** and **Current Ratio** reflect how efficiently firms generate profit and how safely they can cover short-term obligations. The goal is to reveal which sectors were most resilient, which experienced unequal recovery, and how national environments influenced these patterns. Understanding the changing relationship between ROA and CR can provide insight into the financial resilience of different industries. It also helps identify whether recovery followed a stable path or diverged into unequal outcomes, such as K-shaped patterns, where some firms recovered faster while others declined.
+This study compares firms in **Germany** and **Sweden**, two advanced European economies with different financial systems and policy responses.
+The analysis explores how the ROA–CR relationship evolved and fractured within industries during and after the pandemic using time-series features and scagnostic metrics.
+**ROA** and **Current Ratio** reflect how efficiently firms generate profit and how safely they can cover short-term obligations.
+The goal is to reveal which sectors were most resilient, which experienced unequal recovery, and how national environments influenced these patterns.
+Understanding the changing relationship between ROA and CR can provide insight into the financial resilience of different industries.
+It also helps identify whether recovery followed a stable path or diverged into unequal outcomes, such as K-shaped patterns, where some firms recovered faster while others declined.
 
 ## IDA
 
@@ -1426,7 +1431,12 @@ p_q1_B <- draw_q1_panel_country(
 p_q1_B
 ```
 
-The chart compares ROA and ROE for Germany and Sweden before the pandemic (2018 – 2019) and during the pandemic (2020 – 2021). For both countries, the medians stay close to zero, indicating that overall profitability on assets and equity did not change significantly between the two periods. However, the range of values widens during the pandemic, especially in Sweden, where several firms exhibit extremely negative ROE. This pattern suggests that while most firms maintained stable returns, some experienced substantial losses or reductions in equity in 2020 – 2021. Germany also shows a wider spread compared to the pre-pandemic period, but the dispersion is less pronounced than in Sweden. Overall, the chart indicates that profitability stability at the centre conceals greater volatility across firms, with Sweden experiencing stronger downside movements in both ROA and ROE during the pandemic.
+The chart compares ROA and ROE for Germany and Sweden before the pandemic (2018 – 2019) and during the pandemic (2020 – 2021).
+For both countries, the medians stay close to zero, indicating that overall profitability on assets and equity did not change significantly between the two periods.
+However, the range of values widens during the pandemic, especially in Sweden, where several firms exhibit extremely negative ROE.
+This pattern suggests that while most firms maintained stable returns, some experienced substantial losses or reductions in equity in 2020 – 2021.
+Germany also shows a wider spread compared to the pre-pandemic period, but the dispersion is less pronounced than in Sweden.
+Overall, the chart indicates that profitability stability at the centre conceals greater volatility across firms, with Sweden experiencing stronger downside movements in both ROA and ROE during the pandemic.
 
 **Net income (asinh) Analysis Using Median and IQR**
 
@@ -1441,7 +1451,12 @@ p_q1_C <- draw_q1_panel_country(
 p_q1_C
 ```
 
-The chart compares net income (asinh) between Germany and Sweden before (2018 – 2019) and during the pandemic (2020 – 2021). In both countries, the median values remain close to zero across the two periods, indicating that overall profitability did not change much. However, Sweden shows a wider spread of values in both directions, especially during the pandemic, leading more firms to record stronger profits or deeper losses. Germany’s distribution is narrower and more concentrated around the median, reflecting relatively stable firm performance. The heavier tails in Sweden during 2020 – 2021 suggest increased volatility, with a few firms benefiting while others faced larger setbacks. Overall, the figure shows that while average profitability remained steady, Sweden experienced greater variation in firm outcomes during the pandemic than Germany.
+The chart compares net income (asinh) between Germany and Sweden before (2018 – 2019) and during the pandemic (2020 – 2021).
+In both countries, the median values remain close to zero across the two periods, indicating that overall profitability did not change much.
+However, Sweden shows a wider spread of values in both directions, especially during the pandemic, leading more firms to record stronger profits or deeper losses.
+Germany’s distribution is narrower and more concentrated around the median, reflecting relatively stable firm performance.
+The heavier tails in Sweden during 2020 – 2021 suggest increased volatility, with a few firms benefiting while others faced larger setbacks.
+Overall, the figure shows that while average profitability remained steady, Sweden experienced greater variation in firm outcomes during the pandemic than Germany.
 
 #### Industry Median for EBITDA Margin Analysis
 
@@ -1511,7 +1526,16 @@ ggplot(eb_med_cs,
   )
 ```
 
-This chart compares the median EBITDA margin for each industry between the pre-pandemic period (2018 – 2019) and the pandemic period (2020 – 2021) in Germany and Sweden. Each line shows the change in industry profitability, with the blue dot indicating the pre-pandemic median and the red dot indicating the pandemic median. The line colour reveals whether the median increased or decreased. In both countries, most industries experienced moderate or small shifts. In Germany, Accommodation & Food showed the strongest improvement, moving from a negative to a positive margin, while Health Care recorded the largest decline from its previously high level. Technology and Utilities also performed relatively well, with mild increases. In Sweden, the direction of change is similar across many sectors, but the shifts are generally smaller. Accommodation & Food improved slightly, while Health Care, Consumer Services, and Construction saw reductions in profitability. Overall, both economies demonstrate that the pandemic affected industries unevenly: service-based and cyclical sectors were more volatile, while Technology, Utilities, and Education remained relatively stable. Using medians offers a clearer view of typical firm performance without distortion from extreme values.
+This chart compares the median EBITDA margin for each industry between the pre-pandemic period (2018 – 2019) and the pandemic period (2020 – 2021) in Germany and Sweden.
+Each line shows the change in industry profitability, with the blue dot indicating the pre-pandemic median and the red dot indicating the pandemic median.
+The line colour reveals whether the median increased or decreased.
+In both countries, most industries experienced moderate or small shifts.
+In Germany, Accommodation & Food showed the strongest improvement, moving from a negative to a positive margin, while Health Care recorded the largest decline from its previously high level.
+Technology and Utilities also performed relatively well, with mild increases.
+In Sweden, the direction of change is similar across many sectors, but the shifts are generally smaller.
+Accommodation & Food improved slightly, while Health Care, Consumer Services, and Construction saw reductions in profitability.
+Overall, both economies demonstrate that the pandemic affected industries unevenly: service-based and cyclical sectors were more volatile, while Technology, Utilities, and Education remained relatively stable.
+Using medians offers a clearer view of typical firm performance without distortion from extreme values.
 
 ### Question 2
 
@@ -1867,11 +1891,8 @@ Given the comparative focus of our study between Germany and Sweden, we used cou
 This approach categorizes industries based on their ROA trend strength and volatility using the following criteria:
 
 -   High trend strength (≥0.7) + Low spikiness (≤country-specific median) → "Resilient industries"
-
 -   Low trend strength (≤0.3) + High spikiness (≥country-specific 75th percentile) → "K-shaped recovery industries"
-
 -   High trend strength (≥0.7) + High spikiness (≥country-specific 75th percentile) → "Hidden crisis industries"
-
 -   All other combinations → "Moderate impact industries"
 
 The comparative analysis reveals significant differences in sectoral recovery patterns between Germany and Sweden during the post-pandemic period.
@@ -1941,42 +1962,29 @@ In this section, we compare firm-level relationships between liquidity (Current 
 We focus on the industries that exhibited distinct recovery patterns in the macro analysis (see @tbl-recovery-classification).
 Specifically, we select:
 
-- Information & Communication (K-shaped in both countries)
-
+-   Information & Communication (K-shaped in both countries)
 -   Wholesale & Retail Trade (K-shaped only in Germany)
-
 -   Consumer Services (K-shaped only in Sweden)
-
--   Financial & Insurance (Resilient only in  Germany)
-
-- Manufacturing (Resilient only in Sweden)
+-   Financial & Insurance (Resilient only in Germany)
+-   Manufacturing (Resilient only in Sweden)
 
 **Data and methods**
 
 For each country × industry × fiscal year, we:
 
 -   keep firm-level pairs (current_ratio, roa_pct);
-
 -   compute scagnostic metrics (clumpy, outlying, monotonic, stringy);
-
 -   fit a simple linear model ROA \~ CR to obtain slope and residual SD;
-
 -   compare scagnostic between countries to represent variability among firms.
-
 -   compute year-to-year slope changes and count “jumps” (a jump = \|slope change\| \> 0.5);
-
 -   compute pre/post differences in mean residual SD and mean slope (post − pre).
-
 -   When an industry × year has too few firms (\< 3) the scagnostics or regression are not reported (NA).
 
 **How to read the scagnostic metrics**
 
 -   Clumpy: higher values indicate the points form separate clusters → suggests within-industry divergence (possible K-shaped pattern).
-
 -   Outlying: higher values indicate presence of extreme firms (very strong survivors or very weak firms).
-
 -   Stringy / Monotonic: higher values indicate a clearer linear or monotonic relationship between CR and ROA.
-
 -   Residual SD: higher residual SD from the linear fit signals more unexplained scatter (higher micro volatility).
 
 ```{r Q4 EDA 2. Micro-level evidence -data}
@@ -2121,64 +2129,65 @@ Overall, Germany shows stronger stability with lower variability after COVID-19,
 
 **Key patterns observed by industry (Germany vs. Sweden):**
 
-**Wholesale & Retail Trade** 
+**Wholesale & Retail Trade**
 
 -   Germany: avg_slope ≈ 2.08, max_abs_slope_change ≈ 2.97, mean_resid_sd ≈ 7.79.
     Scagnostics: stable *stringy* and ↓ *clumpy*
 
-    Interpretation: Germany shows moderate slope changes but fairly stable structure. Many firms kept similar ROA–CR patterns, and the sector did not become strongly outlying.
+    Interpretation: Germany shows moderate slope changes but fairly stable structure.
+    Many firms kept similar ROA–CR patterns, and the sector did not become strongly outlying.
 
 -   Sweden: avg_slope ≈ -1.23, max_abs_slope_change ≈ 4.00, mean_resid_sd ≈ 15.61.
     Scagnostics: ↓ *clumpy* and ↓ *stringy* after 2020; ↑ outlying in 2019–2021 up to about 0.8.
 
-    Interpretation: Sweden experienced larger volatility and dispersion. This is consistent with a K-shaped response where some firms did much better while others worsened.
+    Interpretation: Sweden experienced larger volatility and dispersion.
+    This is consistent with a K-shaped response where some firms did much better while others worsened.
 
 **Information & Communication**
 
-- Germany: avg_slope ≈ 2.50, mean_resid_sd ≈ 8.25.
-  Scagnostics: sharply ↓ clumpy after 2020; ↑ monotonic.
-    
-     Interpretation: German firms became more predictable in their ROA–CR relation after 2020 (higher monotonic, lower clumpy), suggesting more uniform responses across firms.
+-   Germany: avg_slope ≈ 2.50, mean_resid_sd ≈ 8.25.
+    Scagnostics: sharply ↓ clumpy after 2020; ↑ monotonic.
 
-- Sweden: avg_slope ≈ 3.64, mean_resid_sd ≈ 24.62 (much larger).
-  Scagnostics: ↑ monotonic but volatility and residual dispersion are much higher; clumpy and outlying patterns differ from Germany.
-     
-     Interpretation: Although average slope rose in Sweden, the much higher residual SD indicates wide firm-level dispersion. It is a “hidden crisis” where averages hide deep heterogeneity.
+    Interpretation: German firms became more predictable in their ROA–CR relation after 2020 (higher monotonic, lower clumpy), suggesting more uniform responses across firms.
 
+-   Sweden: avg_slope ≈ 3.64, mean_resid_sd ≈ 24.62 (much larger).
+    Scagnostics: ↑ monotonic but volatility and residual dispersion are much higher; clumpy and outlying patterns differ from Germany.
 
+    Interpretation: Although average slope rose in Sweden, the much higher residual SD indicates wide firm-level dispersion.
+    It is a “hidden crisis” where averages hide deep heterogeneity.
 
 **Financial & Insurance**
 
-- Germany: avg_slope ≈ 0.83, mean_resid_sd ≈ 11.87. Scagnostics: ↑ clumpy after 2020, slightly ↓ stringy, small ↓ outlying.
-    
-    Interpretation: German financial firms show moderate changes. There are some clustering but not huge instability.
+-   Germany: avg_slope ≈ 0.83, mean_resid_sd ≈ 11.87.
+    Scagnostics: ↑ clumpy after 2020, slightly ↓ stringy, small ↓ outlying.
 
-- Sweden: avg_slope ≈ -0.67, mean_resid_sd ≈ 21.47 (higher). Scagnostics: rising trends in scagnostics for some metrics, higher volatility overall.
-    
+    Interpretation: German financial firms show moderate changes.
+    There are some clustering but not huge instability.
+
+-   Sweden: avg_slope ≈ -0.67, mean_resid_sd ≈ 21.47 (higher).
+    Scagnostics: rising trends in scagnostics for some metrics, higher volatility overall.
+
     Interpretation: Swedish financial firms experienced larger instability and dispersion, consistent with stronger liquidity or profitability shocks.
-    
-    
+
 **Manufacturing**
 
-- Germany: avg_slope ≈ -0.002, mean_resid_sd ≈ 14.32, max_abs_slope_change ≈ 0.54.
-  Scagnostics: High but slightly ↓ clumpy, ↓ monotonic after 2020, ↑ outlying in 2020–2021, stable stringy
+-   Germany: avg_slope ≈ -0.002, mean_resid_sd ≈ 14.32, max_abs_slope_change ≈ 0.54.
+    Scagnostics: High but slightly ↓ clumpy, ↓ monotonic after 2020, ↑ outlying in 2020–2021, stable stringy
 
-     Interpretation: Although slope changes were moderate, the rise in outlying and decline in monotonic suggest that the relationship between ROA and CR became less predictable and more fragmented among firms after the pandemic began.
-     
-     
-- Sweden: avg_slope ≈ -0.60, mean_resid_sd ≈ 28.14, max_abs_slope_change ≈ 0.43.
-  Scagnostics: High but ↓ clumpy after 2020, ↑ monotonic, mild fluctuations in outlying, stable stringy
-  
-     Interpretation: Despite a negative average slope and high residual standard deviation, the increase in monotonic and relatively stable scagnostic values point to a moderately resilient structure. Firms became more aligned in their ROA–CR behaviour over time, though some outliers remained.
+    Interpretation: Although slope changes were moderate, the rise in outlying and decline in monotonic suggest that the relationship between ROA and CR became less predictable and more fragmented among firms after the pandemic began.
 
+-   Sweden: avg_slope ≈ -0.60, mean_resid_sd ≈ 28.14, max_abs_slope_change ≈ 0.43.
+    Scagnostics: High but ↓ clumpy after 2020, ↑ monotonic, mild fluctuations in outlying, stable stringy
 
-**Interpretation**
+    Interpretation: Despite a negative average slope and high residual standard deviation, the increase in monotonic and relatively stable scagnostic values point to a moderately resilient structure.
+    Firms became more aligned in their ROA–CR behaviour over time, though some outliers remained.
 
-This suggests that Swedish firms reacted more dynamically to the pandemic shock, whereas German firms maintained more consistent capital structures and profitability relations.
+**Summary**
 
-In summary, German industries generally show resilient recovery patterns — moderate slope changes, smaller variance, and steady scagnostic behaviour.
-Swedish industries, however, demonstrate greater variability and stronger K-shaped dynamics, where firm outcomes diverged more sharply after 2020.
-These findings suggest that national institutional and financial environments may have influenced how firms adjusted liquidity and profitability relationships during the crisis.
+In short, Germany displays more stable post-2020 behaviour across these industries (smaller volatility shifts and steadier scagnostic patterns).
+Sweden shows larger volatility and stronger divergence across firms after 2020, especially in Information & Communication and Financial & Insurance.
+This suggests national differences in how firms adjusted liquidity and profitability during the pandemic.
+For example, institutional settings, firm composition, or policy responses may have led Swedish firms to react more heterogeneously.
 
 **Limitations**
 
@@ -2187,20 +2196,33 @@ We will triangulate these micro results with macro indicators (feasts features) 
 
 #### 3. Comparative Analysis: Macro-Level Dynamics vs. Micro-Level Firm Relationships
 
+This section combines both macro-level and micro-level results to explain how firm recovery patterns differed between Germany and Sweden during and after the COVID-19 crisis.
+Overall, the two countries showed distinct adjustment behaviours in profitability (ROA) and liquidity (Current Ratio, CR), reflecting their financial and institutional environments.
 
-This section combines both macro-level and micro-level results to explain how firm recovery patterns differed between Germany and Sweden during and after the COVID-19 crisis. Overall, the two countries showed distinct adjustment behaviours in profitability (ROA) and liquidity (Current Ratio, CR), reflecting their financial and institutional environments.
+At the macro level, Germany displayed stronger resilience.
+Several industries, such as Financial & Insurance and Manufacturing, showed steady or quickly recovering ROA–CR relationships.
+It suggests that firms maintained more stable capital and liquidity structures.
+In contrast, Sweden exhibited larger variability and stronger K-shaped dynamics, especially in Information & Communication and Consumer Services, where some firms recovered rapidly while others experienced severe declines.
+These results indicate that Swedish industries were more sensitive to shocks and policy uncertainty.
 
-At the macro level, Germany displayed stronger resilience. Several industries, such as Financial & Insurance and Manufacturing, showed steady or quickly recovering ROA–CR relationships. It suggests that firms maintained more stable capital and liquidity structures. In contrast, Sweden exhibited larger variability and stronger K-shaped dynamics, especially in Information & Communication and Consumer Services, where some firms recovered rapidly while others experienced severe declines. These results indicate that Swedish industries were more sensitive to shocks and policy uncertainty.
+At the micro level, scagnostic patterns further support this interpretation.
+German industries showed more stable or even declining variability in metrics such as clumpy and stringy, suggesting relatively coherent behaviour among firms.
+Meanwhile, Swedish industries showed rising outlying and higher residual dispersion, revealing more fragmented recovery paths.
+In other words, Swedish firms reacted more heterogeneously within the same sector, consistent with the idea of uneven or K-shaped recovery.
 
-At the micro level, scagnostic patterns further support this interpretation. German industries showed more stable or even declining variability in metrics such as clumpy and stringy, suggesting relatively coherent behaviour among firms. Meanwhile, Swedish industries showed rising outlying and higher residual dispersion, revealing more fragmented recovery paths. In other words, Swedish firms reacted more heterogeneously within the same sector, consistent with the idea of uneven or K-shaped recovery.
-
-Bringing these results together, the comparison highlights that Germany’s corporate environment may have provided stronger structural support for liquidity management and profitability recovery, while Sweden’s more market-driven system allowed greater flexibility but also led to higher volatility. This difference suggests that national financial systems and policy responses played a key role in shaping how firms adjusted after the pandemic shock.
-
+Bringing these results together, the comparison highlights that Germany’s corporate environment may have provided stronger structural support for liquidity management and profitability recovery, while Sweden’s more market-driven system allowed greater flexibility but also led to higher volatility.
+This difference suggests that national financial systems and policy responses played a key role in shaping how firms adjusted after the pandemic shock.
 
 ## Conclusions
+
 ### Question 1
 
-Overall, the analysis shows that profitability remained mostly stable in both Germany and Sweden during the pandemic years compared with the pre-pandemic period. Median values for EBIT, EBITDA, ROA, ROE, and net income stayed close to zero, indicating that most firms kept similar levels of profitability. However, the variation across firms increased during 2020  – 2021, especially in Sweden, where more companies experienced bigger profits or deeper losses. At the industry level, the median EBITDA margin changed only slightly for most sectors, but Accommodation & Food saw the strongest recovery while Health Care declined the most. Technology, Utilities, and Education remained relatively stable across both countries. These results suggest that although the overall trend in profitability didn’t shift much, the pandemic led to more uneven outcomes across firms and industries, with service-based sectors showing higher volatility.
+Overall, the analysis shows that profitability remained mostly stable in both Germany and Sweden during the pandemic years compared with the pre-pandemic period.
+Median values for EBIT, EBITDA, ROA, ROE, and net income stayed close to zero, indicating that most firms kept similar levels of profitability.
+However, the variation across firms increased during 2020 – 2021, especially in Sweden, where more companies experienced bigger profits or deeper losses.
+At the industry level, the median EBITDA margin changed only slightly for most sectors, but Accommodation & Food saw the strongest recovery while Health Care declined the most.
+Technology, Utilities, and Education remained relatively stable across both countries.
+These results suggest that although the overall trend in profitability didn’t shift much, the pandemic led to more uneven outcomes across firms and industries, with service-based sectors showing higher volatility.
 
 ### Question 2
 
@@ -2212,10 +2234,16 @@ AAA
 
 ### Question 4
 
-The analysis shows that the pandemic affected the link between corporate liquidity and profitability in complex and uneven ways. Germany demonstrated overall resilience, with relatively stable adjustments in most industries. Firms maintained consistent ROA–CR structures and showed limited volatility, suggesting strong financial discipline and institutional support.
-In contrast, Sweden experienced more volatile but also more adaptive responses. The stronger fluctuations in scagnostic metrics and residual dispersion indicate that Swedish firms reacted more dynamically, allowing some to recover quickly while others struggled. It is a clear sign of K-shaped recovery in several sectors.
+The analysis shows that the pandemic affected the link between corporate liquidity and profitability in complex and uneven ways.
+Germany demonstrated overall resilience, with relatively stable adjustments in most industries.
+Firms maintained consistent ROA–CR structures and showed limited volatility, suggesting strong financial discipline and institutional support.
+In contrast, Sweden experienced more volatile but also more adaptive responses.
+The stronger fluctuations in scagnostic metrics and residual dispersion indicate that Swedish firms reacted more dynamically, allowing some to recover quickly while others struggled.
+It is a clear sign of K-shaped recovery in several sectors.
 
-Overall, the comparison suggests that national environments and policy frameworks played an important role in shaping how firms balanced profitability and liquidity during the crisis. Germany’s stability-oriented system promoted consistent recovery, while Sweden’s more flexible market structure encouraged diversity in outcomes. These findings highlight that firm-level resilience depends not only on financial management but also on broader institutional conditions.
+Overall, the comparison suggests that national environments and policy frameworks played an important role in shaping how firms balanced profitability and liquidity during the crisis.
+Germany’s stability-oriented system promoted consistent recovery, while Sweden’s more flexible market structure encouraged diversity in outcomes.
+These findings highlight that firm-level resilience depends not only on financial management but also on broader institutional conditions.
 
 ## References
 
