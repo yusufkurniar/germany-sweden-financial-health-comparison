@@ -1839,13 +1839,13 @@ In this section, we compare firm-level relationships between liquidity (Current 
 We focus on the industries that exhibited distinct recovery patterns in the macro analysis (see @tbl-recovery-classification).
 Specifically, we select:
 
--   Information & Communication (K-shaped in both countries)
+- Information & Communication (K-shaped in both countries)
 
 -   Wholesale & Retail Trade (K-shaped only in Germany)
 
 -   Consumer Services (K-shaped only in Sweden)
 
--   Financial & Insurance (Resilient only in Germany)
+-   Financial & Insurance (Resilient only in  Germany)
 
 - Manufacturing (Resilient only in Sweden)
 
@@ -1878,7 +1878,7 @@ For each country × industry × fiscal year, we:
 -   Residual SD: higher residual SD from the linear fit signals more unexplained scatter (higher micro volatility).
 
 ```{r Q4 EDA 2. Micro-level evidence -data}
-selected_industries <- c("Information & Communication", "Wholesale & Retail Trade", "Consumer Services", "Financial & Insurance")
+selected_industries <- c("Information & Communication", "Wholesale & Retail Trade", "Consumer Services", "Financial & Insurance", "Manufacturing")
 
 # Extract the companies time series data of these industries
 selected_companies_ts <- ger_swe_ts |>
@@ -1978,7 +1978,8 @@ industry_summary <- industry_tignostics |>
   left_join(vol_shift %>% select(industry_group, country, vol_pre_post_diff, slope_pre_post_diff), 
             by = c("industry_group", "country"))
 
-kable(industry_summary |> filter(jumps > 0) |>
+kable(industry_summary |> 
+        filter( !is.na(max_abs_slope_change)) |>
         select(-n_years)) |>
   kable_styling(font_size = 12)
 ```
@@ -2033,12 +2034,12 @@ Overall, Germany shows stronger stability with lower variability after COVID-19,
 **Information & Communication**
 
 - Germany: avg_slope ≈ 2.50, mean_resid_sd ≈ 8.25.
-  Scagnostics: clumpy dropped sharply after 2020; monotonic increased.
+  Scagnostics: sharply ↓ clumpy after 2020; ↑ monotonic.
     
      Interpretation: German firms became more predictable in their ROA–CR relation after 2020 (higher monotonic, lower clumpy), suggesting more uniform responses across firms.
 
 - Sweden: avg_slope ≈ 3.64, mean_resid_sd ≈ 24.62 (much larger).
-  Scagnostics: monotonic rose but volatility and residual dispersion are much higher; clumpy and outlying patterns differ from Germany.
+  Scagnostics: ↑ monotonic but volatility and residual dispersion are much higher; clumpy and outlying patterns differ from Germany.
      
      Interpretation: Although average slope rose in Sweden, the much higher residual SD indicates wide firm-level dispersion. It is a “hidden crisis” where averages hide deep heterogeneity.
 
@@ -2046,13 +2047,27 @@ Overall, Germany shows stronger stability with lower variability after COVID-19,
 
 **Financial & Insurance**
 
-- Germany: avg_slope ≈ 0.83, mean_resid_sd ≈ 11.87. Scagnostics: clumpy increased after 2020 (0.25 → 0.75), stringy slightly down, outlying small decline.
+- Germany: avg_slope ≈ 0.83, mean_resid_sd ≈ 11.87. Scagnostics: ↑ clumpy after 2020, slightly ↓ stringy, small ↓ outlying.
     
     Interpretation: German financial firms show moderate changes. There are some clustering but not huge instability.
 
 - Sweden: avg_slope ≈ -0.67, mean_resid_sd ≈ 21.47 (higher). Scagnostics: rising trends in scagnostics for some metrics, higher volatility overall.
     
     Interpretation: Swedish financial firms experienced larger instability and dispersion, consistent with stronger liquidity or profitability shocks.
+    
+    
+**Manufacturing**
+
+- Germany: avg_slope ≈ -0.002, mean_resid_sd ≈ 14.32, max_abs_slope_change ≈ 0.54.
+  Scagnostics: High but slightly ↓ clumpy, ↓ monotonic after 2020, ↑ outlying in 2020–2021, stable stringy
+
+     Interpretation: Although slope changes were moderate, the rise in outlying and decline in monotonic suggest that the relationship between ROA and CR became less predictable and more fragmented among firms after the pandemic began.
+     
+     
+- Sweden: avg_slope ≈ -0.60, mean_resid_sd ≈ 28.14, max_abs_slope_change ≈ 0.43.
+  Scagnostics: High but ↓ clumpy after 2020, ↑ monotonic, mild fluctuations in outlying, stable stringy
+  
+     Interpretation: Despite a negative average slope and high residual standard deviation, the increase in monotonic and relatively stable scagnostic values point to a moderately resilient structure. Firms became more aligned in their ROA–CR behaviour over time, though some outliers remained.
 
 
 **Interpretation**
@@ -2068,24 +2083,13 @@ These findings suggest that national institutional and financial environments ma
 Results are descriptive: scagnostics indicate shape changes but do not prove causality.
 We will triangulate these micro results with macro indicators (feasts features) in the final section.
 
-#### 3. Summary and interpretation
 
-The exploratory analysis demonstrates that the relationship between corporate profitability and liquidity evolved unevenly across industries during the pandemic.
-More importantly, the recovery patterns were not the same across or within industries, showing clear evidence of a K-shaped recovery in some sectors.
-
-At the macro level, trend strength and volatility analysis revealed clear segmentation: some industries such as Construction and Finance showed resilient recovery, while others, like Accommodation, Information and Recreation, exhibited K-shaped patterns with disrupted ROA trends and high volatility.
-
-The micro-level scagnostic analysis further confirmed this divergence.
-After removing several industries which have small yearly samples (Construction,\
-Accommodation & Food, and Administrative & Support), the industries showing K-shaped tendencies at the macro level exhibited notable shifts in scagnostic measures.
-Specifically, Financial & Insurance displayed a clear rise in clumpiness, signaling within-sector fragmentation, while Arts, Entertainment & Recreation showed growing outlying behavior, reflecting the emergence of extreme performers.
-In contrast, resilient sectors maintained relatively stable and monotonic liquidity–profitability relationships throughout the period.
-
-These results suggest that the pandemic not only altered the overall financial dynamics between liquidity and profitability but also intensified disparities within certain industries, forming a distinct K-shaped recovery pattern.
 
 ## Conclusions
 
-AAA
+Q4:
+
+
 
 ## References
 
