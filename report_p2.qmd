@@ -2103,6 +2103,20 @@ These results suggest that the pandemic not only altered the overall financial d
 
 ## Conclusions
 
+### Question 1
+
+Overall, the analysis shows that profitability remained mostly stable in both Germany and Sweden during the pandemic years compared with the pre-pandemic period. Median values for EBIT, EBITDA, ROA, ROE, and net income stayed close to zero, indicating that most firms kept similar levels of profitability. However, the variation across firms increased during 2020  – 2021, especially in Sweden, where more companies experienced bigger profits or deeper losses. At the industry level, the median EBITDA margin changed only slightly for most sectors, but Accommodation & Food saw the strongest recovery while Health Care declined the most. Technology, Utilities, and Education remained relatively stable across both countries. These results suggest that although the overall trend in profitability didn’t shift much, the pandemic led to more uneven outcomes across firms and industries, with service-based sectors showing higher volatility.
+
+### Question 2
+
+AAA
+
+### Question 3
+
+AAA
+
+### Question 4
+
 AAA
 
 ## References
