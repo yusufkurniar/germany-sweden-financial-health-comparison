@@ -69,3 +69,39 @@ date, time start, time end, activity, team member(s)
 10/27/2025,14:30,15:00,Resolving issues and ensuring Part 1 will not be updated after modifying the gitignore.,Yusuf
 10/27/2025,11:00,11:30,Group discussion about Part 2,All
 10/27/2025,16:30,17:00,Changing qmd report_part2 destination to html report_part2,Yusuf
+10/28/2025,13:00,15:30,IDA,Jingyi
+10/28/2025,16:00,0:00,EDA: macro-level,Jingyi
+10/29/2025,0:00,3:00,EDA: macro-level,Jingyi
+10/29/2025,17:00,23:00,EDA: micro-level,Jingyi
+10/30/2025,9:00,10:00,EDA: micro-level,Jingyi
+10/30/2025,10:00,10:40,Move content to report_p2.qmd,Jingyi
+10/30/2025,12:00,13:00,EDA: micro-level,Jingyi
+10/30/2025,19:00,23:00,Complete EDA,Jingyi
+10/30/2025,23:00,23:30,Write introduction of q4,Jingyi
+10/30/2025,23:30,24:00:00,Write conclusion of q4,Jingyi
+10/29/2026,19:00,19:15,Adding research question 1 for project part 2,Yusuf
+10/29/2026,19:15,19:45,Updating global IDA table checking and NACE column creation,Yusuf
+10/29/2026,19:45,20:15,Updating global IDA for prepare IDA part,Yusuf
+10/29/2026,20:15,20:45,updating global IDA for IDA scale chart (balance sheet variables),Yusuf
+10/29/2026,20:45,21:15,Updating global IDA for IDA scale chart (flow variables),Yusuf
+10/29/2026,21:15,21:45,Updating global IDA for IDA ratio chart (profitability and efficiency variables),Yusuf
+10/29/2026,21:45,22:15,Updating global IDA for IDA ratio chart (liquidity and solvency variables),Yusuf
+10/29/2026,22:15,22:30,Updating global IDA for missingness check,Yusuf
+10/29/2026,22:30,22:45,Updating global IDA for outliers check,Yusuf
+10/29/2026,22:45,23:00,Updating global IDA for character check,Yusuf
+10/30/2026,6:00,6:15,Adding specific IDA question 1 (prepare profitability inputs),Yusuf
+10/30/2026,6:15,6:30,Adding specific IDA question 1 (firm one gap fills),Yusuf
+10/30/2026,6:30,6:45,Adding specific IDA question 1 (prepare imputation),Yusuf
+10/30/2026,6:45,7:00,Adding specific IDA question 1 (prepare imputation summary),Yusuf
+10/30/2026,7:30,8:00,Explaining EBIT & EBITDA imputation,Yusuf
+10/30/2026,8:00,8:15,Explaining ROA imputation,Yusuf
+10/30/2026,8:15,8:30,Explaining ROE imputation,Yusuf
+10/30/2026,8:00,9:10,Resolve conflicts and renaming report_part2 to report_p2 including all related files,Yusuf
+10/30/2026,9:10,10:00,Pushing every IDA update to Main GitHub repo,Yusuf
+10/30/2026,10:00,10:30,Group zoom discussion for progress,All
+10/30/2026,10:30,11:00,Adding EDA question 1 for EBIT & EBITDA analysis using Median and IQR,Yusuf
+10/30/2026,11:00,11:30,Adding EDA question 1 for ROA & ROE analysis using Median and IQR,Yusuf
+10/30/2026,11:30,12:00,Adding EDA question 1 net income analysis using Median and IQR,Yusuf
+10/30/2026,12:30,13:15,Updating EDA question 1 for EBITDA margin analysis pre and during pandemic for both countries,Yusuf
+10/30/2026,13:15,13:30,Updating project diary,Yusuf
+10/30/2026,13:30,13:45,Adding conclusion for question 1 part 2,Yusuf
