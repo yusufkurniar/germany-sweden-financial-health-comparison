@@ -1592,7 +1592,7 @@ AAA
 
 **4. How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic?**
 
-#### 1.  Macro-level evidence: Industry recovery patterns (ROA vs CR) - feasts (Lecture 9, slide 24-26, feasts and tsibbletalk)
+#### 1. Macro-level evidence: Industry recovery patterns (ROA vs CR) - feasts (Lecture 9, slide 24-26, feasts and tsibbletalk)
 
 We will analyze the fundamental relationship between corporate liquidity and profitability across industries during the pandemic period in two countries, with particular focus on identifying anomalous recovery patterns.
 
@@ -1832,7 +1832,7 @@ kable(classification_comparison) |>
   kable_styling(font_size = 11)
 ```
 
-#### 2.  Micro-level evidence of anomalous recovery patterns across industries (ROA and liquidity) - scagnostics (Tignostics) (Lecture 8, 22-27 & Lecture 9, slide 24)
+#### 2. Micro-level evidence of anomalous recovery patterns across industries (ROA and liquidity) - scagnostics (Tignostics) (Lecture 8, 22-27 & Lecture 9, slide 24)
 
 In this section, we compare firm-level relationships between liquidity (Current Ratio) and profitability (ROA) across industries in Germany and Sweden.
 
@@ -1846,6 +1846,8 @@ Specifically, we select:
 -   Consumer Services (K-shaped only in Sweden)
 
 -   Financial & Insurance (Resilient only in Germany)
+
+- Manufacturing (Resilient only in Sweden)
 
 **Data and methods**
 
@@ -2016,15 +2018,41 @@ Overall, Germany shows stronger stability with lower variability after COVID-19,
 
 **Key patterns observed by industry (Germany vs. Sweden):**
 
-**Wholesale & Retail Trade**   ↑
+**Wholesale & Retail Trade** 
 
--   Germany: avg_slope ≈ 2.08, max_abs_slope_change ≈ 2.97, mean_resid_sd ≈ 7.79. Scagnostics: stable *stringy* and ↓ *clumpy*
+-   Germany: avg_slope ≈ 2.08, max_abs_slope_change ≈ 2.97, mean_resid_sd ≈ 7.79.
+    Scagnostics: stable *stringy* and ↓ *clumpy*
 
-    Interpretation: Germany shows moderate slope changes but fairly stable structure; many firms kept similar ROA–CR patterns, and the sector did not become strongly outlying.
+    Interpretation: Germany shows moderate slope changes but fairly stable structure. Many firms kept similar ROA–CR patterns, and the sector did not become strongly outlying.
 
-- Sweden: avg_slope ≈ -1.23, max_abs_slope_change ≈ 4.00, mean_resid_sd ≈ 15.61. Scagnostics: ↓ *clumpy* and ↓ *stringy* after 2020; ↑ outlying in 2019–2021 up to about 0.8.
+-   Sweden: avg_slope ≈ -1.23, max_abs_slope_change ≈ 4.00, mean_resid_sd ≈ 15.61.
+    Scagnostics: ↓ *clumpy* and ↓ *stringy* after 2020; ↑ outlying in 2019–2021 up to about 0.8.
 
     Interpretation: Sweden experienced larger volatility and dispersion. This is consistent with a K-shaped response where some firms did much better while others worsened.
+
+**Information & Communication**
+
+- Germany: avg_slope ≈ 2.50, mean_resid_sd ≈ 8.25.
+  Scagnostics: clumpy dropped sharply after 2020; monotonic increased.
+    
+     Interpretation: German firms became more predictable in their ROA–CR relation after 2020 (higher monotonic, lower clumpy), suggesting more uniform responses across firms.
+
+- Sweden: avg_slope ≈ 3.64, mean_resid_sd ≈ 24.62 (much larger).
+  Scagnostics: monotonic rose but volatility and residual dispersion are much higher; clumpy and outlying patterns differ from Germany.
+     
+     Interpretation: Although average slope rose in Sweden, the much higher residual SD indicates wide firm-level dispersion. It is a “hidden crisis” where averages hide deep heterogeneity.
+
+
+
+**Financial & Insurance**
+
+- Germany: avg_slope ≈ 0.83, mean_resid_sd ≈ 11.87. Scagnostics: clumpy increased after 2020 (0.25 → 0.75), stringy slightly down, outlying small decline.
+    
+    Interpretation: German financial firms show moderate changes. There are some clustering but not huge instability.
+
+- Sweden: avg_slope ≈ -0.67, mean_resid_sd ≈ 21.47 (higher). Scagnostics: rising trends in scagnostics for some metrics, higher volatility overall.
+    
+    Interpretation: Swedish financial firms experienced larger instability and dispersion, consistent with stronger liquidity or profitability shocks.
 
 
 **Interpretation**
@@ -2040,7 +2068,7 @@ These findings suggest that national institutional and financial environments ma
 Results are descriptive: scagnostics indicate shape changes but do not prove causality.
 We will triangulate these micro results with macro indicators (feasts features) in the final section.
 
-#### 3.  Summary and interpretation
+#### 3. Summary and interpretation
 
 The exploratory analysis demonstrates that the relationship between corporate profitability and liquidity evolved unevenly across industries during the pandemic.
 More importantly, the recovery patterns were not the same across or within industries, showing clear evidence of a K-shaped recovery in some sectors.
