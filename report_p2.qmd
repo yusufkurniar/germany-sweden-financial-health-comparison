@@ -1365,6 +1365,20 @@ p_q1_B
 
 The chart compares ROA and ROE for Germany and Sweden before the pandemic (2018 – 2019) and during the pandemic (2020 – 2021). For both countries, the medians stay close to zero, indicating that overall profitability on assets and equity did not change significantly between the two periods. However, the range of values widens during the pandemic, especially in Sweden, where several firms exhibit extremely negative ROE. This pattern suggests that while most firms maintained stable returns, some experienced substantial losses or reductions in equity in 2020 – 2021. Germany also shows a wider spread compared to the pre-pandemic period, but the dispersion is less pronounced than in Sweden. Overall, the chart indicates that profitability stability at the centre conceals greater volatility across firms, with Sweden experiencing stronger downside movements in both ROA and ROE during the pandemic.
 
+**Net income (asinh) Analysis Using Median and IQR**
+
+```{r}
+figC_metrics <- c("Net income (asinh)")
+p_q1_C <- draw_q1_panel_country(
+  dplyr::filter(plot_long, metric %in% figC_metrics),
+  ncol = 1,
+  title_text = "Pre vs Pandemic: Germany vs Sweden\nNet income (asinh) Analysis Using Median and IQR"
+)
+
+p_q1_C
+```
+
+The chart compares net income (asinh) between Germany and Sweden before (2018 – 2019) and during the pandemic (2020 – 2021). In both countries, the median values remain close to zero across the two periods, indicating that overall profitability did not change much. However, Sweden shows a wider spread of values in both directions, especially during the pandemic, leading more firms to record stronger profits or deeper losses. Germany’s distribution is narrower and more concentrated around the median, reflecting relatively stable firm performance. The heavier tails in Sweden during 2020 – 2021 suggest increased volatility, with a few firms benefiting while others faced larger setbacks. Overall, the figure shows that while average profitability remained steady, Sweden experienced greater variation in firm outcomes during the pandemic than Germany.
 
 ### Question 2
 
