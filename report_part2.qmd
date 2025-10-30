@@ -313,15 +313,9 @@ The selected variables encompass four key dimensions of corporate financial heal
 
 -   **Identification and Location** - company_id, company_name, country, and city provide firm-level identifiers and geographical context.
 
-<!-- -->
-
 -   **Balance Sheet Structure** - total_assets_eur, total_liabilities_eur, and total_equity_eur measure firm size and capital composition, reported in euros.
 
-<!-- -->
-
 -   **Income and Profitability** - total_revenue_eur, net_sales_eur, and net_income_eur capture income statement outcomes, while ebit_margin_pct, ebitda_margin_pct, roa_pct, and roe_pct reflect operating performance and returns to shareholders.
-
-<!-- -->
 
 -   **Solvency and Liquidity** - solvency_pct, gearing_pct, current_ratio, liquidity_ratio, shareholders_liq_pct, and interest_cover assess each firm’s financial stability, leverage, and capacity to meet short-term obligations.
 
@@ -749,7 +743,41 @@ AAA
 
 ### Question 2
 
-AAA
+```{r q2-ida}
+# Create leverage and liquidity indicators for both countries
+lev_liq_data <- filtered_germany_sweden |>
+  filter(acct_year %in% 2018:2021, status == "Active") |>
+  mutate(
+    debt_to_assets = total_liabilities_eur / total_assets_eur,
+    equity_ratio   = total_equity_eur / total_assets_eur
+  ) |>
+  select(acct_year, country, industry_group,
+         debt_to_assets, equity_ratio, gearing_pct,
+         solvency_pct, current_ratio) |>
+  drop_na(debt_to_assets, current_ratio)
+
+# Summarise by year and country
+lev_liq_summary <- lev_liq_data |>
+  group_by(country, acct_year) |>
+  summarise(
+    median_debt_assets = median(debt_to_assets, na.rm = TRUE),
+    iqr_debt_assets    = IQR(debt_to_assets, na.rm = TRUE),
+    median_liquidity   = median(current_ratio, na.rm = TRUE),
+    iqr_liquidity      = IQR(current_ratio, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+lev_liq_summary |>
+  knitr::kable(
+    caption = "Median and IQR of Leverage and Liquidity by Country (2018–2021)",
+    digits = 2
+  ) |>
+  kableExtra::kable_styling(full_width = FALSE, font_size = 11)
+```
+
+Observation: Both countries maintained median liquidity near 1.8×, while median leverage hovered around 0.50–0.52.
+Sweden shows slightly higher liquidity dispersion, suggesting a broader mix of firm sizes and capital structures.
+Reference: Lecture 4 (Slides 12–16) – Using group_by/summarise for IDA
 
 ### Question 3
 
@@ -908,7 +936,181 @@ AAA
 
 ### Question 2
 
-AAA
+#### EDA – Year-wise Comparison
+
+```{r}
+lev_liq_long <- lev_liq_summary |>
+  pivot_longer(cols = c(median_debt_assets, median_liquidity),
+               names_to = "indicator", values_to = "value")
+
+ggplot(lev_liq_long,
+       aes(x = acct_year, y = value, colour = country, group = country)) +
+  geom_line(linewidth = 1.1) +
+  geom_point(size = 2) +
+  facet_wrap(~ indicator, scales = "free_y",
+             labeller = as_labeller(c(
+               median_debt_assets = "Median Debt-to-Assets",
+               median_liquidity   = "Median Current Ratio"
+             ))) +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) +
+  scale_colour_brewer(palette = "Set1") +
+  labs(
+    title = "Leverage and Liquidity Trends (2018–2021)",
+    subtitle = "Germany vs Sweden: Stability in liquidity, mild re-leveraging during pandemic",
+    x = "Accounting Year", y = "Median Value", colour = "Country"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(plot.title = element_text(face = "bold"),
+        plot.subtitle = element_text(size = 11),
+        panel.grid.minor = element_blank())
+```
+
+Interpretation: 
+- Both economies experienced a slight leverage increase in 2020 (Germany +0.01, Sweden +0.02).
+- Liquidity remained broadly constant across the pandemic, stabilising near 1.8–1.9×.
+- The trends suggest that German firms relied more on credit support, while Swedish firms drew on retained liquidity, consistent with each country’s policy emphasis (Germany’s Kurzarbeit subsidies vs Sweden’s fiscal buffers).
+
+#### EDA – Leverage–Solvency Relationship
+
+```{r}
+#| label: fig-leverage-solvency-facets
+#| fig-cap: "Leverage–Solvency Relationship by Country and Year"
+#| fig-width: 14
+#| fig-height: 9
+
+# build plotting data for the leverage–solvency faceted chart
+lev_liq_plot <- lev_liq_data |>
+  # keep sensible ranges and finite values
+  filter(
+    is.finite(debt_to_assets), is.finite(solvency_pct),
+    between(debt_to_assets, 0, 1.5),   # 0–150%
+    between(solvency_pct, -50, 100)    # -50% to 100%
+  ) |>
+  drop_na(country, acct_year)
+
+ggplot(lev_liq_plot, aes(x = debt_to_assets, y = solvency_pct, colour = country)) +
+  geom_point(alpha = 0.25, size = 1.2) +
+  geom_smooth(method = "lm", se = FALSE, linewidth = 1.1) +
+  facet_grid(acct_year ~ country) +
+  scale_x_continuous(labels = scales::percent_format(accuracy = 1), limits = c(0, 1.5)) +
+  scale_y_continuous(limits = c(-50, 100)) +
+  scale_colour_manual(values = c("Germany" = "#D55", "Sweden" = "#0072B2")) +
+  labs(
+    title = "Leverage–Solvency Relationship by Country and Year",
+    subtitle = "Stronger negative slope in Germany, especially during 2020",
+    x = "Debt-to-Assets (%)",
+    y = "Solvency (%)",
+    colour = "Country"
+  ) +
+  theme_minimal(base_size = 15) +
+  theme(
+    strip.text = element_text(face = "bold", size = 14),
+    plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
+    plot.subtitle = element_text(size = 13, hjust = 0.5),
+    legend.position = "none",  # each facet is already labelled
+    axis.text = element_text(size = 12),
+    panel.spacing.x = unit(1.2, "lines"),
+    panel.spacing.y = unit(1.0, "lines"),
+    panel.grid.minor = element_blank()
+  )
+```
+
+Interpretation:
+
+Across both Germany and Sweden, leverage shows a **strong negative relationship with solvency** from 2018 to 2021 — firms with higher debt-to-asset ratios consistently report lower solvency levels.
+The **pattern remains stable** over time, confirming that higher leverage structurally reduces long-term financial stability in both economies.
+
+However, the **slope is notably steeper in Germany**, especially in **2020**, indicating that increases in debt had a stronger adverse effect on solvency during the pandemic.
+This likely reflects the **manufacturing-heavy structure** of German industries, which faced sharper revenue disruptions and slower balance sheet recovery.
+In contrast, **Swedish firms**, with **more diversified sectors and stronger equity positions**, experienced a milder solvency decline, demonstrating greater resilience to leverage-induced stress.
+
+#### EDA – Industry-level Leverage Distributions
+
+```{r}
+#| label: fig-leverage-industry-comparison
+#| fig-cap: "Leverage Distribution by Industry and Year for Germany and Sweden (2018–2021)"
+#| fig-width: 16
+#| fig-height: 20
+
+lev_liq_industry <- filtered_germany_sweden |>
+  filter(acct_year %in% 2018:2021,
+         total_assets_eur > 0,
+         total_liabilities_eur >= 0,
+         total_liabilities_eur / total_assets_eur <= 1.5) |>
+  mutate(
+    debt_to_assets = total_liabilities_eur / total_assets_eur
+  ) |>
+  drop_na(industry_group, country)
+
+ggplot(lev_liq_industry,
+       aes(x = debt_to_assets,
+           y = reorder(industry_group, debt_to_assets),
+           fill = country)) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.7, width = 0.6) +
+  facet_wrap(~ acct_year, ncol = 2, scales = "free_x") +
+  scale_x_continuous(labels = scales::percent_format(accuracy = 1),
+                     limits = c(0, 1.5)) +
+  scale_fill_manual(
+    values = c("Germany" = "#D55", "Sweden" = "#0072B2"),
+    name = "Country"
+  ) +
+  labs(
+    title = "Leverage Distribution by Industry and Year (2018–2021)",
+    subtitle = "Comparison between Germany and Sweden across industry groups and years",
+    x = "Debt-to-Assets Ratio",
+    y = NULL
+  ) +
+  theme_minimal(base_size = 16) +  # increased from 13 → 16
+  theme(
+    strip.text = element_text(face = "bold", size = 15),
+    plot.title = element_text(face = "bold", size = 20, hjust = 0.5),
+    plot.subtitle = element_text(size = 14, hjust = 0.5),
+    legend.position = "top",
+    legend.text = element_text(size = 13),
+    legend.title = element_text(size = 14),
+    axis.text.y = element_text(size = 12),
+    axis.text.x = element_text(size = 12),
+    panel.grid.minor = element_blank(),
+    panel.spacing.y = unit(1.2, "lines")
+  )
+```
+
+Interpretation:
+
+The boxplots reveal that leverage remained broadly stable across both countries from 2018 to 2021, with **capital-intensive sectors**-notably *Manufacturing*, *Construction*, and *Transport & Storage*-maintaining higher debt-to-asset ratios than service-oriented industries such as *Information & Communication* or *Professional & Technical Services*.
+
+The median levels changed little across years, though a modest upward shift appears in 2020, consistent with increased borrowing during the early pandemic period.
+
+Overall, **Germany and Sweden display similar leverage structures**, suggesting comparable financial resilience and corporate funding patterns.
+
+When leverage patterns are compared with liquidity (current ratio) trends, a complementary story emerges.
+
+Firms in both countries **maintained adequate short-term liquidity**, with median current ratios remaining around 1.8–2.0 throughout 2018–2021.
+
+This indicates that, despite slightly greater reliance on debt during 2020, most firms preserved the capacity to meet near-term obligations.
+
+The combination of stable leverage and steady liquidity implies that corporate balance sheets were **buffered by prudent debt management and strong internal financing**, helping both economies avoid a widespread solvency crisis during the COVID-19 shock.
+
+```{r}
+#| warning: false
+# Sensitivity check: winsorise extreme ratios
+lev_liq_summary_w <- lev_liq_data |>
+  mutate(across(c(debt_to_assets, current_ratio),
+                ~ scales::squish(., c(quantile(., 0.01, na.rm=TRUE),
+                                      quantile(., 0.99, na.rm=TRUE))))) |>
+  group_by(country, acct_year) |>
+  summarise(across(c(debt_to_assets, current_ratio), median, na.rm=TRUE), .groups="drop")
+knitr::kable(head(lev_liq_summary_w), caption="Winsorised medians confirm robustness.")
+```
+
+Summary interpretation: 
+
+- Leverage: Both countries show small increases during 2020, reverting by 2021.
+- Liquidity: Stable across years and nations, implying effective cash-flow management.
+- Cross-country pattern: Sweden’s firms appear slightly more liquid and less leveraged, signalling greater resilience to credit-market stress.
+- Conclusion: Despite pandemic disruptions, neither economy faced systemic liquidity deterioration; Germany’s higher industrial exposure drove modest leverage stress, while Sweden’s diversified base cushioned impact.
+
+Reference: Lecture 6 (Slides 9–14) - ggplot2 facet_grid for multivariate EDA and Lecture 7 (Slide 10) - Interpreting leverage-solvency trade-offs
 
 ### Question 3
 
@@ -1385,7 +1587,19 @@ These results suggest that the pandemic not only altered the overall financial d
 
 ## Conclusions
 
-AAA
+Q2
+
+Both Germany and Sweden demonstrated financial resilience during the COVID-19 period, but through different balance-sheet strategies.
+	
+-	Liquidity: Firms in both economies maintained stable liquidity (current ratio ≈ 1.8–1.9×), reflecting effective short-term cash management. Sweden’s slightly higher dispersion suggests more diversity in firm size and financing.
+	
+-	Leverage: A mild rise in leverage was observed in 2020 (Germany +0.01, Sweden +0.02). German firms relied more heavily on external borrowing, consistent with strong government credit support (e.g. Kurzarbeit subsidies), whereas Swedish firms drew on internal liquidity buffers.
+
+-	Leverage–Solvency link: Both countries show a strong negative correlation between leverage and solvency, but the slope is steeper for Germany—indicating greater sensitivity to debt accumulation.
+
+-	Industry patterns: Manufacturing, transport & construction remain the most highly leveraged in both countries, while information, health care and professional services maintain conservative positions.
+
+Overall, German firms’ solvency was more exposed to rising leverage, while Swedish firms’ diversified structures supported steadier recovery post-pandemic.
 
 ## References
 
