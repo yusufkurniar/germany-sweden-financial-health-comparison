@@ -912,6 +912,8 @@ The specific IDA for question 1 and the data imputation are guided by the follow
 
 - Lecture 6 on imputation of missing data (pages 52 – 53).
 
+- Tutorial 8 on data missingness's checking.
+
 We initially added a period label (Pre-pandemic 2018 – 2019 vs. Pandemic 2020 – 2021).
 For visualisations, net_income_eur was transformed using asinh() to compare both gains and losses on a consistent scale.
 When ROA/ROE are missing, we recalculated simple estimates from the accounting totals and noted the sources of the values (reported vs. recomputed).
@@ -1467,6 +1469,12 @@ Here are the EDA processes and results for the sub-questions addressing the prim
 
 **1. How did profitability change across industries?**
 
+The EDA process in question 1 is guided by the following sources, with some modifications according to the data requirements:
+
+- Tutorial 7 and 8, about faceted plot analysis and exercise 2 feedback from Kris.
+
+- Lecture 8 on exploring multiple variables (pages 32 – 36).
+
 #### Profitability Measures Analysis
 
 This code recodes years into Pre (2018 – 2019) versus Pandemic (2020 – 2021), reshapes five profitability measures (EBIT, EBITDA, ROA, ROE, net income) to long format, and plots violin plots with jitter, median, and IQR overlays.
@@ -1949,8 +1957,6 @@ ggplot(eda_data, aes(x=country, y=value, fill=country)) +
        x="Country") +
   theme_minimal()
 ```
-
-
 
 ### Question 4
 
