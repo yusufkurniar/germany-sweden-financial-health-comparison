@@ -78,7 +78,7 @@ date, time start, time end, activity, team member(s)
 10/30/2025,12:00,13:00,EDA: micro-level,Jingyi
 10/30/2025,19:00,23:00,Complete EDA,Jingyi
 10/30/2025,23:00,23:30,Write introduction of q4,Jingyi
-10/30/2025,23:30,24:00:00,Write conclusion of q4,Jingyi
+10/30/2025,23:30,0:00,Write conclusion of q4,Jingyi
 10/29/2026,19:00,19:15,Adding research question 1 for project part 2,Yusuf
 10/29/2026,19:15,19:45,Updating global IDA table checking and NACE column creation,Yusuf
 10/29/2026,19:45,20:15,Updating global IDA for prepare IDA part,Yusuf
@@ -106,3 +106,4 @@ date, time start, time end, activity, team member(s)
 10/30/2026,13:15,13:30,Updating project diary,Yusuf
 10/30/2026,13:30,13:45,Adding conclusion for question 1 part 2,Yusuf
 10/31/2025,12:00,13:00,Beautify charts and code,Jingyi
+10/31/2025,15:30,15:40,Adding the guidance source for data description,Yusuf

@@ -127,7 +127,8 @@ This report provides a comprehensive examination of financial performance across
 The dataset used in this analysis originates from **the Bureau van Dijk OSIRIS database**, a comprehensive source of harmonised financial information for publicly listed and major private firms worldwide (Bureau van Dijk, 2025).
 For this study, we extracted firm-level data for **German companies** over the **2018–2021 accounting years**, a period that captures both pre-pandemic and pandemic-era financial performance.
 Each record represents a firm’s reported financials for a specific accounting year, enabling longitudinal exploration of trends in profitability, liquidity, leverage, and resilience.
-These are the code that we used to load the data and combine them:
+
+The data reading and cleaning process follows the guidance from Tutorial 3's solution and the Wild Caught Data unit, with some modifications according to the data requirements. These are the code that we used to load the data and combine them:
 
 Loading the data.
 
