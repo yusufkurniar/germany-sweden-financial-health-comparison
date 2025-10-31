@@ -1177,8 +1177,9 @@ For this question, Initial Data Analysis (IDA) is conducted using only approved 
 1. Financial Indicators Summaries
 
 ```{r industry-financial}
+
 industry_financial_summary <- filtered_germany_sweden |> 
-  filter(country == "Germany", !is.na(industry_group), acct_year >= 2018, acct_year <= 2021) |> 
+  filter(country == "Germany", !is.na(industry_group), acct_year >= 2019, acct_year <= 2021) |> 
   mutate(period = ifelse(acct_year < 2020, "Pre-pandemic", "Pandemic")) |>
   group_by(industry_group, period) |> 
   summarise(
@@ -1201,6 +1202,11 @@ knitr::kable(
 
 ```
 
+**Interpretation**
+
+The summary of key financial indicators for German industries between 2019 and 2021 shows clear differences in performance before and during the pandemic. Overall, **profitability** (measured by net income and ROA) declined across most sectors during the pandemic years, while **leverage** tended to rise as firms relied more on debt to manage financial pressures. **Liquidity** patterns were mixed—capital-intensive industries maintained relatively stable current ratios, whereas service-based sectors such as hospitality and transport faced tighter cash flow conditions. These trends suggest that manufacturing and technology industries demonstrated stronger financial resilience compared to consumer-facing sectors that were more directly affected by pandemic disruptions.
+
+
 2. Outlier Detection — IQR Rule
 
 ```{r Outlier detection}
@@ -1214,45 +1220,59 @@ outlier_summary <- function(x) {
 }
 financial_vars <- c("ebit_margin_pct", "gearing_pct", "current_ratio", "total_assets_eur")
 outlier_counts_sweden <- filtered_germany_sweden  |> 
-  filter(country == "Sweden", acct_year >= 2020, acct_year <= 2022)  |> 
+  filter(country == "Sweden", acct_year >= 2019, acct_year <= 2021)  |> 
   summarise(across(all_of(financial_vars), outlier_summary))
 
 knitr::kable(outlier_counts_sweden, caption="Outlier counts for Sweden: Key financial variables (IQR rule)")
 
 ```
 
+**Interpretation**
+
+The outlier analysis for Sweden from 2019 to 2021 reveals noticeable variability in firms’ financial performance across key indicators. A relatively high number of outliers in **EBIT margin** and **gearing ratio** suggests that some firms experienced unusually strong or weak profitability and varying levels of financial leverage during the pandemic. This highlights the uneven financial effects across industries, with certain firms taking on more debt or achieving exceptional margins. In contrast, **current ratio** and **total assets** show fewer outliers, indicating that liquidity positions and firm sizes remained more consistent across Swedish companies during this period.
 
 3. Data Completeness (Missingness Bar Plot)
 
 ```{r missing-values-sweden}
-missing_long_sweden <- filtered_germany_sweden  |> 
-  filter(country == "Sweden", acct_year >= 2020, acct_year <= 2022)  |> 
-  select(acct_year, all_of(financial_vars))  |> 
-  pivot_longer(-acct_year, names_to="variable", values_to="value")  |> 
-  mutate(missing = is.na(value))  |> 
-  group_by(acct_year, variable)  |> 
-  summarise(prop_missing = mean(missing), .groups='drop')
+# Prepare long-format data (already done)
+missing_long_compare <- filtered_germany_sweden |>  
+  filter(country %in% c("Sweden", "Germany"), acct_year >= 2019, acct_year <= 2021) |>  
+  select(country, acct_year, all_of(financial_vars)) |>  
+  pivot_longer(-c(country, acct_year), names_to = "variable", values_to = "value") |>  
+  mutate(missing = is.na(value)) |>  
+  group_by(country, acct_year, variable) |>  
+  summarise(prop_missing = mean(missing), .groups = "drop")
 
-ggplot(missing_long_sweden, aes(x = variable, y = prop_missing, fill = factor(acct_year))) +
-  geom_bar(stat = "identity", position = "dodge") +
+# Ribbon plot
+ggplot(missing_long_compare, aes(x = acct_year, y = prop_missing, fill = country, group = country)) +
+  geom_ribbon(aes(ymin = 0, ymax = prop_missing), alpha = 0.3) +
+  geom_line(aes(color = country), size = 1) +
+  facet_wrap(~variable, scales = "free_y") +
   labs(
-    title = "Proportion of Missing Values by Variable and Year (Sweden)",
-    x = "Variable",
+    title = "Missingness Trends by Variable for Sweden and Germany (2019–2021)",
+    x = "Year",
     y = "Proportion Missing",
-    fill = "Year"
+    fill = "Country",
+    color = "Country"
   ) +
   theme_bw(base_size = 12) +
   theme(
-    plot.title = element_text(face = "bold", hjust = 0.5, size = 12),
-    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 13),
+    axis.text.x = element_text(face = "bold"),
     legend.position = "right"
   )
 
 ```
 
+**Interpretation**
+
+The ribbon plot compares the proportion of missing values for key financial variables between Swedish and German firms from 2019 to 2021. Overall, most variables show relatively low levels of missing data in both countries, indicating generally reliable datasets. However, some variables, such as **EBIT margin** and **gearing ratio**, exhibit higher missingness, particularly during the pandemic period. The plot highlights country-specific differences: Sweden tends to have slightly higher missingness in certain measures, whereas Germany shows more consistent completeness across variables. The ribbon effectively visualizes both the magnitude and trend of missingness over time, making it easier to identify variables and years that may require careful interpretation or imputation.
+
+
+
 4. Comparative Summary Table: Germany vs Sweden (Pandemic Years)
 
-```{r}
+```{r summary table}
 combined_financial_summary <- filtered_germany_sweden  |> 
   filter(country %in% c("Germany", "Sweden"), !is.na(industry_group), acct_year >= 2020, acct_year <= 2021)  |> 
   group_by(country, industry_group)  |> 
