@@ -368,6 +368,16 @@ It also helps identify whether recovery followed a stable path or diverged into 
 
 ## IDA
 
+The global IDA process is guided by the following sources, with some adjustments based on data requirements:
+
+- Tutorials 3 and 4, which cover data cleaning and the IDA process.
+
+- Kris’s explanation after providing feedback for Exercise 2 (Tutorial 8), where he discussed checking data skewness, handling missing values, and identifying outliers.
+
+- Lecture 5, covering handling missingness (page 24), managing outliers (page 3), and checking skewness (page 4).
+
+- Kris’s explanation in Tutorial 11 about the importance of checking data skewness, so that in the EDA process, we can decide the most suitable calculation method for analysis (for example, using the median for right-skewed data).
+
 Here is the IDA process for this project:
 
 First, we develop this code to prepare the dataset for analysis by converting numeric columns, standardising text fields, and reporting missing values overall and by year.
@@ -891,6 +901,16 @@ After completing the general IDA, we developed the specific IDA to address our s
 Here are the details:
 
 ### Question 1
+
+The specific IDA for question 1 and the data imputation are guided by the following sources, with some modifications according to the data requirements:
+
+- Tutorials 3 and 4, which cover data cleaning and the IDA process.
+
+- Kris’s suggestion in Tutorial 11 about data imputation for missingness.
+
+- Wild Caught Data unit, about data imputation.
+
+- Lecture 6 on imputation of missing data (pages 52 – 53).
 
 We initially added a period label (Pre-pandemic 2018 – 2019 vs. Pandemic 2020 – 2021).
 For visualisations, net_income_eur was transformed using asinh() to compare both gains and losses on a consistent scale.
