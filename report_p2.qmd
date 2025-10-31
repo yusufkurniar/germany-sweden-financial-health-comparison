@@ -1921,8 +1921,12 @@ ggplot(combined_summary, aes(
 
 ```
 
+**Interpretation**
 
-2. Trend of Median Financial Ratios Over Time
+The chart compares **median industry profits** in **Sweden and Germany** before and during the pandemic. Overall, profits declined across most sectors during 2020–2021, but **Swedish industries** generally showed **greater stability and smaller drops** than those in Germany. Manufacturing and technology sectors remained relatively resilient in both countries, while **service-based industries**—especially hospitality and transport—were more affected. This suggests Sweden’s economy maintained slightly stronger financial resilience during the pandemic period.
+
+
+*2. Trend of Median Financial Ratios Over Time
 
 ```{r median financial ratio}
 median_trends <- filtered_germany_sweden |> 
@@ -1939,6 +1943,10 @@ ggplot(median_trends, aes(x=acct_year, y=median_value, color=country, group=coun
   theme_minimal()
 
 ```
+
+**Interpretation**
+
+This plot tracks the **median financial ratios** — profitability, leverage, liquidity, and firm size — for **Germany and Sweden** from **2019 to 2021**. The trends reveal how each economy adapted during the pandemic. Overall, **Sweden’s indicators remained more stable**, showing steady liquidity and profitability, while **Germany displayed sharper fluctuations**, particularly in leverage and profitability, reflecting stronger pandemic shocks. These patterns suggest that Swedish firms maintained healthier financial balance sheets during this period.
 
 3. Boxplots of Key Financial Ratios
 
@@ -1957,6 +1965,10 @@ ggplot(eda_data, aes(x=country, y=value, fill=country)) +
        x="Country") +
   theme_minimal()
 ```
+
+**Interpretation**
+
+This boxplot compares the **distribution of key financial ratios** between **Germany and Sweden** from **2019 to 2021**. Sweden generally shows **narrower spreads** and **fewer extreme outliers**, indicating more consistent firm performance. In contrast, Germany exhibits **greater variability** in profitability and leverage, suggesting higher financial risk and uneven recovery among firms. Overall, the plot highlights Sweden’s **financial stability** versus Germany’s **broader dispersion** in firm outcomes during the pandemic years.
 
 ### Question 4
 
@@ -2492,7 +2504,8 @@ AAA
 
 ### Question 3
 
-AAA
+Overall, the comparative analysis of **Germany and Sweden** from **2019 to 2021** highlights distinct patterns of financial resilience during the COVID-19 pandemic. Both countries experienced declines in profitability and shifts in leverage, but **Swedish firms maintained greater financial stability**, showing smaller drops in median profits, steadier liquidity, and fewer extreme outliers. In contrast, **German firms displayed wider variation** across industries, reflecting uneven impacts and higher financial stress in sectors like hospitality and transport. Together, the results suggest that **Sweden’s corporate sector adapted more smoothly**, supported by stable financial structures and balanced leverage, while **Germany faced deeper disruptions** but also signs of recovery in capital-intensive industries.
+
 
 ### Question 4
 
