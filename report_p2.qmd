@@ -119,7 +119,8 @@ library(viridisLite)
 
 ## Introduction
 
-AAA
+This report provides a comprehensive examination of financial performance across German and Swedish industries during the period 2018 to 2021. Drawing on firm-level data from the OSIRIS database, the analysis applies established financial ratios and summary statistics to assess profitability, liquidity, leverage, and firm size across a diverse range of sectors. The primary aim is to identify structural strengths and vulnerabilities within each country’s corporate environment, with a particular focus on how different industries responded to the onset and progression of the COVID-19 pandemic. By combining descriptive analytics with comparative industry insights, the report aims to inform understanding of financial resilience under conditions of economic uncertainty, highlighting notable patterns and sector-specific trends that emerged over this critical period.
+
 
 ## Data description
 
@@ -1286,7 +1287,7 @@ combined_financial_summary <- filtered_germany_sweden  |>
 knitr::kable(combined_financial_summary, 
              digits = 2, 
              booktabs = TRUE, 
-             caption = "Comparison of Key Financial Medians by Industry: Germany vs Sweden (2020-2021)")
+             caption = "Comparison of Key Financial Medians by Industry: Germany vs Sweden (2019-2021)")
 
 ```
 
