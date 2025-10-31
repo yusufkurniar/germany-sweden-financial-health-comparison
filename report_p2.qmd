@@ -351,9 +351,9 @@ This question extends the Part 1 analysis by comparing **how leverage (debt-to-a
 The goal is to determine whether firms in the two economies displayed similar balance-sheet responses to the COVID-19 shock.\
 This section applies techniques from **Lectures 4-6** (data summarisation, comparative visualisation, and faceting) and interprets results within a financial-resilience framework.
 
-**3. Which German industries showed unexpected financial resilience or vulnerability from 2020 to 2022, and how were these outcomes shaped by profitability, leverage, liquidity, and firm size?**
+**3. Which Sweden industries showed unexpected financial resilience or vulnerability from 2019 to 2021, and how were these outcomes shaped by profitability, leverage, liquidity, and firm size?**
 
-AAA
+Between 2019 and 2021, Swedish industries showed mixed financial resilience. Manufacturing, IT, and professional services remained strong, maintaining profitability and liquidity despite the pandemic, helped by Sweden’s lighter restrictions and export strength. In contrast, hospitality, transport, and retail were more vulnerable, with sharp declines in profitability and higher leverage as firms relied on debt to survive. Larger firms recovered faster due to stronger cash reserves and financing access, while smaller firms faced liquidity pressures. Overall, industries with high profitability and low leverage before 2020 proved most resilient through 2021.
 
 **4. How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic?**
 
@@ -1172,7 +1172,104 @@ Sweden shows slightly higher liquidity dispersion, suggesting a broader mix of f
 
 ### Question 3
 
-AAA
+For this question, Initial Data Analysis (IDA) is conducted using only approved ETC5521 methods (see lectures and tutorials, Weeks 3–4), focusing on group-wise statistics by industry and robust distributional checks.
+
+1. Financial Indicators Summaries
+
+```{r industry-financial}
+industry_financial_summary <- filtered_germany_sweden |> 
+  filter(country == "Germany", !is.na(industry_group), acct_year >= 2018, acct_year <= 2021) |> 
+  mutate(period = ifelse(acct_year < 2020, "Pre-pandemic", "Pandemic")) |>
+  group_by(industry_group, period) |> 
+  summarise(
+    n_firms = n(),
+    median_profit = median(net_income_eur, na.rm = TRUE),
+    median_roa = median(roa_pct, na.rm = TRUE),
+    median_liq = median(current_ratio, na.rm = TRUE),
+    median_lev = median(gearing_pct, na.rm = TRUE),
+    .groups = "drop"     
+  ) |> 
+  arrange(industry_group, period)
+
+# Display table
+knitr::kable(
+  industry_financial_summary,
+  digits = 2,
+  booktabs = TRUE,
+  caption = "Industry-level summary as per IDA procedure"
+)
+
+```
+
+2. Outlier Detection — IQR Rule
+
+```{r Outlier detection}
+outlier_summary <- function(x) {
+  q1 <- quantile(x, 0.25, na.rm=TRUE)
+  q3 <- quantile(x, 0.75, na.rm=TRUE)
+  iqr <- q3 - q1
+  lower <- q1 - 1.5 * iqr
+  upper <- q3 + 1.5 * iqr
+  sum(x < lower | x > upper, na.rm=TRUE)
+}
+financial_vars <- c("ebit_margin_pct", "gearing_pct", "current_ratio", "total_assets_eur")
+outlier_counts_sweden <- filtered_germany_sweden  |> 
+  filter(country == "Sweden", acct_year >= 2020, acct_year <= 2022)  |> 
+  summarise(across(all_of(financial_vars), outlier_summary))
+
+knitr::kable(outlier_counts_sweden, caption="Outlier counts for Sweden: Key financial variables (IQR rule)")
+
+```
+
+
+3. Data Completeness (Missingness Bar Plot)
+
+```{r missing-values-sweden}
+missing_long_sweden <- filtered_germany_sweden  |> 
+  filter(country == "Sweden", acct_year >= 2020, acct_year <= 2022)  |> 
+  select(acct_year, all_of(financial_vars))  |> 
+  pivot_longer(-acct_year, names_to="variable", values_to="value")  |> 
+  mutate(missing = is.na(value))  |> 
+  group_by(acct_year, variable)  |> 
+  summarise(prop_missing = mean(missing), .groups='drop')
+
+ggplot(missing_long_sweden, aes(x = variable, y = prop_missing, fill = factor(acct_year))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(
+    title = "Proportion of Missing Values by Variable and Year (Sweden)",
+    x = "Variable",
+    y = "Proportion Missing",
+    fill = "Year"
+  ) +
+  theme_bw(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 12),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "right"
+  )
+
+```
+
+4. Comparative Summary Table: Germany vs Sweden (Pandemic Years)
+
+```{r}
+combined_financial_summary <- filtered_germany_sweden  |> 
+  filter(country %in% c("Germany", "Sweden"), !is.na(industry_group), acct_year >= 2020, acct_year <= 2021)  |> 
+  group_by(country, industry_group)  |> 
+  summarise(
+    median_roa = median(roa_pct, na.rm = TRUE),
+    median_liq = median(current_ratio, na.rm = TRUE),
+    median_lev = median(gearing_pct, na.rm = TRUE)
+  )  |> 
+  pivot_wider(names_from = country, values_from = c(median_roa, median_liq, median_lev))
+
+knitr::kable(combined_financial_summary, 
+             digits = 2, 
+             booktabs = TRUE, 
+             caption = "Comparison of Key Financial Medians by Industry: Germany vs Sweden (2020-2021)")
+
+```
+
 
 ### Question 4
 
@@ -1712,7 +1809,103 @@ Summary interpretation: • Leverage: Both countries show small increases during
 
 ### Question 3
 
-AAA
+The purpose of this section is to examine the structure and main financial indicators of German and Swedish firms before and during the COVID-19 pandemic (2018–2021).
+We explore firm size, profitability, leverage, and liquidity across industries and over time.
+
+
+1. Industry-level Financial Summary for Sweden
+
+```{r Industry summary}
+industry_financial_summary_sweden <- filtered_germany_sweden |> 
+  filter(country == "Sweden", !is.na(industry_group), acct_year >= 2019, acct_year <= 2021) |> 
+  group_by(industry_group, acct_year) |> 
+  summarise(
+    n_firms = n(),
+    median_profit = median(net_income_eur, na.rm = TRUE),
+    median_roa = median(roa_pct, na.rm = TRUE),
+    median_liq = median(current_ratio, na.rm = TRUE),
+    median_lev = median(gearing_pct, na.rm = TRUE),
+    .groups = "drop"
+  ) |> 
+  mutate(period = ifelse(acct_year < 2020, "Pre-pandemic", "Pandemic"))
+
+```
+
+
+```{r Industry level summary}
+
+combined_summary <- bind_rows(
+industry_financial_summary |> mutate(country="Germany"),
+industry_financial_summary_sweden |> mutate(country="Sweden")
+)
+
+
+ggplot(combined_summary, aes(
+    x = industry_group,
+    y = median_profit,
+    fill = country
+  )) +
+  geom_col(position = "dodge", width = 0.7) +
+  facet_wrap(~period) +
+  coord_flip() +
+  labs(
+    title = "Median Profit Comparison by Industry",
+    x = "Industry",
+    y = "Median Net Income (EUR)",
+    fill = "Country"
+  ) +
+  scale_fill_manual(values = c("Germany" = "#E69F00", "Sweden" = "#56B4E9")) +
+  scale_y_continuous(labels = scales::label_comma()) +
+  theme_minimal(base_size = 10) +
+  theme(
+    axis.text.x = element_text(size = 10),
+    axis.text.y = element_text(size = 10),
+    axis.title.x = element_text(size = 10, face = "bold"),
+    axis.title.y = element_text(size = 10, face = "bold"),
+    legend.position = "top",
+    strip.text = element_text(face = "bold", size = 10)
+  )
+
+```
+
+
+2. Trend of Median Financial Ratios Over Time
+
+```{r median financial ratio}
+median_trends <- filtered_germany_sweden |> 
+  filter(acct_year >= 2019, acct_year <= 2021) |> 
+  group_by(country, acct_year) |> 
+  summarise(across(all_of(financial_vars), median, na.rm=TRUE), .groups="drop") |> 
+  pivot_longer(cols = all_of(financial_vars), names_to="variable", values_to="median_value")
+
+ggplot(median_trends, aes(x=acct_year, y=median_value, color=country, group=country)) +
+  geom_line(size=1) +
+  geom_point(size=2) +
+  facet_wrap(~ variable, scales="free_y") +
+  labs(title="Median Financial Indicators Over Time", x="Year", y="Median Value", color="Country") +
+  theme_minimal()
+
+```
+
+3. Boxplots of Key Financial Ratios
+
+```{r key financial ratios}
+# Reshape data for plotting
+eda_data <- filtered_germany_sweden |> 
+  filter(acct_year >= 2019, acct_year <= 2021) |> 
+  select(country, acct_year, all_of(financial_vars)) |> 
+  pivot_longer(cols = all_of(financial_vars), names_to = "variable", values_to = "value")
+
+ggplot(eda_data, aes(x=country, y=value, fill=country)) +
+  geom_boxplot(outlier.colour = "red", outlier.shape = 16) +
+  facet_wrap(~ variable, scales = "free_y") +
+  labs(title="Distribution of Key Financial Ratios (2019-2021)", 
+       y="Value",
+       x="Country") +
+  theme_minimal()
+```
+
+
 
 ### Question 4
 
