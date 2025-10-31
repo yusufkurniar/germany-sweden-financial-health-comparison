@@ -1769,7 +1769,6 @@ However, Consumer Services is exceptional with the highest Current Ratio spikine
 #| label: fig-combined_analysis
 #| fig-cap: "Combined analysis of trend strength disruption and volatility across industries and countries during the pandemic period. Left: Trend strength analysis with 0.3 threshold lines. Right: Volatility analysis with median lines."
 
-
 # Trend strength analysis to identify the hardest-hit sectors
 trend_analysis <- focus_features |>
   group_by(country) |>
@@ -1781,7 +1780,6 @@ trend_analysis <- focus_features |>
   ) |>
   ungroup()
 
-
 # Volatility analysis to identify the sectors with the greatest volatility during the pandemic
 volatility_analysis <- focus_features |>
   group_by(country) |>
@@ -1791,26 +1789,24 @@ volatility_analysis <- focus_features |>
     overall_volatility = (scale(roa_spikiness) + scale(cr_spikiness)) / 2)  |>
   ungroup()
 
-
-
 # Create trend strength plot
 trend_plot <- focus_features |>
   ggplot(aes(x = roa_trend_strength, y = cr_trend_strength)) +
   geom_point(aes(size = roa_spikiness, 
                  color = industry_group, 
                  shape = country,  
-                 text = paste("Industry:", industry_group, 
-                             "<br>Country:", country,  
-                             "<br>ROA Trend:", round(roa_trend_strength, 3),
-                             "<br>CR Trend:", round(cr_trend_strength, 3))), 
+                 text = paste("<b>Industry:</b>", industry_group, 
+                             "<br><b>Country:</b>", country,  
+                             "<br><b>ROA Trend:</b>", round(roa_trend_strength, 3),
+                             "<br><b>CR Trend:</b>", round(cr_trend_strength, 3))), 
              alpha = 0.7) +
   geom_hline(yintercept = 0.3, linetype = "dashed", color = "red", alpha = 0.7) +
   geom_vline(xintercept = 0.3, linetype = "dashed", color = "red", alpha = 0.7) +
-  labs(title = "Impact of Pandemic on Industry Trend Strength<br><sub><i>Red dashed lines indicate trend strength threshold (0.3)<br>Different shapes represent different countries</i></sub>",
-       x = "ROA Trend Strength", y = "Current Ratio Trend Strength",
+  labs(x = "ROA Trend Strength", y = "Current Ratio Trend Strength",
        size = "ROA Spikiness", shape = "Country") +
   theme_minimal() + 
-  theme(legend.position = "none") +
+  theme(legend.position = "none",
+         axis.text = element_text(size = 9)) +
   scale_shape_manual(values = c(16, 17)) 
 
 # Convert to interactive plotly
@@ -1822,21 +1818,21 @@ volatility_plot <- focus_features |>
   geom_point(aes(color = industry_group, 
                  size = roa_trend_strength, 
                  shape = country,  
-                 text = paste("Industry:", industry_group,
-                             "<br>Country:", country,  
-                             "<br>ROA Spikiness:", round(roa_spikiness, 3),
-                             "<br>CR Spikiness:", round(cr_spikiness, 3))), 
+                 text = paste("<b>Industry:</b>", industry_group,
+                             "<br><b>Country:</b>", country,  
+                             "<br><b>ROA Spikiness:</b>", round(roa_spikiness, 3),
+                             "<br><b>CR Spikiness:</b>", round(cr_spikiness, 3))), 
              alpha = 0.7) +
   geom_hline(yintercept = median(focus_features$cr_spikiness), 
              linetype = "dashed", color = "blue", alpha = 0.5) +
   geom_vline(xintercept = median(focus_features$roa_spikiness), 
              linetype = "dashed", color = "blue", alpha = 0.5) +
   coord_cartesian(xlim = c(0, quantile(focus_features$roa_spikiness, 0.90))) +
-  labs(title = "Industry Volatility Analysis During Pandemic<br><sub><i>Blue dashed lines represent medians<br>Different shapes represent different countries</i></sub>",
-       x = "ROA Spikiness", y = "Current Ratio Spikiness",
+  labs(x = "ROA Spikiness", y = "Current Ratio Spikiness",
        size = "ROA Trend Strength", shape = "Country") +
   theme_minimal() +
-  theme(legend.position = "none") +
+  theme(legend.position = "none",
+         axis.text = element_text(size = 9)) +
   scale_shape_manual(values = c(16, 17))  
 
 volatility_in <- ggplotly(volatility_plot, tooltip = "text")
@@ -1848,14 +1844,17 @@ combined_analysis <- subplot(
   shareY = FALSE,
   titleX = TRUE,
   titleY = TRUE,
-  margin = 0.05 
+  margin = 0.05
 ) |>
   plotly::layout(
     title = list(
-      text = "Industry Financial Impact Analysis During Pandemic<br><sub>Left: Trend strength disruption | Right: Volatility patterns | Shapes indicate countries</sub>",
-      font = list(size = 14, color = "black"),
+      text = "<b>Industry Financial Impact Analysis During Pandemic</b>",
       x = 0.5,
-      y = 0.95
+      xanchor = "center",
+      y = 1.05,
+      font = list(size = 16, color = "black"),
+      automargin = TRUE,
+      margin = list(l = 60, r = 60, b = 100, t = 150)
     ),
     hoverlabel = list(
       bgcolor = "white", 
@@ -1865,6 +1864,13 @@ combined_analysis <- subplot(
     margin = list(l = 60, r = 60, b = 80),
     hovermode = "closest",
     annotations = list(
+      list(
+      x = 0.5, y = 1.05,
+      xref = "paper", yref = "paper",
+      text = "Left: Trend strength disruption | Right: Volatility patterns | Shapes indicate countries",
+      showarrow = FALSE,
+      font = list(size = 10, color = "gray40")
+    ),
       list(
         x = 0, y = -0.15,
         xref = "paper", yref = "paper",
@@ -2096,7 +2102,7 @@ kable(industry_summary |>
 
 ```{r Q4 EDA 2. Micro-level evidence -scagnostic figure}
 #| label: fig-scagnostic
-#| fig-cap: "This figure shows how four scagnostic metrics changed over time across different industries. The red dashed line marks the year 2020 when COVID-19 pandemic occurred. We can see variations in outlying (extreme values), clumpy (clustering patterns), stringy (linear relationships), and monotonic (consistent trends) metrics before and after the pandemic."
+#| fig-cap: "Scagnostic metrics across industries and countries. Dashed line marks 2020 (COVID onset). We can see variations in outlying (extreme values), clumpy (clustering patterns), stringy (linear relationships), and monotonic (consistent trends) metrics before and after the pandemic."
 #| warning: false
 
 scag_long <- by_ind_year |>
@@ -2111,9 +2117,21 @@ ggplot(scag_long, aes(x = fy_year, y = value, color = industry_group)) +
   labs(
     title = "Evolution of Scagnostic Metrics over Time",
     subtitle = "Dashed line = COVID year (2020)",
-    x = "Fiscal Year", y = "Scagnostic Value"
+    x = "Fiscal Year", y = "Scagnostic Value",
+    color = "Industry group"
   ) +
-  theme_minimal()
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    legend.title = element_text(size = 9),
+    legend.text = element_text(size = 6),
+    legend.key.width = unit(0.8, "cm"),
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, size = 9),
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(size = 11)) +
+  guides(color = guide_legend(
+    nrow = 2, byrow = TRUE, override.aes = list(size = 3))
+    )
 ```
 
 **Main results**
