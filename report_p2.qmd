@@ -1274,7 +1274,7 @@ The ribbon plot compares the proportion of missing values for key financial vari
 
 ```{r summary table}
 combined_financial_summary <- filtered_germany_sweden  |> 
-  filter(country %in% c("Germany", "Sweden"), !is.na(industry_group), acct_year >= 2020, acct_year <= 2021)  |> 
+  filter(country %in% c("Germany", "Sweden"), !is.na(industry_group), acct_year >= 2019, acct_year <= 2021)  |> 
   group_by(country, industry_group)  |> 
   summarise(
     median_roa = median(roa_pct, na.rm = TRUE),
@@ -1290,6 +1290,9 @@ knitr::kable(combined_financial_summary,
 
 ```
 
+**Interpretation**
+
+The comparative table presents key financial medians—return on assets (ROA), liquidity (current ratio), and leverage (gearing ratio)—for German and Swedish firms across industries during the pandemic years (2019–2021). Overall, the table highlights differences in financial resilience between the two countries. For example, some Swedish industries, particularly technology and manufacturing, exhibit higher median ROA and stronger liquidity compared to their German counterparts, suggesting relatively better profitability and cash management. Conversely, certain German industries, such as transport and hospitality, show higher leverage levels, indicating greater reliance on debt financing during the pandemic. These contrasts underscore how country-specific factors, including market structure, government support, and industry composition, shaped firms’ financial outcomes during the pandemic period.
 
 ### Question 4
 
