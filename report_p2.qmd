@@ -1923,22 +1923,22 @@ industry_financial_summary_sweden <- filtered_germany_sweden |>
 
 ```
 
-```{r Industry level summary}
+```{r Industry-level-summary, fig.height=10, fig.width=20}
 
 combined_summary <- bind_rows(
-industry_financial_summary |> mutate(country="Germany"),
-industry_financial_summary_sweden |> mutate(country="Sweden")
+  industry_financial_summary |> mutate(country="Germany"),
+  industry_financial_summary_sweden |> mutate(country="Sweden")
 )
 
+combined_summary$period <- factor(combined_summary$period, levels = c("Pre-pandemic", "Pandemic"))
 
 ggplot(combined_summary, aes(
     x = industry_group,
     y = median_profit,
     fill = country
   )) +
-  geom_col(position = "dodge", width = 0.7) +
+  geom_col(position = "dodge", width = 0.6) +
   facet_wrap(~period) +
-  coord_flip() +
   labs(
     title = "Median Profit Comparison by Industry",
     x = "Industry",
@@ -1946,18 +1946,22 @@ ggplot(combined_summary, aes(
     fill = "Country"
   ) +
   scale_fill_manual(values = c("Germany" = "#E69F00", "Sweden" = "#56B4E9")) +
-  scale_y_continuous(labels = scales::label_comma()) +
-  theme_minimal(base_size = 10) +
+  scale_y_continuous(
+    breaks = seq(0, max(combined_summary$median_profit, na.rm = TRUE), by = 100000),
+    labels = function(x) paste0(scales::comma(x / 1000), "k")
+  ) +
+  theme_minimal(base_size = 12) +
   theme(
-    axis.text.x = element_text(size = 10),
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 9),
     axis.text.y = element_text(size = 10),
     axis.title.x = element_text(size = 10, face = "bold"),
     axis.title.y = element_text(size = 10, face = "bold"),
     legend.position = "top",
-    strip.text = element_text(face = "bold", size = 10)
+    plot.title = element_text(size = 10, face = "bold"),
+    strip.text = element_text(size = 10, face = "bold")
   )
-
 ```
+
 
 **Interpretation**
 
