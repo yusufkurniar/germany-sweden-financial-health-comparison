@@ -2010,20 +2010,15 @@ focus_features <- industry_features |>
 
 **Trend strength analysis**
 
-The trend strength visualization in @fig-combined_analysis reveals significant disruptions to industry financial fundamentals.
-Five industries in the bottom-left quadrant, indicating severe deterioration in both ROA and Current Ratio trends.
-Accommodation & Food has the largest bubble, reflecting extreme volatility and weak performance during pandemic restrictions.
-This pattern reflects the extreme operational challenges faced by hospitality-related sectors during pandemic restrictions.
+In @fig-combined_analysis, colors represent industry groups and shapes denote countries (circles: Germany; triangles: Switzerland). In the trend strength plot (left), bubble sizes indicate ROA spikiness, while in the volatility plot (right), bubble sizes represent ROA trend strength. The trend strength visualization in @fig-combined_analysis (left panel) examines the stability of financial metric patterns during the pandemic period. It plots ROA trend strength against Current Ratio trend strength, using a 0.3 threshold to identify significant trend disruptions. This analysis reveals how consistently industries maintained their pre-pandemic financial trajectories across both profitability and liquidity dimensions.
 
 **Volatility analysis**
 
-After trend strength analysis, the volatility examination in @fig-combined_analysis demonstrates divergent patterns in financial metric instability.
-Five industries show high ROA volatility, but most have moderate Current Ratio spikiness.
-However, Consumer Services is exceptional with the highest Current Ratio spikiness, suggesting unique liquidity challenges.
+The volatility examination in @fig-combined_analysis (right panel) assesses the instability of financial metrics during the pandemic. It compares ROA spikiness with Current Ratio spikiness, using median values as reference points to identify above-average volatility. This visualization helps identify industries that experienced the greatest fluctuations in their financial performance, distinguishing between profitability volatility and liquidity volatility patterns.
 
 ```{r Q4 EDA 1. Macro-level evidence -Combined analysis}
 #| label: fig-combined_analysis
-#| fig-cap: "Combined analysis of trend strength disruption and volatility across industries and countries during the pandemic period. Left: Trend strength analysis with 0.3 threshold lines. Right: Volatility analysis with median lines."
+#| fig-cap: "Combined analysis of financial trend disruption and volatility during the pandemic. Shape denotes country (circles: Germany; triangles: Switzerland)."
 
 # Trend strength analysis to identify the hardest-hit sectors
 trend_analysis <- focus_features |>
@@ -2107,7 +2102,7 @@ combined_analysis <- subplot(
       text = "<b>Industry Financial Impact Analysis During Pandemic</b>",
       x = 0.5,
       xanchor = "center",
-      y = 1.05,
+      y = 0.98,
       font = list(size = 16, color = "black"),
       automargin = TRUE,
       margin = list(l = 60, r = 60, b = 100, t = 150)
@@ -2120,13 +2115,6 @@ combined_analysis <- subplot(
     margin = list(l = 60, r = 60, b = 80),
     hovermode = "closest",
     annotations = list(
-      list(
-      x = 0.5, y = 1.05,
-      xref = "paper", yref = "paper",
-      text = "Left: Trend strength disruption | Right: Volatility patterns | Shapes indicate countries",
-      showarrow = FALSE,
-      font = list(size = 10, color = "gray40")
-    ),
       list(
         x = 0, y = -0.15,
         xref = "paper", yref = "paper",
@@ -2399,62 +2387,17 @@ This indicates significant shifts in the relationship between ROA and CR during 
 @fig-scagnostic visualises the evolution of four scagnostic metrics (outlying, clumpy, stringy, and monotonic) over time for both countries.
 The red dashed line marks 2020, when COVID-19 began to affect firm performance and liquidity.
 
-Overall, Germany shows stronger stability with lower variability after COVID-19, while Sweden displays larger fluctuations and volatility increases, especially in the Information & Communication and Financial & Insurance sectors.
-
 **Key patterns observed by industry (Germany vs. Sweden):**
 
-**Wholesale & Retail Trade**
+- **Wholesale & Retail Trade**: Germany shows moderate slope changes with stable structure; Sweden displays higher volatility and dispersion, consistent with K-shaped recovery.
 
--   Germany: avg_slope ≈ 2.08, max_abs_slope_change ≈ 2.97, mean_resid_sd ≈ 7.79.
-    Scagnostics: stable *stringy* and ↓ *clumpy*
 
-    Interpretation: Germany shows moderate slope changes but fairly stable structure.
-    Many firms kept similar ROA–CR patterns, and the sector did not become strongly outlying.
+- **Information & Communication**: German firms became more predictable post-2020; Swedish firms show high residual dispersion despite rising slopes, indicating "hidden crisis" heterogeneity.
 
--   Sweden: avg_slope ≈ -1.23, max_abs_slope_change ≈ 4.00, mean_resid_sd ≈ 15.61.
-    Scagnostics: ↓ *clumpy* and ↓ *stringy* after 2020; ↑ outlying in 2019–2021 up to about 0.8.
 
-    Interpretation: Sweden experienced larger volatility and dispersion.
-    This is consistent with a K-shaped response where some firms did much better while others worsened.
+- **Financial & Insurance**: German firms show moderate clustering changes; Swedish firms experience larger instability and dispersion, reflecting stronger liquidity/profitability shocks.
 
-**Information & Communication**
-
--   Germany: avg_slope ≈ 2.50, mean_resid_sd ≈ 8.25.
-    Scagnostics: sharply ↓ clumpy after 2020; ↑ monotonic.
-
-    Interpretation: German firms became more predictable in their ROA–CR relation after 2020 (higher monotonic, lower clumpy), suggesting more uniform responses across firms.
-
--   Sweden: avg_slope ≈ 3.64, mean_resid_sd ≈ 24.62 (much larger).
-    Scagnostics: ↑ monotonic but volatility and residual dispersion are much higher; clumpy and outlying patterns differ from Germany.
-
-    Interpretation: Although average slope rose in Sweden, the much higher residual SD indicates wide firm-level dispersion.
-    It is a “hidden crisis” where averages hide deep heterogeneity.
-
-**Financial & Insurance**
-
--   Germany: avg_slope ≈ 0.83, mean_resid_sd ≈ 11.87.
-    Scagnostics: ↑ clumpy after 2020, slightly ↓ stringy, small ↓ outlying.
-
-    Interpretation: German financial firms show moderate changes.
-    There are some clustering but not huge instability.
-
--   Sweden: avg_slope ≈ -0.67, mean_resid_sd ≈ 21.47 (higher).
-    Scagnostics: rising trends in scagnostics for some metrics, higher volatility overall.
-
-    Interpretation: Swedish financial firms experienced larger instability and dispersion, consistent with stronger liquidity or profitability shocks.
-
-**Manufacturing**
-
--   Germany: avg_slope ≈ -0.002, mean_resid_sd ≈ 14.32, max_abs_slope_change ≈ 0.54.
-    Scagnostics: High but slightly ↓ clumpy, ↓ monotonic after 2020, ↑ outlying in 2020–2021, stable stringy
-
-    Interpretation: Although slope changes were moderate, the rise in outlying and decline in monotonic suggest that the relationship between ROA and CR became less predictable and more fragmented among firms after the pandemic began.
-
--   Sweden: avg_slope ≈ -0.60, mean_resid_sd ≈ 28.14, max_abs_slope_change ≈ 0.43.
-    Scagnostics: High but ↓ clumpy after 2020, ↑ monotonic, mild fluctuations in outlying, stable stringy
-
-    Interpretation: Despite a negative average slope and high residual standard deviation, the increase in monotonic and relatively stable scagnostic values point to a moderately resilient structure.
-    Firms became more aligned in their ROA–CR behaviour over time, though some outliers remained.
+- **Manufacturing**: Both countries show moderate slope changes, but Germany exhibits less predictable ROA–CR relationships post-pandemic, while Swedish firms show increased alignment despite higher residual dispersion.
 
 **Summary**
 
