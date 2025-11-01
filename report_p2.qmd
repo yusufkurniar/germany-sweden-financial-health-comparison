@@ -116,11 +116,12 @@ library(tidyr)
 library(ggrepel)
 library(viridisLite)
 ```
-
 ## Introduction
 
-This report provides a comprehensive examination of financial performance across German and Swedish industries during the period 2018 to 2021. Drawing on firm-level data from the OSIRIS database, the analysis applies established financial ratios and summary statistics to assess profitability, liquidity, leverage, and firm size across a diverse range of sectors. The primary aim is to identify structural strengths and vulnerabilities within each country’s corporate environment, with a particular focus on how different industries responded to the onset and progression of the COVID-19 pandemic. By combining descriptive analytics with comparative industry insights, the report aims to inform understanding of financial resilience under conditions of economic uncertainty, highlighting notable patterns and sector-specific trends that emerged over this critical period.
-
+This report provides a comprehensive examination of financial performance across German and Swedish industries during the period 2018 to 2021.
+Drawing on firm-level data from the OSIRIS database, the analysis applies established financial ratios and summary statistics to assess profitability, liquidity, leverage, and firm size across a diverse range of sectors.
+The primary aim is to identify structural strengths and vulnerabilities within each country’s corporate environment, with a particular focus on how different industries responded to the onset and progression of the COVID-19 pandemic.
+By combining descriptive analytics with comparative industry insights, the report aims to inform understanding of financial resilience under conditions of economic uncertainty, highlighting notable patterns and sector-specific trends that emerged over this critical period.
 
 ## Data description
 
@@ -128,7 +129,8 @@ The dataset used in this analysis originates from **the Bureau van Dijk OSIRIS d
 For this study, we extracted firm-level data for **German companies** over the **2018–2021 accounting years**, a period that captures both pre-pandemic and pandemic-era financial performance.
 Each record represents a firm’s reported financials for a specific accounting year, enabling longitudinal exploration of trends in profitability, liquidity, leverage, and resilience.
 
-The data reading and cleaning process follows the guidance from Tutorial 3's solution and the Wild Caught Data unit, with some modifications according to the data requirements. These are the code that we used to load the data and combine them:
+The data reading and cleaning process follows the guidance from Tutorial 3's solution and the Wild Caught Data unit, with some modifications according to the data requirements.
+These are the code that we used to load the data and combine them:
 
 Loading the data.
 
@@ -355,7 +357,11 @@ This section applies techniques from **Lectures 4-6** (data summarisation, compa
 
 **3. Which Sweden industries showed unexpected financial resilience or vulnerability from 2019 to 2021, and how were these outcomes shaped by profitability, leverage, liquidity, and firm size?**
 
-Between 2019 and 2021, Swedish industries showed mixed financial resilience. Manufacturing, IT, and professional services remained strong, maintaining profitability and liquidity despite the pandemic, helped by Sweden’s lighter restrictions and export strength. In contrast, hospitality, transport, and retail were more vulnerable, with sharp declines in profitability and higher leverage as firms relied on debt to survive. Larger firms recovered faster due to stronger cash reserves and financing access, while smaller firms faced liquidity pressures. Overall, industries with high profitability and low leverage before 2020 proved most resilient through 2021.
+Between 2019 and 2021, Swedish industries showed mixed financial resilience.
+Manufacturing, IT, and professional services remained strong, maintaining profitability and liquidity despite the pandemic, helped by Sweden’s lighter restrictions and export strength.
+In contrast, hospitality, transport, and retail were more vulnerable, with sharp declines in profitability and higher leverage as firms relied on debt to survive.
+Larger firms recovered faster due to stronger cash reserves and financing access, while smaller firms faced liquidity pressures.
+Overall, industries with high profitability and low leverage before 2020 proved most resilient through 2021.
 
 **4. How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic?**
 
@@ -370,13 +376,13 @@ It also helps identify whether recovery followed a stable path or diverged into 
 
 The global IDA process is guided by the following sources, with some adjustments based on data requirements:
 
-- Tutorials 3 and 4, which cover data cleaning and the IDA process.
+-   Tutorials 3 and 4, which cover data cleaning and the IDA process.
 
-- Kris’s explanation after providing feedback for Exercise 2 (Tutorial 8), where he discussed checking data skewness, handling missing values, and identifying outliers.
+-   Kris’s explanation after providing feedback for Exercise 2 (Tutorial 8), where he discussed checking data skewness, handling missing values, and identifying outliers.
 
-- Lecture 5, covering handling missingness (page 24), managing outliers (page 3), and checking skewness (page 4).
+-   Lecture 5, covering handling missingness (page 24), managing outliers (page 3), and checking skewness (page 4).
 
-- Kris’s explanation in Tutorial 11 about the importance of checking data skewness, so that in the EDA process, we can decide the most suitable calculation method for analysis (for example, using the median for right-skewed data).
+-   Kris’s explanation in Tutorial 11 about the importance of checking data skewness, so that in the EDA process, we can decide the most suitable calculation method for analysis (for example, using the median for right-skewed data).
 
 Here is the IDA process for this project:
 
@@ -904,15 +910,15 @@ Here are the details:
 
 The specific IDA for question 1 and the data imputation are guided by the following sources, with some modifications according to the data requirements:
 
-- Tutorials 3 and 4, which cover data cleaning and the IDA process.
+-   Tutorials 3 and 4, which cover data cleaning and the IDA process.
 
-- Kris’s suggestion in Tutorial 11 about data imputation for missingness.
+-   Kris’s suggestion in Tutorial 11 about data imputation for missingness.
 
-- Wild Caught Data unit, about data imputation.
+-   Wild Caught Data unit, about data imputation.
 
-- Lecture 6 on imputation of missing data (pages 52 – 53).
+-   Lecture 6 on imputation of missing data (pages 52 – 53).
 
-- Tutorial 8 on data missingness's checking.
+-   Tutorial 8 on data missingness's checking.
 
 We initially added a period label (Pre-pandemic 2018 – 2019 vs. Pandemic 2020 – 2021).
 For visualisations, net_income_eur was transformed using asinh() to compare both gains and losses on a consistent scale.
@@ -1159,6 +1165,12 @@ Overall, both datasets provided reliable ROE values, with Sweden needing slightl
 
 ### Question 2
 
+The Initial Data Analysis (IDA) for this question focused on constructing and validating key indicators of leverage and liquidity for both Germany and Sweden during 2018-2021.
+Specifically, new variables such as debt-to-assets and equity ratio were derived from total liabilities, equity, and assets to measure firms’ capital structure and solvency capacity.
+Data cleaning steps included filtering out inactive firms, excluding implausible ratios (e.g., leverage \>150%), and dropping missing or non-finite values.
+These processed metrics were summarised using median and interquartile range (IQR) to capture typical firm behaviour and variability by year and country, ensuring comparability between economies before conducting visual exploration.
+(Reference: Lecture 3 - Summarising and Cleaning Financial Data; Lecture 5 - Robust Measures for Skewed Distributions.)
+
 ```{r q2-ida}
 # Create leverage and liquidity indicators for both countries
 lev_liq_data <- filtered_germany_sweden |>
@@ -1191,14 +1203,13 @@ lev_liq_summary |>
   kableExtra::kable_styling(full_width = FALSE, font_size = 11)
 ```
 
-Observation: Both countries maintained median liquidity near 1.8×, while median leverage hovered around 0.50–0.52.
-Sweden shows slightly higher liquidity dispersion, suggesting a broader mix of firm sizes and capital structures.
+**Observation:** Both countries maintained median liquidity near 1.8×, while median leverage hovered around 0.50-0.52.Sweden shows slightly higher liquidity dispersion, suggesting a broader mix of firm sizes and capital structures.
 
 ### Question 3
 
 For this question, Initial Data Analysis (IDA) is conducted using only approved ETC5521 methods (see lectures and tutorials, Weeks 3–4), focusing on group-wise statistics by industry and robust distributional checks.
 
-1. Financial Indicators Summaries
+1.  Financial Indicators Summaries
 
 ```{r industry-financial}
 
@@ -1228,10 +1239,12 @@ knitr::kable(
 
 **Interpretation**
 
-The summary of key financial indicators for German industries between 2019 and 2021 shows clear differences in performance before and during the pandemic. Overall, **profitability** (measured by net income and ROA) declined across most sectors during the pandemic years, while **leverage** tended to rise as firms relied more on debt to manage financial pressures. **Liquidity** patterns were mixed—capital-intensive industries maintained relatively stable current ratios, whereas service-based sectors such as hospitality and transport faced tighter cash flow conditions. These trends suggest that manufacturing and technology industries demonstrated stronger financial resilience compared to consumer-facing sectors that were more directly affected by pandemic disruptions.
+The summary of key financial indicators for German industries between 2019 and 2021 shows clear differences in performance before and during the pandemic.
+Overall, **profitability** (measured by net income and ROA) declined across most sectors during the pandemic years, while **leverage** tended to rise as firms relied more on debt to manage financial pressures.
+**Liquidity** patterns were mixed—capital-intensive industries maintained relatively stable current ratios, whereas service-based sectors such as hospitality and transport faced tighter cash flow conditions.
+These trends suggest that manufacturing and technology industries demonstrated stronger financial resilience compared to consumer-facing sectors that were more directly affected by pandemic disruptions.
 
-
-2. Outlier Detection — IQR Rule
+2.  Outlier Detection — IQR Rule
 
 ```{r Outlier detection}
 outlier_summary <- function(x) {
@@ -1253,9 +1266,12 @@ knitr::kable(outlier_counts_sweden, caption="Outlier counts for Sweden: Key fina
 
 **Interpretation**
 
-The outlier analysis for Sweden from 2019 to 2021 reveals noticeable variability in firms’ financial performance across key indicators. A relatively high number of outliers in **EBIT margin** and **gearing ratio** suggests that some firms experienced unusually strong or weak profitability and varying levels of financial leverage during the pandemic. This highlights the uneven financial effects across industries, with certain firms taking on more debt or achieving exceptional margins. In contrast, **current ratio** and **total assets** show fewer outliers, indicating that liquidity positions and firm sizes remained more consistent across Swedish companies during this period.
+The outlier analysis for Sweden from 2019 to 2021 reveals noticeable variability in firms’ financial performance across key indicators.
+A relatively high number of outliers in **EBIT margin** and **gearing ratio** suggests that some firms experienced unusually strong or weak profitability and varying levels of financial leverage during the pandemic.
+This highlights the uneven financial effects across industries, with certain firms taking on more debt or achieving exceptional margins.
+In contrast, **current ratio** and **total assets** show fewer outliers, indicating that liquidity positions and firm sizes remained more consistent across Swedish companies during this period.
 
-3. Data Completeness (Missingness Bar Plot)
+3.  Data Completeness (Missingness Bar Plot)
 
 ```{r missing-values-sweden}
 # Prepare long-format data (already done)
@@ -1290,11 +1306,13 @@ ggplot(missing_long_compare, aes(x = acct_year, y = prop_missing, fill = country
 
 **Interpretation**
 
-The ribbon plot compares the proportion of missing values for key financial variables between Swedish and German firms from 2019 to 2021. Overall, most variables show relatively low levels of missing data in both countries, indicating generally reliable datasets. However, some variables, such as **EBIT margin** and **gearing ratio**, exhibit higher missingness, particularly during the pandemic period. The plot highlights country-specific differences: Sweden tends to have slightly higher missingness in certain measures, whereas Germany shows more consistent completeness across variables. The ribbon effectively visualizes both the magnitude and trend of missingness over time, making it easier to identify variables and years that may require careful interpretation or imputation.
+The ribbon plot compares the proportion of missing values for key financial variables between Swedish and German firms from 2019 to 2021.
+Overall, most variables show relatively low levels of missing data in both countries, indicating generally reliable datasets.
+However, some variables, such as **EBIT margin** and **gearing ratio**, exhibit higher missingness, particularly during the pandemic period.
+The plot highlights country-specific differences: Sweden tends to have slightly higher missingness in certain measures, whereas Germany shows more consistent completeness across variables.
+The ribbon effectively visualizes both the magnitude and trend of missingness over time, making it easier to identify variables and years that may require careful interpretation or imputation.
 
-
-
-4. Comparative Summary Table: Germany vs Sweden (Pandemic Years)
+4.  Comparative Summary Table: Germany vs Sweden (Pandemic Years)
 
 ```{r summary table}
 combined_financial_summary <- filtered_germany_sweden  |> 
@@ -1316,7 +1334,11 @@ knitr::kable(combined_financial_summary,
 
 **Interpretation**
 
-The comparative table presents key financial medians—return on assets (ROA), liquidity (current ratio), and leverage (gearing ratio)—for German and Swedish firms across industries during the pandemic years (2019–2021). Overall, the table highlights differences in financial resilience between the two countries. For example, some Swedish industries, particularly technology and manufacturing, exhibit higher median ROA and stronger liquidity compared to their German counterparts, suggesting relatively better profitability and cash management. Conversely, certain German industries, such as transport and hospitality, show higher leverage levels, indicating greater reliance on debt financing during the pandemic. These contrasts underscore how country-specific factors, including market structure, government support, and industry composition, shaped firms’ financial outcomes during the pandemic period.
+The comparative table presents key financial medians—return on assets (ROA), liquidity (current ratio), and leverage (gearing ratio)—for German and Swedish firms across industries during the pandemic years (2019–2021).
+Overall, the table highlights differences in financial resilience between the two countries.
+For example, some Swedish industries, particularly technology and manufacturing, exhibit higher median ROA and stronger liquidity compared to their German counterparts, suggesting relatively better profitability and cash management.
+Conversely, certain German industries, such as transport and hospitality, show higher leverage levels, indicating greater reliance on debt financing during the pandemic.
+These contrasts underscore how country-specific factors, including market structure, government support, and industry composition, shaped firms’ financial outcomes during the pandemic period.
 
 ### Question 4
 
@@ -1471,9 +1493,9 @@ Here are the EDA processes and results for the sub-questions addressing the prim
 
 The EDA process in question 1 is guided by the following sources, with some modifications according to the data requirements:
 
-- Tutorial 7 and 8, about faceted plot analysis and exercise 2 feedback from Kris.
+-   Tutorial 7 and 8, about faceted plot analysis and exercise 2 feedback from Kris.
 
-- Lecture 8 on exploring multiple variables (pages 32 – 36).
+-   Lecture 8 on exploring multiple variables (pages 32 – 36).
 
 #### Profitability Measures Analysis
 
@@ -1689,7 +1711,12 @@ Using medians offers a clearer view of typical firm performance without distorti
 
 ### Question 2
 
-#### EDA – Year-wise Comparison
+The Exploratory Data Analysis (EDA) expands on the cleaned leverage-liquidity dataset to identify cross-country and temporal patterns that describe how firms managed their financial positions during the pandemic.
+Three complementary visual analyses were conducted:
+
+#### Year-wise Comparison
+
+This section tracks changes in median leverage and liquidity across 2018–2021 to reveal how firms in Germany and Sweden adjusted their balance sheets during the pandemic.
 
 ```{r}
 lev_liq_long <- lev_liq_summary |>
@@ -1718,11 +1745,17 @@ ggplot(lev_liq_long,
         panel.grid.minor = element_blank())
 ```
 
-Interpretation: • Both economies experienced a slight leverage increase in 2020 (Germany +0.01, Sweden +0.02).
-• Liquidity remained broadly constant across the pandemic, stabilising near 1.8–1.9×.
-• The trends suggest that German firms relied more on credit support, while Swedish firms drew on retained liquidity, consistent with each country’s policy emphasis (Germany’s Kurzarbeit subsidies vs Sweden’s fiscal buffers).
+**Interpretation:**
 
-#### EDA – Leverage–Solvency Relationship
+\- Both economies experienced a slight leverage increase in 2020 (Germany +0.01, Sweden +0.02).
+
+\- Liquidity remained broadly constant across the pandemic, stabilising near 1.8–1.9×.
+
+\- The trends suggest that German firms relied more on credit support, while Swedish firms drew on retained liquidity, consistent with each country’s policy emphasis (Germany’s Kurzarbeit subsidies vs Sweden’s fiscal buffers).
+
+#### Leverage-Solvency Relationship
+
+This section examines how leverage (debt-to-assets) relates to solvency over time, highlighting whether higher debt ratios reduced financial stability differently across the two countries.
 
 ```{r}
 #| label: fig-leverage-solvency-facets
@@ -1767,16 +1800,18 @@ ggplot(lev_liq_plot, aes(x = debt_to_assets, y = solvency_pct, colour = country)
   )
 ```
 
-Interpretation:
+**Interpretation:**
 
-Across both Germany and Sweden, leverage shows a **strong negative relationship with solvency** from 2018 to 2021 — firms with higher debt-to-asset ratios consistently report lower solvency levels.
+Across both Germany and Sweden, leverage shows a **strong negative relationship with solvency** from 2018 to 2021 - firms with higher debt-to-asset ratios consistently report lower solvency levels.
 The **pattern remains stable** over time, confirming that higher leverage structurally reduces long-term financial stability in both economies.
 
 However, the **slope is notably steeper in Germany**, especially in **2020**, indicating that increases in debt had a stronger adverse effect on solvency during the pandemic.
 This likely reflects the **manufacturing-heavy structure** of German industries, which faced sharper revenue disruptions and slower balance sheet recovery.
 In contrast, **Swedish firms**, with **more diversified sectors and stronger equity positions**, experienced a milder solvency decline, demonstrating greater resilience to leverage-induced stress.
 
-EDA – Industry-level Leverage Distributions
+#### Industry-level Leverage Distributions
+
+This section explores cross-industry variation in leverage to identify which sectors carried the most debt and how these patterns evolved through the pandemic period.
 
 ```{r}
 #| label: fig-leverage-industry-comparison
@@ -1827,7 +1862,7 @@ ggplot(lev_liq_industry,
   )
 ```
 
-Interpretation:
+**Interpretation:**
 
 The boxplots reveal that leverage remained broadly stable across both countries from 2018 to 2021, with **capital-intensive sectors**-notably *Manufacturing*, *Construction*, and *Transport & Storage*-maintaining higher debt-to-asset ratios than service-oriented industries such as *Information & Communication* or *Professional & Technical Services*.
 
@@ -1855,18 +1890,22 @@ lev_liq_summary_w <- lev_liq_data |>
 knitr::kable(head(lev_liq_summary_w), caption="Winsorised medians confirm robustness.")
 ```
 
-Summary interpretation: • Leverage: Both countries show small increases during 2020, reverting by 2021.
-• Liquidity: Stable across years and nations, implying effective cash-flow management.
-• Cross-country pattern: Sweden’s firms appear slightly more liquid and less leveraged, signalling greater resilience to credit-market stress.
-• Conclusion: Despite pandemic disruptions, neither economy faced systemic liquidity deterioration; Germany’s higher industrial exposure drove modest leverage stress, while Sweden’s diversified base cushioned impact.
+**Summary interpretation:**
+
+\- Leverage: Both countries show small increases during 2020, reverting by 2021.
+
+\- Liquidity: Stable across years and nations, implying effective cash-flow management.
+
+\- Cross-country pattern: Sweden’s firms appear slightly more liquid and less leveraged, signalling greater resilience to credit-market stress.
+
+\- Conclusion: Despite pandemic disruptions, neither economy faced systemic liquidity deterioration; Germany’s higher industrial exposure drove modest leverage stress, while Sweden’s diversified base cushioned impact.
 
 ### Question 3
 
 The purpose of this section is to examine the structure and main financial indicators of German and Swedish firms before and during the COVID-19 pandemic (2018–2021).
 We explore firm size, profitability, leverage, and liquidity across industries and over time.
 
-
-1. Industry-level Financial Summary for Sweden
+#### Industry-level Financial Summary for Sweden
 
 ```{r Industry summary}
 industry_financial_summary_sweden <- filtered_germany_sweden |> 
@@ -1883,7 +1922,6 @@ industry_financial_summary_sweden <- filtered_germany_sweden |>
   mutate(period = ifelse(acct_year < 2020, "Pre-pandemic", "Pandemic"))
 
 ```
-
 
 ```{r Industry level summary}
 
@@ -1923,10 +1961,12 @@ ggplot(combined_summary, aes(
 
 **Interpretation**
 
-The chart compares **median industry profits** in **Sweden and Germany** before and during the pandemic. Overall, profits declined across most sectors during 2020–2021, but **Swedish industries** generally showed **greater stability and smaller drops** than those in Germany. Manufacturing and technology sectors remained relatively resilient in both countries, while **service-based industries**—especially hospitality and transport—were more affected. This suggests Sweden’s economy maintained slightly stronger financial resilience during the pandemic period.
+The chart compares **median industry profits** in **Sweden and Germany** before and during the pandemic.
+Overall, profits declined across most sectors during 2020–2021, but **Swedish industries** generally showed **greater stability and smaller drops** than those in Germany.
+Manufacturing and technology sectors remained relatively resilient in both countries, while **service-based industries**—especially hospitality and transport—were more affected.
+This suggests Sweden’s economy maintained slightly stronger financial resilience during the pandemic period.
 
-
-*2. Trend of Median Financial Ratios Over Time
+#### Trend of Median Financial Ratios Over Time
 
 ```{r median financial ratio}
 median_trends <- filtered_germany_sweden |> 
@@ -1946,9 +1986,12 @@ ggplot(median_trends, aes(x=acct_year, y=median_value, color=country, group=coun
 
 **Interpretation**
 
-This plot tracks the **median financial ratios** — profitability, leverage, liquidity, and firm size — for **Germany and Sweden** from **2019 to 2021**. The trends reveal how each economy adapted during the pandemic. Overall, **Sweden’s indicators remained more stable**, showing steady liquidity and profitability, while **Germany displayed sharper fluctuations**, particularly in leverage and profitability, reflecting stronger pandemic shocks. These patterns suggest that Swedish firms maintained healthier financial balance sheets during this period.
+This plot tracks the **median financial ratios** — profitability, leverage, liquidity, and firm size — for **Germany and Sweden** from **2019 to 2021**.
+The trends reveal how each economy adapted during the pandemic.
+Overall, **Sweden’s indicators remained more stable**, showing steady liquidity and profitability, while **Germany displayed sharper fluctuations**, particularly in leverage and profitability, reflecting stronger pandemic shocks.
+These patterns suggest that Swedish firms maintained healthier financial balance sheets during this period.
 
-3. Boxplots of Key Financial Ratios
+#### Boxplots of Key Financial Ratios
 
 ```{r key financial ratios}
 # Reshape data for plotting
@@ -1968,13 +2011,16 @@ ggplot(eda_data, aes(x=country, y=value, fill=country)) +
 
 **Interpretation**
 
-This boxplot compares the **distribution of key financial ratios** between **Germany and Sweden** from **2019 to 2021**. Sweden generally shows **narrower spreads** and **fewer extreme outliers**, indicating more consistent firm performance. In contrast, Germany exhibits **greater variability** in profitability and leverage, suggesting higher financial risk and uneven recovery among firms. Overall, the plot highlights Sweden’s **financial stability** versus Germany’s **broader dispersion** in firm outcomes during the pandemic years.
+This boxplot compares the **distribution of key financial ratios** between **Germany and Sweden** from **2019 to 2021**.
+Sweden generally shows **narrower spreads** and **fewer extreme outliers**, indicating more consistent firm performance.
+In contrast, Germany exhibits **greater variability** in profitability and leverage, suggesting higher financial risk and uneven recovery among firms.
+Overall, the plot highlights Sweden’s **financial stability** versus Germany’s **broader dispersion** in firm outcomes during the pandemic years.
 
 ### Question 4
 
 **4. How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic?**
 
-#### 1. Macro-level evidence: Industry recovery patterns (ROA vs CR) - feasts (Lecture 9, slide 24-26, feasts and tsibbletalk)
+#### Macro-level evidence: Industry recovery patterns (ROA vs CR) - feasts (Lecture 9, slide 24-26, feasts and tsibbletalk)
 
 We will analyze the fundamental relationship between corporate liquidity and profitability across industries during the pandemic period in two countries, with particular focus on identifying anomalous recovery patterns.
 
@@ -2205,7 +2251,7 @@ kable(classification_comparison) |>
   kable_styling(font_size = 11)
 ```
 
-#### 2. Micro-level evidence of anomalous recovery patterns across industries (ROA and liquidity) - scagnostics (Tignostics) (Lecture 8, 22-27 & Lecture 9, slide 24)
+#### Micro-level evidence of anomalous recovery patterns across industries (ROA and liquidity) - scagnostics (Tignostics) (Lecture 8, 22-27 & Lecture 9, slide 24)
 
 In this section, we compare firm-level relationships between liquidity (Current Ratio) and profitability (ROA) across industries in Germany and Sweden.
 
@@ -2411,7 +2457,7 @@ For example, institutional settings, firm composition, or policy responses may h
 Results are descriptive: scagnostics indicate shape changes but do not prove causality.
 We will triangulate these micro results with macro indicators (feasts features) in the final section.
 
-#### 3. Comparative Analysis: Macro-Level Dynamics vs. Micro-Level Firm Relationships
+#### Comparative Analysis: Macro-Level Dynamics vs. Micro-Level Firm Relationships
 
 This section combines both macro-level and micro-level results to explain how firm recovery patterns differed between Germany and Sweden during and after the COVID-19 crisis.
 Overall, the two countries showed distinct adjustment behaviours in profitability (ROA) and liquidity (Current Ratio, CR), reflecting their financial and institutional environments.
@@ -2443,12 +2489,26 @@ These results suggest that although the overall trend in profitability didn’t 
 
 ### Question 2
 
-AAA
+Both Germany and Sweden demonstrated financial resilience during the COVID-19 period, but through different balance-sheet strategies.
+
+-   **Liquidity:** Firms in both economies maintained stable liquidity (current ratio ≈ 1.8–1.9×), reflecting effective short-term cash management.
+    Sweden’s slightly higher dispersion suggests more diversity in firm size and financing.
+
+-   **Leverage:** A mild rise in leverage was observed in 2020 (Germany +0.01, Sweden +0.02).
+    German firms relied more heavily on external borrowing, consistent with strong government credit support (e.g. Kurzarbeit subsidies), whereas Swedish firms drew on internal liquidity buffers.
+
+-   **Leverage–Solvency link**: Both countries show a strong negative correlation between leverage and solvency, but the slope is steeper for Germany—indicating greater sensitivity to debt accumulation.
+
+-   **Industry patterns:** Manufacturing, transport & construction remain the most highly leveraged in both countries, while information, health care and professional services maintain conservative positions.
+
+Overall, German firms’ solvency was more exposed to rising leverage, while Swedish firms’ diversified structures supported steadier recovery post-pandemic.
 
 ### Question 3
 
-Overall, the comparative analysis of **Germany and Sweden** from **2019 to 2021** highlights distinct patterns of financial resilience during the COVID-19 pandemic. Both countries experienced declines in profitability and shifts in leverage, but **Swedish firms maintained greater financial stability**, showing smaller drops in median profits, steadier liquidity, and fewer extreme outliers. In contrast, **German firms displayed wider variation** across industries, reflecting uneven impacts and higher financial stress in sectors like hospitality and transport. Together, the results suggest that **Sweden’s corporate sector adapted more smoothly**, supported by stable financial structures and balanced leverage, while **Germany faced deeper disruptions** but also signs of recovery in capital-intensive industries.
-
+Overall, the comparative analysis of **Germany and Sweden** from **2019 to 2021** highlights distinct patterns of financial resilience during the COVID-19 pandemic.
+Both countries experienced declines in profitability and shifts in leverage, but **Swedish firms maintained greater financial stability**, showing smaller drops in median profits, steadier liquidity, and fewer extreme outliers.
+In contrast, **German firms displayed wider variation** across industries, reflecting uneven impacts and higher financial stress in sectors like hospitality and transport.
+Together, the results suggest that **Sweden’s corporate sector adapted more smoothly**, supported by stable financial structures and balanced leverage, while **Germany faced deeper disruptions** but also signs of recovery in capital-intensive industries.
 
 ### Question 4
 
@@ -2462,6 +2522,24 @@ It is a clear sign of K-shaped recovery in several sectors.
 Overall, the comparison suggests that national environments and policy frameworks played an important role in shaping how firms balanced profitability and liquidity during the crisis.
 Germany’s stability-oriented system promoted consistent recovery, while Sweden’s more flexible market structure encouraged diversity in outcomes.
 These findings highlight that firm-level resilience depends not only on financial management but also on broader institutional conditions.
+
+## Overall Conclusion
+
+The comparative analysis of Germany and Sweden between 2018 and 2021 shows that both economies demonstrated strong financial resilience throughout the COVID-19 pandemic, although they relied on different strategies.
+Profitability indicators such as ROA, ROE, and EBITDA margins remained largely stable in both countries, while firm-level variation increased, especially within service-based sectors such as accommodation and transport.
+
+Both countries maintained sound liquidity positions, with current ratios close to 1.8 to 1.9, indicating effective short-term cash management.
+However, their leverage patterns differed slightly.
+German firms relied more on debt financing supported by government credit programs, whereas Swedish firms used internal reserves and maintained more conservative debt levels.
+This difference was reflected in solvency outcomes, with Germany showing greater sensitivity to rising leverage while Sweden displayed stronger stability due to its diversified corporate structure.
+
+Across industries, capital-intensive sectors such as manufacturing, transport, and construction carried higher debt levels but maintained adequate liquidity.
+In contrast, information technology, healthcare, and professional services operated with lower leverage and stable performance.
+The relationship between liquidity and profitability also revealed different adjustment mechanisms: German firms followed a steady and policy-driven recovery, while Swedish firms adapted more dynamically, resulting in a more uneven but flexible rebound.
+
+Overall, both economies avoided a major liquidity crisis and sustained corporate stability during the pandemic.
+The results highlight that financial resilience depends not only on internal balance-sheet management but also on national policy frameworks and institutional support.
+Germany’s coordinated fiscal programs promoted consistency and stability, while Sweden’s flexible market structure encouraged adaptability and faster recovery across firms.
 
 ## References
 
