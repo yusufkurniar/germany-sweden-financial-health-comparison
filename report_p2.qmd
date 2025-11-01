@@ -1276,7 +1276,7 @@ In contrast, **current ratio** and **total assets** show fewer outliers, indicat
 ```{r missing-values-sweden}
 # Prepare long-format data (already done)
 missing_long_compare <- filtered_germany_sweden |>  
-  filter(country %in% c("Sweden", "Germany"), acct_year >= 2019, acct_year <= 2021) |>  
+  filter(country %in% c("Sweden", "Germany"), acct_year >= 2018, acct_year <= 2021) |>  
   select(country, acct_year, all_of(financial_vars)) |>  
   pivot_longer(-c(country, acct_year), names_to = "variable", values_to = "value") |>  
   mutate(missing = is.na(value)) |>  
@@ -1295,6 +1295,7 @@ ggplot(missing_long_compare, aes(x = acct_year, y = prop_missing, fill = country
     fill = "Country",
     color = "Country"
   ) +
+  scale_y_continuous(labels = function(x) sprintf("%.4f", x)) +
   theme_bw(base_size = 12) +
   theme(
     plot.title = element_text(face = "bold", hjust = 0.5, size = 13),
@@ -1306,11 +1307,8 @@ ggplot(missing_long_compare, aes(x = acct_year, y = prop_missing, fill = country
 
 **Interpretation**
 
-The ribbon plot compares the proportion of missing values for key financial variables between Swedish and German firms from 2019 to 2021.
-Overall, most variables show relatively low levels of missing data in both countries, indicating generally reliable datasets.
-However, some variables, such as **EBIT margin** and **gearing ratio**, exhibit higher missingness, particularly during the pandemic period.
-The plot highlights country-specific differences: Sweden tends to have slightly higher missingness in certain measures, whereas Germany shows more consistent completeness across variables.
-The ribbon effectively visualizes both the magnitude and trend of missingness over time, making it easier to identify variables and years that may require careful interpretation or imputation.
+The ribbon plot illustrates the proportion of missing values for key financial variables among Swedish and German firms from **2018 to 2021**. Overall, both datasets maintain **low missingness**, reflecting good data quality across years. A slight **increase in missing values during 2020–2021** is visible, likely due to reporting disruptions during the pandemic. Variables such as **EBIT margin** and **gearing ratio** show marginally higher missingness, suggesting occasional gaps in profitability and leverage reporting. Across countries, **Germany’s data remain more complete and consistent**, while **Sweden displays slightly higher variability** in missingness across variables and years. This pattern indicates that while data reliability is strong overall, **pandemic-related reporting effects were somewhat more evident in Sweden**.
+
 
 4.  Comparative Summary Table: Germany vs Sweden (Pandemic Years)
 
