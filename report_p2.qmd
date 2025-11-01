@@ -116,7 +116,6 @@ library(tidyr)
 library(ggrepel)
 library(viridisLite)
 ```
-
 ## Introduction
 
 This report provides a comprehensive examination of financial performance across German and Swedish industries during the period 2018 to 2021.
@@ -1715,7 +1714,7 @@ Using medians offers a clearer view of typical firm performance without distorti
 The Exploratory Data Analysis (EDA) expands on the cleaned leverage-liquidity dataset to identify cross-country and temporal patterns that describe how firms managed their financial positions during the pandemic.
 Three complementary visual analyses were conducted:
 
-#### EDA – Year-wise Comparison
+#### Year-wise Comparison
 
 This section tracks changes in median leverage and liquidity across 2018–2021 to reveal how firms in Germany and Sweden adjusted their balance sheets during the pandemic.
 
@@ -1754,7 +1753,7 @@ ggplot(lev_liq_long,
 
 \- The trends suggest that German firms relied more on credit support, while Swedish firms drew on retained liquidity, consistent with each country’s policy emphasis (Germany’s Kurzarbeit subsidies vs Sweden’s fiscal buffers).
 
-#### EDA - Leverage-Solvency Relationship
+#### Leverage-Solvency Relationship
 
 This section examines how leverage (debt-to-assets) relates to solvency over time, highlighting whether higher debt ratios reduced financial stability differently across the two countries.
 
@@ -1810,7 +1809,7 @@ However, the **slope is notably steeper in Germany**, especially in **2020**, in
 This likely reflects the **manufacturing-heavy structure** of German industries, which faced sharper revenue disruptions and slower balance sheet recovery.
 In contrast, **Swedish firms**, with **more diversified sectors and stronger equity positions**, experienced a milder solvency decline, demonstrating greater resilience to leverage-induced stress.
 
-#### EDA – Industry-level Leverage Distributions
+#### Industry-level Leverage Distributions
 
 This section explores cross-industry variation in leverage to identify which sectors carried the most debt and how these patterns evolved through the pandemic period.
 
@@ -2021,7 +2020,7 @@ Overall, the plot highlights Sweden’s **financial stability** versus Germany�
 
 **4. How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic?**
 
-#### 1. Macro-level evidence: Industry recovery patterns (ROA vs CR) - feasts (Lecture 9, slide 24-26, feasts and tsibbletalk)
+#### Macro-level evidence: Industry recovery patterns (ROA vs CR) - feasts (Lecture 9, slide 24-26, feasts and tsibbletalk)
 
 We will analyze the fundamental relationship between corporate liquidity and profitability across industries during the pandemic period in two countries, with particular focus on identifying anomalous recovery patterns.
 
@@ -2264,7 +2263,7 @@ kable(classification_comparison) |>
   kable_styling(font_size = 11)
 ```
 
-#### 2. Micro-level evidence of anomalous recovery patterns across industries (ROA and liquidity) - scagnostics (Tignostics) (Lecture 8, 22-27 & Lecture 9, slide 24)
+#### Micro-level evidence of anomalous recovery patterns across industries (ROA and liquidity) - scagnostics (Tignostics) (Lecture 8, 22-27 & Lecture 9, slide 24)
 
 In this section, we compare firm-level relationships between liquidity (Current Ratio) and profitability (ROA) across industries in Germany and Sweden.
 
@@ -2515,7 +2514,7 @@ For example, institutional settings, firm composition, or policy responses may h
 Results are descriptive: scagnostics indicate shape changes but do not prove causality.
 We will triangulate these micro results with macro indicators (feasts features) in the final section.
 
-#### 3. Comparative Analysis: Macro-Level Dynamics vs. Micro-Level Firm Relationships
+#### Comparative Analysis: Macro-Level Dynamics vs. Micro-Level Firm Relationships
 
 This section combines both macro-level and micro-level results to explain how firm recovery patterns differed between Germany and Sweden during and after the COVID-19 crisis.
 Overall, the two countries showed distinct adjustment behaviours in profitability (ROA) and liquidity (Current Ratio, CR), reflecting their financial and institutional environments.
@@ -2581,7 +2580,7 @@ Overall, the comparison suggests that national environments and policy framework
 Germany’s stability-oriented system promoted consistent recovery, while Sweden’s more flexible market structure encouraged diversity in outcomes.
 These findings highlight that firm-level resilience depends not only on financial management but also on broader institutional conditions.
 
-## **Overall Conclusion**
+## Overall Conclusion
 
 The comparative analysis of Germany and Sweden between 2018 and 2021 shows that both economies demonstrated strong financial resilience throughout the COVID-19 pandemic, although they relied on different strategies.
 Profitability indicators such as ROA, ROE, and EBITDA margins remained largely stable in both countries, while firm-level variation increased, especially within service-based sectors such as accommodation and transport.
