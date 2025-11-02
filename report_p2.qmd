@@ -1483,7 +1483,7 @@ kable(ger_swe_ts |>
 
 ## EDA
 
-Here are the EDA processes and results for the sub-questions addressing the primary question "How did the pandemic affect corporate financials in Germany?"
+Here are the EDA processes and results for the sub-questions addressing the primary question "How did the pandemic affect corporate financials in Germany and Sweden?"
 
 ### Question 1
 
