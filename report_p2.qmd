@@ -2691,3 +2691,5 @@ The links to my use of ChatGPT and other AI for help on this assignment are:
 -   <https://chatgpt.com/share/68f305ad-f15c-800d-b724-fc917c1a93ef> helped to deal with the problem that package ‘tignostics’ is not available for this version of R and how to use scagnostics.
 
 -   <https://chatgpt.com/share/68f571d7-0810-8011-960e-b969c4d9a752> helped us format the explanation in a better and concise manner.
+
+-   <https://chatgpt.com/share/6907e227-64f8-8003-b679-0fca791cf322> Used for grammar assistance and improving interpretation flow.
