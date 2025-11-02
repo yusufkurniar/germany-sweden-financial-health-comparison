@@ -116,6 +116,7 @@ library(tidyr)
 library(ggrepel)
 library(viridisLite)
 ```
+
 ## Introduction
 
 This report provides a comprehensive examination of financial performance across German and Swedish industries during the period 2018 to 2021.
@@ -126,7 +127,7 @@ By combining descriptive analytics with comparative industry insights, the repor
 ## Data description
 
 The dataset used in this analysis originates from **the Bureau van Dijk OSIRIS database**, a comprehensive source of harmonised financial information for publicly listed and major private firms worldwide (Bureau van Dijk, 2025).
-For this study, we extracted firm-level data for **German companies** over the **2018–2021 accounting years**, a period that captures both pre-pandemic and pandemic-era financial performance.
+For this study, we extracted firm-level data for **German and Sweden companies** over the **2018 – 2021 accounting years**, a period that captures both pre-pandemic and pandemic-era financial performance.
 Each record represents a firm’s reported financials for a specific accounting year, enabling longitudinal exploration of trends in profitability, liquidity, leverage, and resilience.
 
 The data reading and cleaning process follows the guidance from Tutorial 3's solution and the Wild Caught Data unit, with some modifications according to the data requirements.
@@ -1207,7 +1208,7 @@ lev_liq_summary |>
 
 ### Question 3
 
-For this question, Initial Data Analysis (IDA) is conducted using only approved ETC5521 methods (see lectures and tutorials, Weeks 3–4), focusing on group-wise statistics by industry and robust distributional checks.
+For this question, Initial Data Analysis (IDA) is conducted using only approved ETC5521 methods (see lectures and tutorials, Weeks 3 – 4), focusing on group-wise statistics by industry and robust distributional checks.
 
 1.  Financial Indicators Summaries
 
@@ -1332,7 +1333,7 @@ knitr::kable(combined_financial_summary,
 
 **Interpretation**
 
-The comparative table presents key financial medians—return on assets (ROA), liquidity (current ratio), and leverage (gearing ratio)—for German and Swedish firms across industries during the pandemic years (2019–2021).
+The comparative table presents key financial medians—return on assets (ROA), liquidity (current ratio), and leverage (gearing ratio) for German and Swedish firms across industries during the pandemic years (2019 – 2021).
 Overall, the table highlights differences in financial resilience between the two countries.
 For example, some Swedish industries, particularly technology and manufacturing, exhibit higher median ROA and stronger liquidity compared to their German counterparts, suggesting relatively better profitability and cash management.
 Conversely, certain German industries, such as transport and hospitality, show higher leverage levels, indicating greater reliance on debt financing during the pandemic.
@@ -1434,7 +1435,7 @@ m3
 **Address missingness issues**
 
 To address missing data, observations with missing values in either ROA or current ratio were removed from the dataset.
-Additionally, to ensure temporal consistency across the study period, only industry groups that contained data for all three years (2019-2021) were retained.
+Additionally, to ensure temporal consistency across the study period, only industry groups that contained data for all three years (2019 - 2021) were retained.
 The 'Other / Unmapped' category was removed from the study as it comprises companies without clear industry classification.
 
 ```{r Q4 IDA 4. Address missingness issues}
@@ -1747,7 +1748,7 @@ ggplot(lev_liq_long,
 
 \- Both economies experienced a slight leverage increase in 2020 (Germany +0.01, Sweden +0.02).
 
-\- Liquidity remained broadly constant across the pandemic, stabilising near 1.8–1.9×.
+\- Liquidity remained broadly constant across the pandemic, stabilising near 1.8 – 1.9×.
 
 \- The trends suggest that German firms relied more on credit support, while Swedish firms drew on retained liquidity, consistent with each country’s policy emphasis (Germany’s Kurzarbeit subsidies vs Sweden’s fiscal buffers).
 
@@ -1900,7 +1901,7 @@ knitr::kable(head(lev_liq_summary_w), caption="Winsorised medians confirm robust
 
 ### Question 3
 
-The purpose of this section is to examine the structure and main financial indicators of German and Swedish firms before and during the COVID-19 pandemic (2018–2021).
+The purpose of this section is to examine the structure and main financial indicators of German and Swedish firms before and during the COVID-19 pandemic (2018 – 2021).
 We explore firm size, profitability, leverage, and liquidity across industries and over time.
 
 #### Industry-level Financial Summary for Sweden
@@ -1964,7 +1965,7 @@ ggplot(combined_summary, aes(
 **Interpretation**
 
 The chart compares **median industry profits** in **Sweden and Germany** before and during the pandemic.
-Overall, profits declined across most sectors during 2020–2021, but **Swedish industries** generally showed **greater stability and smaller drops** than those in Germany.
+Overall, profits declined across most sectors during 2020 – 2021, but **Swedish industries** generally showed **greater stability and smaller drops** than those in Germany.
 Manufacturing and technology sectors remained relatively resilient in both countries, while **service-based industries**—especially hospitality and transport—were more affected.
 This suggests Sweden’s economy maintained slightly stronger financial resilience during the pandemic period.
 
@@ -2478,7 +2479,7 @@ In other words, Swedish firms reacted more heterogeneously within the same secto
 Bringing these results together, the comparison highlights that Germany’s corporate environment may have provided stronger structural support for liquidity management and profitability recovery, while Sweden’s more market-driven system allowed greater flexibility but also led to higher volatility.
 This difference suggests that national financial systems and policy responses played a key role in shaping how firms adjusted after the pandemic shock.
 
-## Conclusions
+## Conclusion per Question
 
 ### Question 1
 
@@ -2549,7 +2550,7 @@ The materials used for this report are:
 
 -   Bureau van Dijk.
     (2025).
-    OSIRIS \[Data set: Germany subset\].
+    OSIRIS \[Data set: Germany and Sweden subset\].
     Bureau van Dijk – A Moody’s Analytics Company.
     https://www.bvdinfo.com/en-gb/our-products/data/international/osiris
 
