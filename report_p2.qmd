@@ -119,10 +119,9 @@ library(viridisLite)
 
 ## Introduction
 
-This report provides a comprehensive examination of financial performance across German and Swedish industries during the period 2018 to 2021.
-Drawing on firm-level data from the OSIRIS database, the analysis applies established financial ratios and summary statistics to assess profitability, liquidity, leverage, and firm size across a diverse range of sectors.
-The primary aim is to identify structural strengths and vulnerabilities within each country’s corporate environment, with a particular focus on how different industries responded to the onset and progression of the COVID-19 pandemic.
-By combining descriptive analytics with comparative industry insights, the report aims to inform understanding of financial resilience under conditions of economic uncertainty, highlighting notable patterns and sector-specific trends that emerged over this critical period.
+This report continues from Part 1 and offers a comparative analysis of corporate financial performance in Germany and Sweden between 2018 and 2021. It utilises firm-level data from the OSIRIS database to assess key financial metrics such as profitability, liquidity, leverage, and firm size across major industries. The main research question guiding this analysis is: How did the pandemic impact the financials of companies in Germany and Sweden? The study builds on the methods and findings from Part 1, expanding the scope from a single country to a cross-country comparison to identify structural strengths and weaknesses in each economy.
+
+The time frame highlights two main periods: the pre-pandemic phase (2018 – 2019) and the pandemic phase (2020 – 2021). In Germany, the first confirmed COVID-19 case was on 27 January 2020, with restrictions starting from 22 March 2020 and most being lifted between March 2022 and April 2023 (The Associated Press, 2020). In Sweden, the first case was reported on 31 January 2020, but the government adopted a less restrictive approach, mainly relying on voluntary measures (Godin, 2020). These differences had a significant impact on the economic situation of each country’s industries. Data limitations include missing figures for 2022 and possible inconsistencies in reporting during crisis periods. By linking descriptive statistics and comparative industry trends, this report aims to explain how different policy responses and sectoral structures influenced financial resilience and recovery during the pandemic.
 
 ## Data description
 
@@ -2674,6 +2673,8 @@ The materials used for this report are:
     Europe braces for next wave of coronavirus pandemic in Berlin.
     AP News.
     https://apnews.com/article/coronavirus-pandemic-health-europe-epidemics-berlin-b61de99739774c1f52b4ba6860054d6d
+    
+-   Godin, M. (2020). Sweden’s relaxed approach to the coronavirus could already be back-firing. Time. https://time.com/5817412/sweden-coronavirus/
 
 ## AI Acknowledgement
 
