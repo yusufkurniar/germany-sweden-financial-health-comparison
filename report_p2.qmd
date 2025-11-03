@@ -1209,7 +1209,9 @@ lev_liq_summary |>
 
 For this question, Initial Data Analysis (IDA) is conducted using only approved ETC5521 methods (see lectures and tutorials, Weeks 3 – 4), focusing on group-wise statistics by industry and robust distributional checks.
 
-1.  Financial Indicators Summaries
+1.  Financial Indicators Summaries 
+
+(Lectures: 3 & 5 , Tutorials: 3 & 4)
 
 ```{r industry-financial}
 
@@ -1242,7 +1244,9 @@ knitr::kable(
 This code generates an **industry-level summary** of key financial indicators for German firms from 2019–2021, distinguishing between **pre-pandemic** and **pandemic** periods. It calculates the median values of profitability, ROA, liquidity, and leverage for each industry group, ensuring robustness against outliers. The resulting summary enables comparison of financial performance across industries, highlighting shifts in profitability and stability during the pandemic.
 
 
-2.  Outlier Detection — IQR Rule
+2.  Outlier Detection — IQR Rule 
+
+(Lecture 5 & Tutorials: 3 & 8)
 
 ```{r Outlier detection}
 outlier_summary <- function(x) {
@@ -1266,7 +1270,9 @@ knitr::kable(outlier_counts_sweden, caption="Outlier counts for Sweden: Key fina
 
 This code applies the **Interquartile Range (IQR) rule** to detect outliers among key financial variables for Swedish firms between 2019 and 2021. For each variable—**EBIT margin, gearing ratio, current ratio, and total assets**—the function calculates the first (Q1) and third (Q3) quartiles, determines the IQR, and identifies values lying beyond 1.5×IQR from these bounds as outliers. The resulting table reports the count of extreme observations per variable. This method provides a **robust, non-parametric approach** to identifying unusually high or low financial values, which helps assess data quality, detect potential anomalies, and ensure the reliability of subsequent statistical analyses.
 
-3.  Data Completeness (Missingness Bar Plot)
+3.  Data Completeness (Missingness Bar Plot) 
+
+(Lecture: 6 & Tutorials: 3, 8 & 11)
 
 ```{r missing-values-sweden}
 # Prepare long-format data (already done)
@@ -1305,7 +1311,7 @@ ggplot(missing_long_compare, aes(x = acct_year, y = prop_missing, fill = country
 This plot visualizes **data completeness** across key financial variables for Sweden and Germany between 2018 and 2021. It shows the **proportion of missing values** for each variable and year, allowing a direct comparison of data quality between the two countries. The ribbon and line format highlights both the **level and trend of missingness** over time. Consistently low proportions indicate reliable data coverage, while noticeable peaks suggest potential data reporting or collection gaps. Overall, this visualization supports a **systematic evaluation of data integrity**, ensuring that subsequent analyses are based on robust and complete financial information.
 
 
-4.  Comparative Summary Table: Germany vs Sweden (Pandemic Years)
+4.  Comparative Summary Table: Germany vs Sweden (Pandemic Years) (Lecture 3 & Tutorial 4)
 
 ```{r summary table}
 combined_financial_summary <- filtered_germany_sweden  |> 
@@ -1895,7 +1901,9 @@ knitr::kable(head(lev_liq_summary_w), caption="Winsorised medians confirm robust
 The purpose of this section is to examine the structure and main financial indicators of German and Swedish firms before and during the COVID-19 pandemic (2018 – 2021).
 We explore firm size, profitability, leverage, and liquidity across industries and over time.
 
-#### Industry-level Financial Summary for Sweden
+#### Industry-level Financial Summary for Sweden 
+
+(Lectures: 3 & 5 & Tutorials: 3 & 4)
 
 ```{r Industry summary}
 industry_financial_summary_sweden <- filtered_germany_sweden |> 
@@ -1959,7 +1967,9 @@ This analysis compares **median net income** across industries in **Germany and 
 
 The bar chart visually contrasts median profits side by side, revealing which sectors were more resilient or adversely affected by the pandemic. The clear color scheme and period-based facets allow for easy comparison, showing how industry performance evolved in response to economic disruptions across both nations.
 
-#### Trend of Median Financial Ratios Over Time
+#### Trend of Median Financial Ratios Over Time 
+
+(Lecture: 5 & Tutorials: 3 & 8)
 
 ```{r median financial ratio}
 median_trends <- filtered_germany_sweden |> 
@@ -1981,7 +1991,9 @@ ggplot(median_trends, aes(x=acct_year, y=median_value, color=country, group=coun
 
 This visualization presents the **trend of median financial ratios**—including profitability, leverage, liquidity, and firm size—for **Germany and Sweden** between **2019 and 2021**. By plotting median values over time for each key variable, the chart reveals how overall financial health evolved during the pre-pandemic and pandemic years. Distinct lines for each country allow for a clear comparison of trends, helping identify which nation demonstrated stronger financial stability or experienced greater fluctuations across key performance indicators.
 
-#### Boxplots of Key Financial Ratios
+#### Boxplots of Key Financial Ratios 
+
+(Lecture: 6 (pages 52-53), Tutorial: 3, 8, 11)
 
 ```{r key financial ratios}
 # Reshape data for plotting
