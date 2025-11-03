@@ -1239,10 +1239,8 @@ knitr::kable(
 
 **Interpretation**
 
-The summary of key financial indicators for German industries between 2019 and 2021 shows clear differences in performance before and during the pandemic.
-Overall, **profitability** (measured by net income and ROA) declined across most sectors during the pandemic years, while **leverage** tended to rise as firms relied more on debt to manage financial pressures.
-**Liquidity** patterns were mixed—capital-intensive industries maintained relatively stable current ratios, whereas service-based sectors such as hospitality and transport faced tighter cash flow conditions.
-These trends suggest that manufacturing and technology industries demonstrated stronger financial resilience compared to consumer-facing sectors that were more directly affected by pandemic disruptions.
+This code generates an **industry-level summary** of key financial indicators for German firms from 2019–2021, distinguishing between **pre-pandemic** and **pandemic** periods. It calculates the median values of profitability, ROA, liquidity, and leverage for each industry group, ensuring robustness against outliers. The resulting summary enables comparison of financial performance across industries, highlighting shifts in profitability and stability during the pandemic.
+
 
 2.  Outlier Detection — IQR Rule
 
@@ -1266,10 +1264,7 @@ knitr::kable(outlier_counts_sweden, caption="Outlier counts for Sweden: Key fina
 
 **Interpretation**
 
-The outlier analysis for Sweden from 2019 to 2021 reveals noticeable variability in firms’ financial performance across key indicators.
-A relatively high number of outliers in **EBIT margin** and **gearing ratio** suggests that some firms experienced unusually strong or weak profitability and varying levels of financial leverage during the pandemic.
-This highlights the uneven financial effects across industries, with certain firms taking on more debt or achieving exceptional margins.
-In contrast, **current ratio** and **total assets** show fewer outliers, indicating that liquidity positions and firm sizes remained more consistent across Swedish companies during this period.
+This code applies the **Interquartile Range (IQR) rule** to detect outliers among key financial variables for Swedish firms between 2019 and 2021. For each variable—**EBIT margin, gearing ratio, current ratio, and total assets**—the function calculates the first (Q1) and third (Q3) quartiles, determines the IQR, and identifies values lying beyond 1.5×IQR from these bounds as outliers. The resulting table reports the count of extreme observations per variable. This method provides a **robust, non-parametric approach** to identifying unusually high or low financial values, which helps assess data quality, detect potential anomalies, and ensure the reliability of subsequent statistical analyses.
 
 3.  Data Completeness (Missingness Bar Plot)
 
@@ -1307,7 +1302,7 @@ ggplot(missing_long_compare, aes(x = acct_year, y = prop_missing, fill = country
 
 **Interpretation**
 
-The ribbon plot illustrates the proportion of missing values for key financial variables among Swedish and German firms from **2018 to 2021**. Overall, both datasets maintain **low missingness**, reflecting good data quality across years. A slight **increase in missing values during 2020–2021** is visible, likely due to reporting disruptions during the pandemic. Variables such as **EBIT margin** and **gearing ratio** show marginally higher missingness, suggesting occasional gaps in profitability and leverage reporting. Across countries, **Germany’s data remain more complete and consistent**, while **Sweden displays slightly higher variability** in missingness across variables and years. This pattern indicates that while data reliability is strong overall, **pandemic-related reporting effects were somewhat more evident in Sweden**.
+This plot visualizes **data completeness** across key financial variables for Sweden and Germany between 2018 and 2021. It shows the **proportion of missing values** for each variable and year, allowing a direct comparison of data quality between the two countries. The ribbon and line format highlights both the **level and trend of missingness** over time. Consistently low proportions indicate reliable data coverage, while noticeable peaks suggest potential data reporting or collection gaps. Overall, this visualization supports a **systematic evaluation of data integrity**, ensuring that subsequent analyses are based on robust and complete financial information.
 
 
 4.  Comparative Summary Table: Germany vs Sweden (Pandemic Years)
@@ -1332,11 +1327,8 @@ knitr::kable(combined_financial_summary,
 
 **Interpretation**
 
-The comparative table presents key financial medians—return on assets (ROA), liquidity (current ratio), and leverage (gearing ratio) for German and Swedish firms across industries during the pandemic years (2019 – 2021).
-Overall, the table highlights differences in financial resilience between the two countries.
-For example, some Swedish industries, particularly technology and manufacturing, exhibit higher median ROA and stronger liquidity compared to their German counterparts, suggesting relatively better profitability and cash management.
-Conversely, certain German industries, such as transport and hospitality, show higher leverage levels, indicating greater reliance on debt financing during the pandemic.
-These contrasts underscore how country-specific factors, including market structure, government support, and industry composition, shaped firms’ financial outcomes during the pandemic period.
+This comparative summary table presents the **median financial indicators** — return on assets (ROA), liquidity (current ratio), and leverage (gearing) — for **Germany and Sweden** across various industries during the **pandemic period (2019–2021)**. By summarizing and contrasting these median values, the table highlights **cross-country differences in financial performance and stability** at the industry level. For instance, higher median liquidity in one country may reflect stronger short-term solvency, while lower leverage suggests more conservative financing structures. Overall, this table provides a concise yet informative overview of how the two economies’ industries **responded financially during the pandemic years**, enabling targeted comparisons of resilience and financial health.
+
 
 ### Question 4
 
@@ -1963,10 +1955,9 @@ ggplot(combined_summary, aes(
 
 **Interpretation**
 
-The chart compares **median industry profits** in **Sweden and Germany** before and during the pandemic.
-Overall, profits declined across most sectors during 2020 – 2021, but **Swedish industries** generally showed **greater stability and smaller drops** than those in Germany.
-Manufacturing and technology sectors remained relatively resilient in both countries, while **service-based industries**—especially hospitality and transport—were more affected.
-This suggests Sweden’s economy maintained slightly stronger financial resilience during the pandemic period.
+This analysis compares **median net income** across industries in **Germany and Sweden** during the **pre-pandemic (2019)** and **pandemic (2020–2021)** periods. By grouping data by industry and year, the summary highlights differences in profitability trends between the two countries.
+
+The bar chart visually contrasts median profits side by side, revealing which sectors were more resilient or adversely affected by the pandemic. The clear color scheme and period-based facets allow for easy comparison, showing how industry performance evolved in response to economic disruptions across both nations.
 
 #### Trend of Median Financial Ratios Over Time
 
@@ -1988,10 +1979,7 @@ ggplot(median_trends, aes(x=acct_year, y=median_value, color=country, group=coun
 
 **Interpretation**
 
-This plot tracks the **median financial ratios** — profitability, leverage, liquidity, and firm size — for **Germany and Sweden** from **2019 to 2021**.
-The trends reveal how each economy adapted during the pandemic.
-Overall, **Sweden’s indicators remained more stable**, showing steady liquidity and profitability, while **Germany displayed sharper fluctuations**, particularly in leverage and profitability, reflecting stronger pandemic shocks.
-These patterns suggest that Swedish firms maintained healthier financial balance sheets during this period.
+This visualization presents the **trend of median financial ratios**—including profitability, leverage, liquidity, and firm size—for **Germany and Sweden** between **2019 and 2021**. By plotting median values over time for each key variable, the chart reveals how overall financial health evolved during the pre-pandemic and pandemic years. Distinct lines for each country allow for a clear comparison of trends, helping identify which nation demonstrated stronger financial stability or experienced greater fluctuations across key performance indicators.
 
 #### Boxplots of Key Financial Ratios
 
@@ -2013,10 +2001,8 @@ ggplot(eda_data, aes(x=country, y=value, fill=country)) +
 
 **Interpretation**
 
-This boxplot compares the **distribution of key financial ratios** between **Germany and Sweden** from **2019 to 2021**.
-Sweden generally shows **narrower spreads** and **fewer extreme outliers**, indicating more consistent firm performance.
-In contrast, Germany exhibits **greater variability** in profitability and leverage, suggesting higher financial risk and uneven recovery among firms.
-Overall, the plot highlights Sweden’s **financial stability** versus Germany’s **broader dispersion** in firm outcomes during the pandemic years.
+This boxplot visualization illustrates the distribution of key financial ratios—profitability, leverage, liquidity, and firm size—for Germany and Sweden from 2019 to 2021. It highlights the **median values** to show typical firm performance, the **spread of the interquartile range** to indicate variability across firms, and **outliers** to identify extreme cases. Overall, the plots allow comparison of financial stability and dispersion between the two countries, showing which economies had more resilient or consistent financial performance and how variability may have changed during the pandemic period.
+
 
 ### Question 4
 
@@ -2690,6 +2676,6 @@ The links to my use of ChatGPT and other AI for help on this assignment are:
 
 -   <https://chatgpt.com/share/68f305ad-f15c-800d-b724-fc917c1a93ef> helped to deal with the problem that package ‘tignostics’ is not available for this version of R and how to use scagnostics.
 
--   <https://chatgpt.com/share/68f571d7-0810-8011-960e-b969c4d9a752> helped us format the explanation in a better and concise manner.
+-   <https://chatgpt.com/share/69088135-c960-800f-9fab-a9ed8409003c> helped us format the explanation in a better and concise manner.
 
 -   <https://chatgpt.com/share/6907e227-64f8-8003-b679-0fca791cf322> Used for grammar assistance and improving interpretation flow.
