@@ -2478,7 +2478,7 @@ In other words, Swedish firms reacted more heterogeneously within the same secto
 Bringing these results together, the comparison highlights that Germany’s corporate environment may have provided stronger structural support for liquidity management and profitability recovery, while Sweden’s more market-driven system allowed greater flexibility but also led to higher volatility.
 This difference suggests that national financial systems and policy responses played a key role in shaping how firms adjusted after the pandemic shock.
 
-## Conclusion per Question
+## Summary per Question
 
 ### Question 1
 
@@ -2525,7 +2525,7 @@ Overall, the comparison suggests that national environments and policy framework
 Germany’s stability-oriented system promoted consistent recovery, while Sweden’s more flexible market structure encouraged diversity in outcomes.
 These findings highlight that firm-level resilience depends not only on financial management but also on broader institutional conditions.
 
-## Overall Conclusion
+## Conclusion
 
 The comparative analysis of Germany and Sweden between 2018 and 2021 shows that both economies demonstrated strong financial resilience throughout the COVID-19 pandemic, although they relied on different strategies.
 Profitability indicators such as ROA, ROE, and EBITDA margins remained largely stable in both countries, while firm-level variation increased, especially within service-based sectors such as accommodation and transport.
@@ -2680,7 +2680,7 @@ The materials used for this report are:
 
 The links to my use of ChatGPT and other AI for help on this assignment are:
 
--   <https://chatgpt.com/share/68f563ee-9040-8010-ab1c-4969cfb31ee0> Used to help know when the pandemic happened in Germany, understand the accounting terms related to profitability, how to create a violin chart and jitter, how to make a dumbbell chart for comparison, and perform imputation on the data.
+-   <https://chatgpt.com/share/69083c0b-2f70-8010-a0cb-270eec1c1661> Used to help know when the pandemic happened in Germany, understand the accounting terms related to profitability, how to create a violin chart and jitter, how to make a dumbbell chart for comparison, perform imputation on the data, and suggestion on how comparing variables using dumbbell and jitter violin chart.
 
 -   <https://chatgpt.com/share/68f4378d-bb24-8003-8471-ed2147a8fab3> Used for formatting assistance, debugging R code, and improving interpretation flow.
 
