@@ -55,3 +55,7 @@ report_files/
 report_part2.qmd
 /.quarto/
 **/*.quarto_ipynb
+
+# Addition
+.RDataTmp*
+.DS_Store
