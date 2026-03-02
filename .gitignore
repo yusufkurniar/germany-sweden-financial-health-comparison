@@ -36,11 +36,13 @@ vignettes/*.pdf
 *.utf8.md
 *.knit.md
 
+# Quarto build artifacts inside docs (keep HTML files tracked)
+docs/site_libs/
+docs/*_files/
+docs/search.json
+
 # R Environment Variables
 .Renviron
-
-# pkgdown site
-docs/
 
 # translation temp files
 po/*~
