@@ -1,0 +1,2677 @@
+---
+title: "Financial Health of Firms During COVID-19: Germany and Sweden"
+author: "Yusuf Kurnia Romadhon"
+date: "Oct 20, 2025"
+quarto-required: ">=1.8.0"
+format:
+    html: 
+        output-file: report2.html
+        css: "assignment.css"
+        theme: cerulean
+        page-layout: full
+    
+        code-fold: true
+        code-summary: "Show code"
+        code-line-numbers: false
+        code-tools: false
+        code-copy: false
+    
+        #big size save
+        embed-resources: false
+        self-contained: false
+    
+        #trim JS helpers
+        toc: true
+        toc-depth: 3
+        toc-location: left
+        anchor-sections: false
+        smooth-scroll: false
+    
+        #smaller images
+        fig-width: 6
+        fig-height: 4
+        fig-dpi: 72
+    
+        #lighter code highlighting
+        highlight-style: github
+        df-print: paged
+editor: 
+  markdown: 
+    wrap: sentence
+---
+
+```{r}
+#| echo: false
+# Set up chunk for all slides
+knitr::opts_chunk$set(
+  fig.width = 6,
+  fig.height = 4,
+  fig.align = "center",
+  out.width = "100%",
+  code.line.numbers = FALSE,
+  fig.retina = 4,
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  cache = FALSE,
+  dev.args = list(pointsize = 11)
+)
+```
+
+```{r}
+#| echo: false
+# Load libraries
+library(tidyverse)
+library(conflicted)
+
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(dplyr::select)
+conflicts_prefer(dplyr::slice)
+
+# Plot options and themes
+options(
+  digits = 2,
+  width = 60,
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis",
+  ggplot2.discrete.colour = c("#D55E00", "#0072B2", "#009E73", "#CC79A7", "#E69F00", "#56B4E9", "#F0E442"),
+  ggplot2.discrete.fill = c("#D55E00", "#0072B2", "#009E73", "#CC79A7", "#E69F00", "#56B4E9", "#F0E442")
+)
+
+theme_set(theme_bw(base_size = 14) +
+   theme(
+     aspect.ratio = 1,
+     plot.background = element_rect(fill = 'transparent', colour = NA),
+     plot.title.position = "plot",
+     plot.title = element_text(size = 24),
+     panel.background = element_rect(fill = 'transparent', colour = NA),
+     legend.background = element_rect(fill = 'transparent', colour = NA),
+     legend.key = element_rect(fill = 'transparent', colour = NA)
+   )
+)
+```
+
+## Executive Summary
+
+This report compares how firms in Germany and Sweden adjusted profitability, leverage, liquidity, and financial structure during the COVID 19 period using firm level data from 2018 to 2021.
+
+Key findings:
+
+- Median profitability indicators such as ROA, ROE, and EBITDA margins remained broadly stable in both countries, but firm level dispersion increased during 2020 to 2021.
+- Liquidity buffers were preserved. Current ratios remained near pre pandemic levels, indicating no widespread short term solvency stress.
+- Leverage increased modestly in 2020, with German firms relying slightly more on debt financing while Swedish firms maintained more conservative balance sheet positions.
+- Sectoral divergence intensified. Capital intensive and cyclical industries experienced greater volatility, while technology, utilities, and selected service sectors remained comparatively stable.
+- The relationship between liquidity and profitability became more unstable during the pandemic, particularly in Sweden, where firm level divergence and uneven recovery patterns were more pronounced.
+
+Overall, both economies avoided systemic corporate instability during the pandemic period. However, financial adjustment patterns differed: Germany exhibited more coordinated and stable balance sheet responses, while Sweden showed greater firm level heterogeneity and more uneven recovery dynamics.
+
+## Introduction
+
+This report extends Part 1 by conducting a comparative analysis of corporate financial performance in Germany and Sweden between 2018 and 2021. Using firm-level data from the OSIRIS database, the study examines key financial indicators including profitability, liquidity, leverage, and firm size across major industries. The central research question is: How did the COVID-19 pandemic affect corporate financial performance in Germany and Sweden, and how did differences in policy response and economic structure shape financial resilience?
+
+The analysis distinguishes between two phases: the pre-pandemic period (2018 to 2019) and the pandemic period (2020 to 2021). Germany implemented relatively strict containment measures beginning in March 2020, while Sweden adopted a more voluntary and less restrictive approach. These contrasting policy strategies provide a natural comparative setting to examine whether differences in economic intervention translated into different financial outcomes across industries.
+
+Building on the methods developed in Part 1, this report moves from a single-country perspective to a cross-country framework. By comparing industry-level trends, distributional changes, and structural indicators of resilience, the analysis identifies similarities and divergences in how firms responded to the pandemic shock. The goal is not only to document financial changes, but to evaluate how institutional context and sectoral composition influenced the stability and recovery of corporate performance.
+
+Data limitations include the absence of 2022 financial statements and potential reporting distortions during crisis conditions. Nevertheless, the available panel provides sufficient coverage to assess immediate pandemic impacts and short-term recovery dynamics.
+
+## Data description
+
+The dataset used in this analysis is sourced from the Bureau van Dijk OSIRIS database, a harmonised global financial database covering publicly listed and major private firms (Bureau van Dijk, 2025).
+
+For this study, firm-level financial data were extracted for Germany and Sweden covering the 2018–2021 accounting years. This window captures two distinct economic regimes:
+
+- Pre-pandemic period (2018 – 2019)
+- Pandemic period (2020 – 2021)
+
+Each observation represents a firm-year record, enabling both cross-sectional comparison between countries and longitudinal analysis over time.
+
+**Data Loading and Integration**
+
+This is the detail library used for this project.
+
+```{r load-library}
+library(dplyr)
+library(stringr)
+library(janitor)
+library(skimr)
+library(tsibble)
+library(knitr)
+library(naniar)
+library(patchwork)
+library(plotly)
+library(tsibbletalk)
+library(feasts)
+library(broom)
+library(purrr)
+library(cassowaryr)
+library(gganimate)
+library(gifski)
+library(kableExtra)
+library(ggplot2)
+library(scales)
+library(tidyr)
+library(ggrepel)
+library(viridisLite)
+```
+
+Financial files were stored by country and year. The following code loads all relevant German and Swedish datasets for 2018 – 2021 and combines them into a unified panel.
+
+```{r read-data}
+#define the folder
+data_directory <- "osiris"
+
+#filter germany and sweden
+germany_sweden_file_paths <- list.files(
+  data_directory,
+  pattern = "^osiris_?(Germany|Sweden)_(2018|2019|2020|2021)\\.rda$",
+  full.names = TRUE,
+  ignore.case = TRUE
+)
+
+#name the list by file stems
+germany_sweden_file_stems <- tools::file_path_sans_ext(basename(germany_sweden_file_paths))
+osiris_germany_sweden <- setNames(vector("list", length(germany_sweden_file_paths)), germany_sweden_file_stems)
+
+#load each file
+for (file_index in seq_along(germany_sweden_file_paths)) {
+  temporary_environment <- new.env(parent = emptyenv())
+  load(germany_sweden_file_paths[file_index], envir = temporary_environment)
+  loaded_objects <- as.list(temporary_environment)
+
+  #If the file holds one object, store that object, otherwise store the sub-list
+  osiris_germany_sweden[[file_index]] <- if (length(loaded_objects) == 1) loaded_objects[[1]] else loaded_objects
+}
+
+```
+
+After loading, each dataset is appended with two derived identifiers:
+
+- year (extracted from file name)
+- source_country (Germany or Sweden)
+
+The datasets are then combined into a single longitudinal panel and ordered by country and year.
+
+This structure allows:
+
+- Cross-country comparisons
+- Industry-level aggregation
+- Firm-level time-series analysis
+
+```{r read-data-2}
+#build a single data frame with 'year' and 'source_country' taken from the filename
+combined_germany_sweden <- {
+  parts <- vector("list", length(osiris_germany_sweden))
+  names(parts) <- names(osiris_germany_sweden)
+
+  for (file_stem in names(osiris_germany_sweden)) {
+    data_frame_from_file <- osiris_germany_sweden[[file_stem]]
+
+    extracted_year     <- as.integer(str_extract(file_stem, "\\d{4}"))
+    extracted_country  <- str_extract(file_stem, "(?i)Germany|Sweden") |> stringr::str_to_title()
+
+    parts[[file_stem]] <- mutate(
+      data_frame_from_file,
+      year = extracted_year,
+      source_country = extracted_country #avoid clashing with the raw 'country'
+    )
+  }
+
+  #bind and sort
+  bind_rows(parts) |>
+    arrange(source_country, year)
+}
+
+#unique country–year pairs
+combined_germany_sweden |>
+  dplyr::distinct(source_country, year) |>
+  dplyr::arrange(source_country, year) |>
+  kable(align = "l", booktabs = TRUE) |>
+  kable_styling(full_width = FALSE, font_size = 11)
+
+```
+
+**Data Cleaning and Variable Standardisation**
+
+To ensure analytical clarity and reproducibility, raw OSIRIS vendor column names were standardised using clean_names() and mapped to clear, topic-based variable names.
+
+The transformation process:
+
+- Normalises naming conventions.
+- Harmonises financial metrics.
+- Derives fiscal-year variables from year-end reporting dates.
+- Filters the dataset to retain only variables relevant to profitability, liquidity, leverage, and firm structure.
+
+```{r data-cleaning}
+filtered_germany_sweden <- combined_germany_sweden |>
+  clean_names() |>
+  
+  rename(
+    # IDs / scope (used in all questions)
+    company_name       = company_name_name,
+    company_id         = name_id,
+    acct_year          = year,
+    country            = country_country,
+    city               = city_city_city,
+    consolidation_code = consolidation_code_consol_code,
+    status             = status_status,
+    
+    # Industry codes (Q1, Q2, Q4)
+    nace_code = nace_rev_1_core_code_cnacecd,
+    icb_code  = industrial_classification_benchmark_icb,
+    sic_code  = us_sic_core_code_csicuscde,
+    
+    # Scale / balance sheet (Q2, Q3)
+    total_assets_eur      = total_assets_data13077,
+    total_liabilities_eur = total_liabilities_and_debt_data14022,
+    total_equity_eur      = total_shareholders_equity_data14041,
+    
+    # Revenue & profit (Q1, Q3)
+    total_revenue_eur = total_revenues_data13004,
+    net_sales_eur     = net_sales_data13002,
+    gross_sales_eur   = gross_sales_data13000,
+    net_income_eur    = net_income_starting_line_data15500,
+    
+    # Profitability ratios (Q1, Q4)
+    ebit_margin_pct   = ebit_margin_percent_data31055,
+    ebitda_margin_pct = ebitda_margin_percent_data31060,
+    roa_pct           = return_on_total_assets_percent_data31015,
+    roe_pct           = roe_percent_data31065,
+    
+    # Efficiency
+    net_assets_turnover = net_assets_turnover_data31225,
+    stock_turnover      = stock_turnover_data31220,
+    
+    # Leverage, solvency, and liquidity (Q2)
+    solvency_pct        = solvency_ratio_percent_data31310,
+    gearing_pct         = gearing_percent_data31315,
+    current_ratio       = current_ratio_data31105,
+    liquidity_ratio     = liquidity_ratio_data31110,
+    shareholders_liq_pct= shareholders_liquidity_ratio_data31305,
+    interest_cover      = interest_cover_data31115
+  ) |>
+  
+  # Rename fiscal year
+  mutate(
+    fy_end_date = lubridate::ymd(as.character(company_fiscal_year_end_date_closdate)),
+    fy_year     = year(fy_end_date)
+  ) |>
+  
+  # Select only relevant columns
+  select(
+    company_id, company_name, fy_end_date, fy_year, acct_year, status, country, city, consolidation_code,
+    nace_code, icb_code, sic_code,
+    total_assets_eur, total_liabilities_eur, total_equity_eur,
+    total_revenue_eur, net_sales_eur, gross_sales_eur, net_income_eur,
+    ebit_margin_pct, ebitda_margin_pct, roa_pct, roe_pct,
+    net_assets_turnover, stock_turnover,
+    solvency_pct, gearing_pct, current_ratio, liquidity_ratio,
+    shareholders_liq_pct, interest_cover
+  )
+
+```
+
+**Variable Scope and Dimensions**
+
+```{r table-description, echo=FALSE}
+data_dictionary <- tribble(
+  ~`Column Name`,           ~Description,                                                                    ~`Data Type`, ~`Original Name`,
+  "company_id",             "Unique company identifier (Bureau van Dijk ID).",                               "character", "BvD ID Number (os_id_number)",
+  "company_name",           "Registered company name (label).",                                               "character", "Company Name (name)",
+  "fy_end_date",            "Company fiscal year-end date for the account.",                                  "date",      "Company Fiscal Year End Date (closdate)",
+  "fy_year",                "Year extracted from fiscal year-end date.",                                      "integer",   "derived from Company Fiscal Year End Date (closdate)",
+  "acct_year",              "Reporting year label carried from file name/field.",                             "integer",   "year",
+  "country",                "Country of head office.",                                                         "character", "Country (country)",
+  "city",                   "City of head office.",                                                            "character", "CITY - City (city)",
+  "consolidation_code",     "Consolidation scope of the accounts (e.g., C1/C2/U1/U2).",                        "character", "Consolidation Code (consol_code)",
+  "nace_code",              "NACE core code (EU industry classification).",                                    "character", "NACE Rev 1, Core Code (cnacecd)",
+  "icb_code",               "ICB industry classification code.",                                               "character", "Industrial Classification Benchmark (icb)",
+  "sic_code",               "US SIC core code.",                                                               "character", "US SIC, Core Code (csicuscde)",
+  "total_assets_eur",       "Total assets (EUR).",                                                              "numeric",   "Total Assets (data13077)",
+  "total_liabilities_eur",  "Total liabilities and debt (EUR).",                                               "numeric",   "Total Liabilities and Debt (data14022)",
+  "total_equity_eur",       "Total shareholders’ equity (EUR).",                                               "numeric",   "Total Shareholders Equity (data14041)",
+  "total_revenue_eur",      "Total revenues / operating revenue (EUR).",                                       "numeric",   "Total revenues (data13004)",
+  "net_sales_eur",          "Net sales (EUR).",                                                                 "numeric",   "Net sales (data13002)",
+  "gross_sales_eur",        "Gross sales (EUR).",                                                               "numeric",   "Gross sales (data13000)",
+  "net_income_eur",         "Net income (EUR).",                                                                "numeric",   "Net Income / Starting Line (data15500)",
+  "ebit_margin_pct",        "EBIT margin (% of sales/revenue).",                                               "numeric",   "EBIT Margin (%) (data31055)",
+  "ebitda_margin_pct",      "EBITDA margin (% of sales/revenue).",                                             "numeric",   "EBITDA Margin (%) (data31060)",
+  "roa_pct",                "Return on total assets (%).",                                                     "numeric",   "Return on Total Assets (%) (data31015)",
+  "roe_pct",                "Return on equity (%).",                                                           "numeric",   "ROE (%) (data31065)",
+  "net_assets_turnover",    "Net assets turnover (times).",                                                    "numeric",   "Net Assets Turnover (data31225)",
+  "stock_turnover",         "Stock / inventory turnover (times).",                                             "numeric",   "Stock Turnover (data31220)",
+  "solvency_pct",           "Solvency ratio (%).",                                                             "numeric",   "Solvency ratio (%) (data31310)",
+  "gearing_pct",            "Gearing ratio (%).",                                                              "numeric",   "Gearing (%) (data31315)",
+  "current_ratio",          "Current ratio (times).",                                                          "numeric",   "Current ratio (data31105)",
+  "liquidity_ratio",        "Liquidity / quick ratio (times).",                                                "numeric",   "Liquidity ratio (data31110)",
+  "shareholders_liq_pct",   "Shareholders’ liquidity ratio (%).",                                              "numeric",   "Shareholders Liquidity ratio (data31305)",
+  "interest_cover",         "Interest cover (times).",                                                         "numeric",   "Interest Cover (data31115)"
+)
+
+#show table
+data_dictionary |>
+  kable(align = "l", booktabs = TRUE) |>
+  kable_styling(full_width = FALSE, font_size = 11)
+```
+
+The selected variables encompass four key dimensions of corporate financial health:
+
+1. Identification and Location
+
+    - company_id, company_name
+    - country, city
+    - consolidation_code
+    
+  These variables define firm identity and reporting scope.
+
+2. Balance Sheet Structure
+
+    - total_assets_eur
+    - total_liabilities_eur
+    - total_equity_eur
+    
+  These measure firm size and capital structure.
+
+3. Income and Profitability
+
+    - Revenue measures: total_revenue_eur, net_sales_eur, gross_sales_eur
+    - Net income: net_income_eur
+    - Profitability ratios: roa_pct, roe_pct, ebit_margin_pct, ebitda_margin_pct
+    
+  These reflect operating performance and returns to capital.
+
+4. Liquidity and Solvency
+
+    - current_ratio, liquidity_ratio
+    - solvency_pct, gearing_pct
+    - interest_cover, shareholders_liq_pct
+    
+  These capture financial stability and short-term resilience.
+
+5. Industry Classification
+
+    - nace_code
+    - icb_code
+    - sic_code
+    
+  Industry identifiers enable sectoral comparison across countries.
+    
+**Accounting Year Interpretation**
+
+The OSIRIS accounting year variable reflects financial reporting cycles that often span two calendar years. For example:
+
+- 2018 reflects financial results ending in 2018 (primarily covering 2017–2018 activity)
+- 2021 reflects financial performance ending in 2021 (capturing much of the 2020 – 2021 pandemic period)
+
+Throughout this report, the accounting year is interpreted as the endpoint of the reporting cycle, meaning:
+
+- 2018–2019 represent pre-pandemic benchmarks
+- 2020–2021 represent pandemic-era financial outcomes
+
+This interpretation ensures consistency when comparing financial conditions before and during the COVID-19 shock.
+
+### Research Question
+
+Here are the research questions (sub-questions) that guide us in analysing and answering the primary question: How did the pandemic affect corporate financials in Germany and Sweden?
+
+**1. How did profitability change across industries?**
+
+This question investigates how profitability variables such as ROA, EBITDA margin, and EBIT margin shifted across industries between the pre-pandemic period (2018 to 2019) and the pandemic period (2020 to 2021) in Germany and Sweden.
+It aims to identify which sectors saw profit declines, remained stable, or grew during the pandemic.
+By comparing profitability trends across industries, the analysis highlights which sectors proved more resilient to the economic impacts of the pandemic.
+These insights help explain how the pandemic affected overall corporate performance and provide a clearer understanding of the differences in financial recovery among industries.
+
+**2. How did leverage (debt-to-assets) and liquidity (current ratio) evolve during pandemic?**
+
+This question extends the Part 1 analysis by comparing **how leverage (debt-to-assets)** and **liquidity (current ratio)** evolved between **Germany and Sweden** from 2018 to 2021.\
+The goal is to determine whether firms in the two economies displayed similar balance-sheet responses to the COVID-19 shock.
+
+**3. Which Sweden industries showed unexpected financial resilience or vulnerability from 2019 to 2021, and how were these outcomes shaped by profitability, leverage, liquidity, and firm size?**
+
+Between 2019 and 2021, Swedish industries showed mixed financial resilience.
+Manufacturing, IT, and professional services remained strong, maintaining profitability and liquidity despite the pandemic, helped by Sweden’s lighter restrictions and export strength.
+In contrast, hospitality, transport, and retail were more vulnerable, with sharp declines in profitability and higher leverage as firms relied on debt to survive.
+Larger firms recovered faster due to stronger cash reserves and financing access, while smaller firms faced liquidity pressures.
+Overall, industries with high profitability and low leverage before 2020 proved most resilient through 2021.
+
+**4. How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic?**
+
+This study compares firms in **Germany** and **Sweden**, two advanced European economies with different financial systems and policy responses.
+The analysis explores how the ROA and CR relationship evolved and fractured within industries during and after the pandemic using time-series features and scagnostic metrics.
+**ROA** and **Current Ratio** reflect how efficiently firms generate profit and how safely they can cover short-term obligations.
+The goal is to reveal which sectors were most resilient, which experienced unequal recovery, and how national environments influenced these patterns.
+Understanding the changing relationship between ROA and CR can provide insight into the financial resilience of different industries.
+It also helps identify whether recovery followed a stable path or diverged into unequal outcomes, such as K-shaped patterns, where some firms recovered faster while others declined.
+
+## IDA
+
+The Initial Data Analysis (IDA) evaluates data integrity, distributional behaviour, and comparability across Germany and Sweden before proceeding to substantive analysis.
+
+Given that firm-level financial data are typically heavy-tailed, skewed, and heterogeneous across industries, this stage focuses on:
+
+- Structural integrity of firm-year observations.
+- Industry classification consistency.
+- Distribution shape and outlier behaviour.
+- Missingness patterns.
+- Justification for robust summaries.
+
+**1. Structural Integrity and Missingness Checks**
+
+The first step standardises numeric fields, cleans text variables, reports missingness, and performs sanity checks for duplicates and impossible values.
+
+```{r table-checking}
+
+num_cols <- c(
+  "total_assets_eur","total_liabilities_eur","total_equity_eur",
+  "total_revenue_eur","net_sales_eur","gross_sales_eur","net_income_eur",
+  "ebit_margin_pct","ebitda_margin_pct","roa_pct","roe_pct",
+  "net_assets_turnover","stock_turnover",
+  "solvency_pct","gearing_pct","current_ratio","liquidity_ratio",
+  "shareholders_liq_pct","interest_cover"
+)
+
+#symbol formatting/coerce numerics
+filtered_germany_sweden <- filtered_germany_sweden |>
+  mutate(
+    across(all_of(num_cols) & where(is.character), readr::parse_number),
+    country = stringr::str_to_title(country),
+    city    = stringr::str_to_title(city)
+  )
+
+#missingness report check (overall and by year)
+missing_overall <- filtered_germany_sweden |>
+  summarise(across(everything(), ~ mean(is.na(.)))) |>
+  pivot_longer(everything(), names_to = "variable", values_to = "missing_rate")
+
+missing_by_year <- filtered_germany_sweden |>
+  group_by(acct_year) |>
+  summarise(across(everything(), ~ mean(is.na(.)))) |>
+  pivot_longer(-acct_year, names_to = "variable", values_to = "missing_rate")
+
+#sanity checks
+dup_firm_year <- filtered_germany_sweden |>
+  count(company_id, fy_year, acct_year, country) |>
+  filter(n > 1)
+
+impossible_assets <- filtered_germany_sweden |>
+  filter(!is.na(total_assets_eur) & total_assets_eur < 0)
+
+consol_levels <- filtered_germany_sweden |>
+  count(consolidation_code, sort = TRUE)
+
+```
+
+This block confirms:
+
+- Numeric variables are correctly parsed.
+- Country and city labels are standardised.
+- Duplicate firm-year records are absent.
+- Impossible values (e.g., negative total assets) are flagged.
+- Consolidation codes are reviewed.
+
+Ensuring structural integrity at this stage prevents distortion in later cross-country comparisons.
+
+**2. Industry Classification Mapping**
+
+To enable consistent sector-level analysis, 2-digit NACE codes are extracted and mapped to broad industry groups. ICB classification is used as a fallback where necessary. A unified industry_group variable is then created.
+
+```{r NACE-column}
+#clean 2-digit NACE as integer
+filtered_germany_sweden <- filtered_germany_sweden |>
+  mutate(
+    nace_num2 = suppressWarnings(as.integer(str_sub(readr::parse_number(as.character(nace_code)), 1, 2)))
+  )
+
+#map NACE divisions to broad section names
+industry_from_nace <- function(x){
+  case_when(
+    x %in% 1:3 ~ "Agriculture, Forestry & Fishing",
+    x %in% 5:9 ~ "Mining & Quarrying",
+    x %in% 10:33 | x %in% 15:37 ~ "Manufacturing",
+    x %in% 35 ~ "Electricity, Gas, Steam",
+    x %in% 36:39 ~ "Water Supply & Waste",
+    x %in% 41:43 ~ "Construction",
+    x %in% 45:47 ~ "Wholesale & Retail Trade",
+    x %in% 49:53 ~ "Transport & Storage",
+    x %in% 55:56 ~ "Accommodation & Food",
+    x %in% 58:63 ~ "Information & Communication",
+    x %in% 64:66 ~ "Financial & Insurance",
+    x %in% 68 ~ "Real Estate",
+    x %in% 69:75 ~ "Professional, Scientific & Technical",
+    x %in% 77:82 ~ "Administrative & Support",
+    x %in% 84 ~ "Public Administration",
+    x %in% 85 ~ "Education",
+    x %in% 86:88 ~ "Human Health & Social Work",
+    x %in% 90:93 ~ "Arts, Entertainment & Recreation",
+    x %in% 94:96 ~ "Other Service Activities",
+    x %in% 97:98 ~ "Household Activities",
+    x %in% 99 ~ "Extraterritorial Organizations",
+    TRUE ~ NA_character_
+  )
+}
+
+#ICB top-level sector labels
+icb_map <- c(
+  "0001" = "Oil & Gas",
+  "1000" = "Basic Materials",
+  "2000" = "Industrials",
+  "3000" = "Consumer Goods",
+  "4000" = "Health Care",
+  "5000" = "Consumer Services",
+  "6000" = "Telecommunications",
+  "7000" = "Utilities",
+  "8000" = "Financials",
+  "9000" = "Technology"
+)
+
+#normalize ICB to a 4-digit “bucket” (example: 2573 to 2000)
+normalize_icb <- function(x){
+  x_chr <- str_extract(as.character(x), "\\d+")
+  ifelse(is.na(x_chr), NA_character_,
+         sprintf("%04d", as.integer(floor(as.numeric(x_chr) / 1000) * 1000)))
+}
+
+filtered_germany_sweden <- filtered_germany_sweden |>
+  mutate(
+    industry_nace = industry_from_nace(nace_num2),
+    icb_bucket    = normalize_icb(icb_code),
+    industry_icb  = icb_map[icb_bucket],
+    industry_group = coalesce(industry_nace, industry_icb, "Other / Unmapped")
+  )
+
+#check
+unmapped_sample <- filtered_germany_sweden |>
+  filter(industry_group == "Other / Unmapped") |>
+  select(company_id, fy_year, acct_year, nace_code, icb_code) |>
+  head(15)
+
+#factor order for plots
+ordered_levels <- c(
+  "Agriculture, Forestry & Fishing","Mining & Quarrying","Manufacturing",
+  "Electricity, Gas, Steam","Water Supply & Waste","Construction",
+  "Wholesale & Retail Trade","Transport & Storage","Accommodation & Food",
+  "Information & Communication","Financial & Insurance","Real Estate",
+  "Professional, Scientific & Technical","Administrative & Support",
+  "Public Administration","Education","Human Health & Social Work",
+  "Arts, Entertainment & Recreation","Other Service Activities",
+  "Household Activities","Extraterritorial Organizations",
+  "Oil & Gas","Basic Materials","Industrials","Consumer Goods","Health Care",
+  "Consumer Services","Telecommunications","Utilities","Financials","Technology",
+  "Other / Unmapped"
+)
+filtered_germany_sweden <- filtered_germany_sweden |>
+  mutate(industry_group = factor(industry_group, levels = ordered_levels))
+```
+
+This step ensures:
+
+- Comparable industry groupings across Germany and Sweden.
+- Reduced fragmentation from highly granular vendor codes.
+- Consistent sector ordering for visualisation.
+
+The mapping prioritises NACE classifications and supplements them with ICB where missing.
+
+**3. Reshaping for Distribution Profiling**
+
+Numeric variables are reshaped into long format to support systematic profiling. Variables are separated into:
+
+- Scale variables (monetary totals).
+- Ratio variables (profitability, liquidity, leverage).
+
+```{r prepare-IDA}
+#using long data
+ida_germany_sweden <- filtered_germany_sweden |>
+  dplyr::select(acct_year, country, dplyr::all_of(num_cols)) |>
+  tidyr::pivot_longer(dplyr::all_of(num_cols),
+                      names_to = "variable_orig", values_to = "value") |>
+  tidyr::drop_na()
+
+#split between scale and ratio
+scale_vars <- c("total_assets_eur","total_liabilities_eur","total_equity_eur",
+                "total_revenue_eur","net_sales_eur","gross_sales_eur","net_income_eur")
+ratio_vars <- setdiff(unique(ida_germany_sweden$variable_orig), scale_vars)
+
+#label mapping for the charts
+nice <- c(
+  total_assets_eur   = "Total assets (EUR)",
+  total_liabilities_eur="Total liabilities (EUR)",
+  total_equity_eur   = "Equity (EUR)",
+  total_revenue_eur  = "Total revenue (EUR)",
+  net_sales_eur      = "Net sales (EUR)",
+  gross_sales_eur    = "Gross sales (EUR)",
+  net_income_eur     = "Net income (EUR)",
+  ebit_margin_pct    = "EBIT margin (%)",
+  ebitda_margin_pct  = "EBITDA margin (%)",
+  roa_pct            = "ROA (%)",
+  roe_pct            = "ROE (%)",
+  net_assets_turnover= "Net assets turnover (x)",
+  stock_turnover     = "Stock turnover (x)",
+  solvency_pct       = "Solvency (%)",
+  gearing_pct        = "Gearing (%)",
+  current_ratio      = "Current ratio (x)",
+  liquidity_ratio    = "Liquidity ratio (x)",
+  shareholders_liq_pct = "Shareholders’ liquidity (%)",
+  interest_cover     = "Interest cover (x)"
+)
+
+pretty_var <- function(x) ifelse(x %in% names(nice), nice[x], x)
+
+ida_germany_sweden <- ida_germany_sweden |>
+  mutate(variable = pretty_var(variable_orig),
+         variable = factor(variable, levels = unique(variable)))
+
+```
+
+Reshaping facilitates uniform treatment across variables and supports consistent visual diagnostics. Separating scale and ratio variables allows appropriate transformation choices (log scale for monetary values, linear scale for ratios).
+
+**Distributional Analysis**
+
+**4. Scale Variables**
+
+Scale variables are examined using violin and jitter plots on a log scale, with medians highlighted.
+
+**4.1 Variable Group Definitions**
+
+```{r IDA-scale}
+#define variables sets
+vars_balance <- c("total_assets_eur","total_liabilities_eur","total_equity_eur")
+vars_flows   <- c("total_revenue_eur","net_sales_eur","gross_sales_eur","net_income_eur")
+```
+
+This code defines balance-sheet and flow variable groups for visualisation.
+
+**4.2 Balanced Sheet Scale Variables**
+
+```{r balanced-sheet-scale}
+p_scale_balance <- ida_germany_sweden |>
+  filter(variable_orig %in% vars_balance) |>
+  mutate(
+    y    = if_else(value > 0, value, NA_real_),
+    year = factor(acct_year)
+  ) |>
+  ggplot(aes(x = year, y = y, colour = country,
+             group = interaction(country, year))) +
+  geom_violin(trim = FALSE, fill = NA, linewidth = 0.4, na.rm = TRUE,
+              position = position_dodge(width = 0.75)) +
+  geom_jitter(alpha = 0.12, size = 0.6, na.rm = TRUE,
+              position = position_jitterdodge(jitter.width = 0.12,
+                                              jitter.height = 0,
+                                              dodge.width = 0.75)) +
+  stat_summary(fun = median, geom = "point", shape = 95, size = 6, na.rm = TRUE,
+               position = position_dodge(width = 0.75)) +
+  scale_y_log10(labels = scales::label_number(scale_cut = scales::cut_short_scale())) +
+  facet_wrap(~ variable, scales = "free_y", ncol = 3) +
+  labs(x = "Year", y = NULL, title = "Violin and Jitter by Year (log scale) for Balance Sheet Variables") +
+  theme_minimal(base_size = 11) +
+  theme(
+  plot.title.position = "plot",
+  legend.position     = "top",
+  legend.spacing.y    = unit(-0.6, "lines"),
+  legend.justification = "center",
+  legend.direction     = "horizontal",
+  legend.box           = "horizontal",
+  legend.margin        = margin(b = 4),
+  axis.text.x          = element_text(size = 10),
+  strip.text           = element_text(face = "bold"),
+  panel.grid.minor     = element_blank()
+)
+
+p_scale_balance
+```
+
+Balance-sheet variables are strongly right-skewed in both countries. Most firms cluster at lower asset levels, while a small number of very large firms create long upper tails.
+
+Key findings:
+
+- Medians remain stable between 2018 and 2021.
+- Sweden shows slightly higher central levels in asset and liability measures.
+- Dispersion increases modestly during 2020 – 2021
+
+The heavy skewness justifies the use of median and IQR rather than mean.
+
+**4.3 Flow Scale Variables**
+
+```{r}
+p_scale_flows <- ida_germany_sweden |>
+  dplyr::filter(variable_orig %in% vars_flows) |>
+  dplyr::mutate(
+    y    = dplyr::if_else(value > 0, value, NA_real_),
+    year = factor(acct_year)
+  ) |>
+  ggplot(aes(x = year, y = y, colour = country,
+             group = interaction(country, year))) +
+  geom_violin(trim = FALSE, fill = NA, linewidth = 0.4, na.rm = TRUE,
+              position = position_dodge(width = 0.75)) +
+  geom_jitter(alpha = 0.12, size = 0.6, na.rm = TRUE,
+              position = position_jitterdodge(jitter.width = 0.12,
+                                              jitter.height = 0,
+                                              dodge.width = 0.75)) +
+  stat_summary(fun = median, geom = "point", shape = 95, size = 6, na.rm = TRUE,
+               position = position_dodge(width = 0.75)) +
+  scale_y_log10(labels = scales::label_number(scale_cut = scales::cut_short_scale())) +
+  facet_wrap(~ variable, scales = "free_y", ncol = 2) +
+  labs(x = "Year", y = NULL, title = "Violin and Jitter by Year (log scale) for Flow Variables") +
+  theme_minimal(base_size = 11) +
+  theme(
+  plot.title.position = "plot",
+  legend.position     = "top",
+  legend.spacing.y    = unit(0.3, "lines"),
+  legend.justification = "center",
+  legend.direction     = "horizontal",
+  legend.box           = "horizontal",
+  legend.margin        = margin(t = 6, b = 2),
+  axis.text.x          = element_text(size = 10),
+  strip.text           = element_text(face = "bold"),
+  panel.grid.minor     = element_blank()
+)
+
+p_scale_flows
+```
+
+Revenue and sales measures show similar right-skewed distributions. Net income exhibits a thicker lower tail in 2020 – 2021, indicating increased incidence of low or negative profitability during the pandemic.
+
+Again, medians provide a more robust summary than means.
+
+**5. Ratio Variables**
+
+Ratio variables are visualised on their natural scale to assess dispersion and potential structural shifts.
+
+**5.1 Variable Group Definitions**
+
+```{r IDA-ratio}
+#define variable sets
+vars_profit_eff <- c(
+  "ebit_margin_pct", "ebitda_margin_pct",
+  "roa_pct", "roe_pct",
+  "net_assets_turnover", "stock_turnover"
+)
+
+vars_liquidity_solvency <- c(
+  "solvency_pct", "gearing_pct",
+  "current_ratio", "liquidity_ratio",
+  "shareholders_liq_pct", "interest_cover"
+)
+```
+
+This block defines profitability/efficiency and liquidity/solvency variable groups.
+
+**5.2 Profitability and Efficiency Ratios**
+
+```{r p-ratio-profit-eff}
+p_ratio_profit_eff <- ida_germany_sweden |>
+  dplyr::filter(variable_orig %in% vars_profit_eff) |>
+  dplyr::mutate(year = factor(acct_year)) |>
+  ggplot(aes(x = year, y = value, colour = country,
+             group = interaction(country, year))) +
+  geom_violin(trim = FALSE, fill = NA, linewidth = 0.4, na.rm = TRUE,
+              position = position_dodge(width = 0.75)) +
+  geom_jitter(alpha = 0.12, size = 0.6, na.rm = TRUE,
+              position = position_jitterdodge(jitter.width = 0.12,
+                                              jitter.height = 0,
+                                              dodge.width = 0.75)) +
+  stat_summary(fun = median, geom = "point",
+               shape = 95, size = 6, na.rm = TRUE,
+               position = position_dodge(width = 0.75)) +
+  facet_wrap(~ variable, scales = "free_y", ncol = 3) +
+  labs(x = "Year", y = NULL,
+       title = "Violin and Jitter by Year for Profitability & Efficiency Ratios") +
+  theme_minimal(base_size = 11) +
+  theme(
+    axis.text.x = element_text(size = 10),
+    strip.text  = element_text(face = "bold"),
+    panel.grid.minor = element_blank(),
+    legend.position = "top"
+  )
+
+p_ratio_profit_eff
+```
+
+Profitability ratios cluster near zero but widen during the pandemic years. ROE displays the greatest dispersion, reflecting sensitivity to equity base fluctuations.
+
+Efficiency ratios remain relatively stable, suggesting operational turnover was less volatile than bottom-line profitability.
+
+Heavy tails confirm that median-based comparisons are appropriate.
+
+**5.3 Liquidity and Solvency Ratios**
+
+```{r}
+p_ratio_liq_solv <- ida_germany_sweden |>
+  dplyr::filter(variable_orig %in% vars_liquidity_solvency) |>
+  dplyr::mutate(year = factor(acct_year)) |>
+  ggplot(aes(x = year, y = value, colour = country,
+             group = interaction(country, year))) +
+  geom_violin(trim = FALSE, fill = NA, linewidth = 0.4, na.rm = TRUE,
+              position = position_dodge(width = 0.75)) +
+  geom_jitter(alpha = 0.12, size = 0.6, na.rm = TRUE,
+              position = position_jitterdodge(jitter.width = 0.12,
+                                              jitter.height = 0,
+                                              dodge.width = 0.75)) +
+  stat_summary(fun = median, geom = "point",
+               shape = 95, size = 6, na.rm = TRUE,
+               position = position_dodge(width = 0.75)) +
+  facet_wrap(~ variable, scales = "free_y", ncol = 3) +
+  labs(x = "Year", y = NULL,
+       title = "Violin and Jitter by Year for Liquidity & Solvency Variables") +
+  theme_minimal(base_size = 11) +
+  theme(
+    axis.text.x = element_text(size = 10),
+    strip.text  = element_text(face = "bold"),
+    panel.grid.minor = element_blank(),
+    legend.position = "top"
+  )
+
+p_ratio_liq_solv
+```
+
+Liquidity measures are centred around operationally meaningful values, while gearing and interest coverage show long upper tails.
+
+Sweden exhibits slightly greater dispersion across several ratios, consistent with earlier distributional findings.
+
+**Data Quality Diagnostics**
+
+**6. Missingness Patterns**
+
+Missingness is examined by country and year.
+
+```{r numeric-missingness-check}
+key_vars <- c("total_assets_eur","total_liabilities_eur","total_equity_eur",
+              "total_revenue_eur","net_income_eur",
+              "ebit_margin_pct","ebitda_margin_pct","roa_pct","roe_pct",
+              "current_ratio","liquidity_ratio","gearing_pct","solvency_pct")
+
+# missingness by industry and country
+missing_by_industry <- filtered_germany_sweden |>
+  group_by(country, industry_group) |>
+  summarise(across(all_of(key_vars), ~ mean(is.na(.)), .names = "{.col}"),
+            .groups = "drop") |>
+  pivot_longer(-c(country, industry_group),
+               names_to = "variable", values_to = "missing_rate")
+
+#heatmap by year for numeric variables
+missing_heat <- filtered_germany_sweden |>
+  group_by(country, acct_year) |>
+  summarise(across(all_of(key_vars), ~ mean(is.na(.)), .names = "{.col}"),
+            .groups = "drop") |>
+  pivot_longer(-c(country, acct_year),
+               names_to = "variable", values_to = "missing_rate")
+
+ggplot(missing_heat,
+       aes(variable, factor(acct_year), fill = missing_rate)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient(low = "white", high = "red",
+                      labels = scales::percent_format(accuracy = 1)) +
+  facet_wrap(~ country, nrow = 1) +
+  labs(x = NULL, y = "Year",
+       title = "Missingness by Year & Country (Numeric Variables)") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+Missingness is stable across 2018–2021 and does not spike during the pandemic. Ratio variables (particularly gearing and liquidity ratio) exhibit higher missing rates than core accounting totals.
+
+Balance-sheet and revenue variables are nearly complete, ensuring reliable cross-country comparisons for scale measures.
+
+**7. Outliers Detection**
+
+Outliers are flagged using both IQR (1.5× rule) and z-score thresholds.
+
+```{r outliers-check}
+num_cols <- c("total_assets_eur","total_liabilities_eur","total_equity_eur",
+              "total_revenue_eur","net_sales_eur","gross_sales_eur","net_income_eur",
+              "ebit_margin_pct","ebitda_margin_pct","roa_pct","roe_pct",
+              "net_assets_turnover","stock_turnover",
+              "solvency_pct","gearing_pct","current_ratio","liquidity_ratio",
+              "shareholders_liq_pct","interest_cover")
+
+qfun <- function(x,p) quantile(x, probs=p, na.rm=TRUE, names=FALSE)
+
+outliers_by_country <- purrr::map_dfr(num_cols, function(v){
+  x  <- filtered_germany_sweden[[v]]
+  ct <- filtered_germany_sweden$country
+  
+  q1 <- qfun(x,.25); q3 <- qfun(x,.75); iqr <- q3-q1
+  lo <- q1 - 1.5*iqr; hi <- q3 + 1.5*iqr
+  z  <- as.numeric(scale(x))
+  
+  tibble::tibble(
+    variable = v,
+    country  = ct,
+    n        = !is.na(x),
+    iqr_flag = (x < lo | x > hi),
+    z_flag   = abs(z) > 3
+  )
+}) |>
+  dplyr::group_by(variable, country) |>
+  dplyr::summarise(
+    n = sum(n),
+    iqr_outliers = sum(iqr_flag, na.rm = TRUE),
+    z_outliers   = sum(z_flag, na.rm = TRUE),
+    share_iqr    = iqr_outliers/n,
+    share_z      = z_outliers/n,
+    .groups = "drop"
+  ) |>
+  dplyr::arrange(country, desc(share_iqr))
+
+var_levels <- intersect(num_cols, unique(outliers_by_country$variable))
+
+outliers_by_country_ord <- outliers_by_country |>
+  dplyr::mutate(variable = factor(variable, levels = var_levels)) |>
+  dplyr::arrange(variable, country)
+
+outliers_by_country_ord |>
+  kable(align = "l", booktabs = TRUE) |>
+  kable_styling(full_width = FALSE, font_size = 11)
+```
+
+Outliers are common in scale variables due to heterogeneous firm size. Profitability ratios also show extreme values, particularly ROE.
+
+These patterns confirm:
+
+- Heavy-tailed distributions.
+- Need for robust summaries.
+- Potential benefit of log transformations for monetary variables.
+
+No automatic winsorisation is applied at this stage; instead, robustness is addressed in later modelling decisions.
+
+**8. Character Field Validation**
+
+Key identifiers and classification fields are cleaned and checked for missingness.
+
+```{r character-check}
+#character variables to check
+char_vars <- c("company_id","company_name","country","city",
+               "consolidation_code","nace_code","icb_code","sic_code")
+char_vars <- intersect(char_vars, names(filtered_germany_sweden))
+
+#cleaning
+chars_clean <- filtered_germany_sweden |>
+  mutate(
+    across(all_of(char_vars),
+           ~ .x |> as.character() |> str_squish() |> na_if("")),
+    #casing
+    country = str_to_title(country),
+    city    = str_to_title(city),
+    company_name = str_squish(company_name)
+  )
+
+#missingness check
+char_missing <- chars_clean |>
+  summarise(across(all_of(char_vars), ~ mean(is.na(.)))) |>
+  tidyr::pivot_longer(everything(), names_to="variable", values_to="missing_rate")
+
+char_missing |>
+  kable(align = "l", booktabs = TRUE) |>
+  kable_styling(full_width = FALSE, font_size = 11)
+```
+
+Identifiers (company_id, company_name) are complete, enabling reliable panel tracking. Industry codes are largely complete, supporting consistent classification.
+
+After completing the global IDA, targeted preparation steps were applied for each research question.
+
+### Question 1
+
+I initially added a period label (Pre-pandemic 2018 – 2019 vs. Pandemic 2020 – 2021).
+For visualisations, net_income_eur was transformed using asinh() to compare both gains and losses on a consistent scale.
+When ROA/ROE are missing, I recalculated simple estimates from the accounting totals and noted the sources of the values (reported vs. recomputed).
+
+```{r q1_prepare_profitability_inputs}
+stopifnot("net_income_eur" %in% names(filtered_germany_sweden))
+
+ida_question1 <- filtered_germany_sweden |>
+  mutate(
+    country = country,
+    # period flag
+    period = if_else(acct_year >= 2020, "Pandemic (2020–2021)", "Pre-pandemic (2018–2019)"),
+    # transform for visuals (handles negatives)
+    net_income_eur_asinh = asinh(as.numeric(net_income_eur)),
+    # recompute ROA / ROE (fallbacks)
+    roa_calc = 100 * (net_income_eur / total_assets_eur),
+    roe_calc = if_else(total_equity_eur > 0,
+                       100 * (net_income_eur / total_equity_eur),
+                       NA_real_),
+    roa_use = coalesce(roa_pct, roa_calc),
+    roe_use = coalesce(roe_pct, roe_calc),
+    roa_src = case_when(
+      !is.na(roa_pct) ~ "reported",
+      !is.na(roa_calc) ~ "recomputed",
+      TRUE ~ NA_character_
+    ),
+    roe_src = case_when(
+      !is.na(roe_pct) ~ "reported",
+      !is.na(roe_calc) ~ "recomputed",
+      TRUE ~ NA_character_
+    )
+  )
+```
+
+This step:
+
+- Defines pre-pandemic vs pandemic periods
+- Transforms net income using asinh() to handle losses
+- Recomputes ROA and ROE when missing
+- Tracks provenance of values
+
+This ensures transparency in profitability construction.
+
+**Conservative Within-firm Gap Filling**
+
+```{r q1_firm_one_gap_fill}
+#Firm one-gap fill within the same period only
+
+fill_one_gap <- function(x){
+  f <- dplyr::lag(x); b <- dplyr::lead(x)
+  ifelse(is.na(x) & !is.na(f) & !is.na(b) & (f == b), f, x)
+}
+
+ida_question1 <- ida_question1 |>
+  arrange(company_id, acct_year) |>
+  group_by(company_id, period) |>  #period boundary blocks carryover
+  mutate(
+    ebit_step1   = fill_one_gap(ebit_margin_pct),
+    ebitda_step1 = fill_one_gap(ebitda_margin_pct),
+    roa_step1    = fill_one_gap(roa_use),
+    roe_step1    = fill_one_gap(roe_use)
+  ) |>
+  ungroup() |>
+  mutate(
+    ebit_step1   = coalesce(ebit_margin_pct, ebit_step1),
+    ebitda_step1 = coalesce(ebitda_margin_pct, ebitda_step1),
+    roa_step1    = coalesce(roa_use, roa_step1),
+    roe_step1    = coalesce(roe_use, roe_step1)
+  )
+```
+
+A one-gap rule fills isolated missing values within the same period only, preventing cross-period information leakage.
+
+**Hierarchical Median Imputation**
+
+```{r q1_impute_hierarchy_finalize}
+#median fills in strict order (no cross-period borrowing)
+#country x industry × year medians
+med_ixy <- ida_question1 |>
+  group_by(country, industry_group, acct_year) |>
+  summarise(
+    med_ebit = median(ebit_step1,   na.rm=TRUE),
+    med_ebitda = median(ebitda_step1, na.rm=TRUE),
+    med_roa = median(roa_step1,    na.rm=TRUE),
+    med_roe = median(roe_step1,    na.rm=TRUE),
+    .groups="drop"
+  )
+
+#country x industry × period medians
+med_ip <- ida_question1 |>
+  group_by(country, industry_group, period) |>
+  summarise(
+    med_ebit_ip = median(ebit_step1,   na.rm=TRUE),
+    med_ebitda_ip = median(ebitda_step1, na.rm=TRUE),
+    med_roa_ip = median(roa_step1,    na.rm=TRUE),
+    med_roe_ip = median(roe_step1,    na.rm=TRUE),
+    .groups="drop"
+  )
+
+#country x period medians
+med_p <- ida_question1 |>
+  group_by(country, period) |>
+  summarise(
+    med_ebit_p = median(ebit_step1,   na.rm=TRUE),
+    med_ebitda_p = median(ebitda_step1, na.rm=TRUE),
+    med_roa_p = median(roa_step1,    na.rm=TRUE),
+    med_roe_p = median(roe_step1,    na.rm=TRUE),
+    .groups="drop"
+  )
+
+#join and impute with precedence, also explicit source flags
+ida_question1 <- ida_question1 |>
+  left_join(med_ixy, by = c("country","industry_group","acct_year")) |>
+  left_join(med_ip,  by = c("country","industry_group","period")) |>
+  left_join(med_p,   by = c("country", "period")) |>
+  mutate(
+    #final values, using your precedence
+    ebit_margin_q1   = if_else(is.na(ebitda_step1), ebit_step1, ebit_step1),
+    ebit_margin_q1   = if_else(is.na(ebit_step1),   coalesce(med_ebit,   med_ebit_ip,   med_ebit_p),   ebit_step1),
+    ebitda_margin_q1 = if_else(is.na(ebitda_step1), coalesce(med_ebitda, med_ebitda_ip, med_ebitda_p), ebitda_step1),
+    roa_q1           = if_else(is.na(roa_step1),    coalesce(med_roa,    med_roa_ip,    med_roa_p),    roa_step1),
+    roe_q1           = if_else(is.na(roe_step1),    coalesce(med_roe,    med_roe_ip,    med_roe_p),    roe_step1),
+
+    #provenance for EBIT/EBITDA margins
+    ebit_src = dplyr::case_when(
+      !is.na(ebit_margin_pct) ~ "reported",
+      is.na(ebit_margin_pct) & !is.na(ebit_step1) ~ "firm-1gap(period)",
+      is.na(ebit_step1) & !is.na(med_ebit) ~ "ind×year",
+      is.na(ebit_step1) & is.na(med_ebit) & !is.na(med_ebit_ip) ~ "ind×period",
+      TRUE ~ "period"
+    ),
+    ebitda_src = dplyr::case_when(
+      !is.na(ebitda_margin_pct) ~ "reported",
+      is.na(ebitda_margin_pct) & !is.na(ebitda_step1) ~ "firm-1gap(period)",
+      is.na(ebitda_step1) & !is.na(med_ebitda) ~ "ind×year",
+      is.na(ebitda_step1) & is.na(med_ebitda) & !is.na(med_ebitda_ip) ~ "ind×period",
+      TRUE ~ "period"
+    ),
+
+    #ROA/ROE provenance
+    roa_src = dplyr::case_when(
+      !is.na(roa_src) ~ roa_src,
+      is.na(roa_src) & !is.na(roa_step1) ~ "firm-1gap(period)",
+      is.na(roa_step1) & !is.na(med_roa) ~ "ind×year",
+      is.na(roa_step1) & is.na(med_roa) & !is.na(med_roa_ip) ~ "ind×period",
+      TRUE ~ "period"
+    ),
+    roe_src = dplyr::case_when(
+      !is.na(roe_src) ~ roe_src,
+      is.na(roe_src) & !is.na(roe_step1) ~ "firm-1gap(period)",
+      is.na(roe_step1) & !is.na(med_roe) ~ "ind×year",
+      is.na(roe_step1) & is.na(med_roe) & !is.na(med_roe_ip) ~ "ind×period",
+      TRUE ~ "period"
+    )
+  ) |>
+  select(-ends_with("_step1"))
+```
+
+Remaining gaps are filled using a strict hierarchy:
+
+- Country × Industry × Year median.
+- Country × Industry × Period median.
+- Country × Period median.
+
+All imputation sources are explicitly recorded.
+
+**Imputation Audit Tables**
+
+```{r q1_imputation_summary}
+impute_summary_q1 <- ida_question1 |>
+  summarise(
+    .by = c(country, period),
+    n_rows = n(),
+    ebit_reported   = sum(ebit_src   == "reported",            na.rm=TRUE),
+    ebit_firmgap    = sum(ebit_src   == "firm-1gap(period)",   na.rm=TRUE),
+    ebit_ind_year   = sum(ebit_src   == "ind×year",            na.rm=TRUE),
+    ebit_ind_period = sum(ebit_src   == "ind×period",          na.rm=TRUE),
+    ebit_period     = sum(ebit_src   == "period",              na.rm=TRUE),
+
+    ebitda_reported   = sum(ebitda_src   == "reported",          na.rm=TRUE),
+    ebitda_firmgap    = sum(ebitda_src   == "firm-1gap(period)", na.rm=TRUE),
+    ebitda_ind_year   = sum(ebitda_src   == "ind×year",          na.rm=TRUE),
+    ebitda_ind_period = sum(ebitda_src   == "ind×period",        na.rm=TRUE),
+    ebitda_period     = sum(ebitda_src   == "period",            na.rm=TRUE),
+
+    roa_reported    = sum(roa_src == "reported",            na.rm=TRUE),
+    roa_recomputed  = sum(roa_src == "recomputed",          na.rm=TRUE),
+    roa_firmgap     = sum(roa_src == "firm-1gap(period)",   na.rm=TRUE),
+    roa_ind_year    = sum(roa_src == "ind×year",            na.rm=TRUE),
+    roa_ind_period  = sum(roa_src == "ind×period",          na.rm=TRUE),
+    roa_period      = sum(roa_src == "period",              na.rm=TRUE),
+
+    roe_reported    = sum(roe_src == "reported",            na.rm=TRUE),
+    roe_recomputed  = sum(roe_src == "recomputed",          na.rm=TRUE),
+    roe_firmgap     = sum(roe_src == "firm-1gap(period)",   na.rm=TRUE),
+    roe_ind_year    = sum(roe_src == "ind×year",            na.rm=TRUE),
+    roe_ind_period  = sum(roe_src == "ind×period",          na.rm=TRUE),
+    roe_period      = sum(roe_src == "period",              na.rm=TRUE)
+  )
+```
+
+Imputation rates remain limited. Germany shows higher direct reporting coverage than Sweden, particularly for EBIT and EBITDA margins. ROA and ROE are largely reported in both countries.
+
+1.  EBIT & EBITDA Imputation
+
+```{r impute-margins}
+impute_margins <- impute_summary_q1 |>
+  select(country, period, n_rows,
+         ebit_reported, ebit_ind_year, ebit_period, ebit_firmgap,
+         ebitda_reported, ebitda_ind_year, ebitda_period, ebitda_firmgap)
+
+impute_margins |>
+  kable(align = "l", booktabs = TRUE) |>
+  kable_styling(full_width = FALSE, font_size = 11)
+```
+
+According to the table, Germany shows strong coverage of EBIT and EBITDA margins in both periods, with about 82 – 84% of values reported directly.
+The remaining 16 – 18% are filled using industry and year medians, and Germany does not need any firm-gap or period-level imputations.
+In comparison, Sweden has lower direct reporting, around 69 – 71% across both periods.
+Approximately 29 – 31% of Swedish records depend on industry and year medians, which is a higher dependence than in Germany.
+Only four rows in each period use a period-level fallback, indicating that heavy imputations are very limited.
+Overall, imputations are present in both countries, but Sweden requires more support due to lower direct reporting.
+
+2.  ROA Imputation
+
+```{r impute-roa}
+impute_roa <- impute_summary_q1 |>
+  select(country, period, n_rows,
+         roa_reported, roa_recomputed, roa_ind_year, roa_ind_period, roa_period)
+
+impute_roa |>
+  kable(align = "l", booktabs = TRUE) |>
+  kable_styling(full_width = FALSE, font_size = 11)
+```
+
+According to the table, ROA is nearly fully available in Germany, with 98 – 99% of rows reported directly in both periods.
+Only about 1% of observations depend on recomputation from accounting totals, and industry and year replacement is below 0.3%.
+Sweden also shows strong ROA coverage, around 94 – 95% reported or recomputed.
+However, Sweden relies more on recomputation, approximately 5% in each period.
+Industry-level fallback is very limited.
+Overall, data quality remains stable in both countries, though Sweden requires slightly more reconstruction of ROA than Germany.
+
+3.  ROE Imputation
+
+```{r impute-roe}
+impute_roe <- impute_summary_q1 |>
+  select(country, period, n_rows,
+         roe_reported, roe_recomputed, roe_ind_year, roe_ind_period, roe_period)
+
+impute_roe |>
+  kable(align = "l", booktabs = TRUE) |>
+  kable_styling(full_width = FALSE, font_size = 11)
+```
+
+According to the table, Germany had strong ROE availability, with about 96% of records reported directly in both periods.
+Around 0.4 – 0.5% were recomputed, and roughly 3 – 4% used industry and year fallbacks.
+Sweden also had good coverage, above 94% reported in both periods.
+However, Sweden relied more on recomputation and on industry and year fallbacks combined, accounting for around 5 – 6% of observations.
+No period-level imputations occurred in either country.
+Overall, both datasets provided reliable ROE values, with Sweden needing slightly more support from industry medians. 
+
+The relatively high direct reporting coverage in Germany compared to Sweden suggests stronger raw data completeness, although both datasets remain sufficiently robust for comparative analysis. Importantly, the imputation hierarchy preserves cross-country comparability while minimising distortion from extreme firm-level observations.
+
+### Question 2
+
+The Initial Data Analysis (IDA) for this question focused on constructing and validating key indicators of leverage and liquidity for both Germany and Sweden during 2018 – 2021.
+Specifically, new variables such as debt-to-assets and equity ratio were derived from total liabilities, equity, and assets to measure firms’ capital structure and solvency capacity.
+Data cleaning steps included filtering out inactive firms, excluding implausible ratios (e.g., leverage \>150%), and dropping missing or non-finite values.
+These processed metrics were summarised using median and interquartile range (IQR) to capture typical firm behaviour and variability by year and country, ensuring comparability between economies before conducting visual exploration.
+
+```{r q2-ida}
+# Create leverage and liquidity indicators for both countries
+lev_liq_data <- filtered_germany_sweden |>
+  filter(acct_year %in% 2018:2021, status == "Active") |>
+  mutate(
+    debt_to_assets = total_liabilities_eur / total_assets_eur,
+    equity_ratio   = total_equity_eur / total_assets_eur
+  ) |>
+  select(acct_year, country, industry_group,
+         debt_to_assets, equity_ratio, gearing_pct,
+         solvency_pct, current_ratio) |>
+  drop_na(debt_to_assets, current_ratio)
+
+# Summarise by year and country
+lev_liq_summary <- lev_liq_data |>
+  group_by(country, acct_year) |>
+  summarise(
+    median_debt_assets = median(debt_to_assets, na.rm = TRUE),
+    iqr_debt_assets    = IQR(debt_to_assets, na.rm = TRUE),
+    median_liquidity   = median(current_ratio, na.rm = TRUE),
+    iqr_liquidity      = IQR(current_ratio, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+lev_liq_summary |>
+  knitr::kable(
+    caption = "Median and IQR of Leverage and Liquidity by Country (2018–2021)",
+    digits = 2
+  ) |>
+  kableExtra::kable_styling(full_width = FALSE, font_size = 11)
+```
+
+Both countries maintained median liquidity near 1.8×, while median leverage hovered around 0.50-0.52.Sweden shows slightly higher liquidity dispersion, suggesting a broader mix of firm sizes and capital structures.
+
+The stability of median leverage during 2020 – 2021 indicates that firms did not materially increase debt exposure despite favourable credit conditions. This suggests that pandemic-related stress manifested more through profitability pressures than through widespread balance-sheet deterioration.
+
+### Question 3
+
+1.  Financial Indicators Summaries
+
+```{r industry-financial}
+
+industry_financial_summary <- filtered_germany_sweden |> 
+  filter(country == "Germany", !is.na(industry_group), acct_year >= 2019, acct_year <= 2021) |> 
+  mutate(period = ifelse(acct_year < 2020, "Pre-pandemic", "Pandemic")) |>
+  group_by(industry_group, period) |> 
+  summarise(
+    n_firms = n(),
+    median_profit = median(net_income_eur, na.rm = TRUE),
+    median_roa = median(roa_pct, na.rm = TRUE),
+    median_liq = median(current_ratio, na.rm = TRUE),
+    median_lev = median(gearing_pct, na.rm = TRUE),
+    .groups = "drop"     
+  ) |> 
+  arrange(industry_group, period)
+
+# Display table
+knitr::kable(
+  industry_financial_summary,
+  digits = 2,
+  booktabs = TRUE,
+  caption = "Industry-level summary as per IDA procedure"
+)
+
+```
+
+This code generates an **industry-level summary** of key financial indicators for German firms from 2019 – 2021, distinguishing between **pre-pandemic** and **pandemic** periods. It calculates the median values of profitability, ROA, liquidity, and leverage for each industry group, ensuring robustness against outliers. The resulting summary enables comparison of financial performance across industries, highlighting shifts in profitability and stability during the pandemic.
+
+2.  Outlier Detection (IQR Rule) 
+
+```{r Outlier detection}
+outlier_summary <- function(x) {
+  q1 <- quantile(x, 0.25, na.rm=TRUE)
+  q3 <- quantile(x, 0.75, na.rm=TRUE)
+  iqr <- q3 - q1
+  lower <- q1 - 1.5 * iqr
+  upper <- q3 + 1.5 * iqr
+  sum(x < lower | x > upper, na.rm=TRUE)
+}
+financial_vars <- c("ebit_margin_pct", "gearing_pct", "current_ratio", "total_assets_eur")
+outlier_counts_sweden <- filtered_germany_sweden  |> 
+  filter(country == "Sweden", acct_year >= 2019, acct_year <= 2021)  |> 
+  summarise(across(all_of(financial_vars), outlier_summary))
+
+knitr::kable(outlier_counts_sweden, caption="Outlier counts for Sweden: Key financial variables (IQR rule)")
+
+```
+
+This code applies the **Interquartile Range (IQR) rule** to detect outliers among key financial variables for Swedish firms between 2019 and 2021. For each variable, **EBIT margin, gearing ratio, current ratio, and total assets**, the function calculates the first (Q1) and third (Q3) quartiles, determines the IQR, and identifies values lying beyond 1.5×IQR from these bounds as outliers. The resulting table reports the count of extreme observations per variable. This method provides a **robust, non-parametric approach** to identifying unusually high or low financial values, which helps assess data quality, detect potential anomalies, and ensure the reliability of subsequent statistical analyses.
+
+3.  Data Completeness
+
+```{r missing-values-sweden}
+# Prepare long-format data (already done)
+missing_long_compare <- filtered_germany_sweden |>  
+  filter(country %in% c("Sweden", "Germany"), acct_year >= 2018, acct_year <= 2021) |>  
+  select(country, acct_year, all_of(financial_vars)) |>  
+  pivot_longer(-c(country, acct_year), names_to = "variable", values_to = "value") |>  
+  mutate(missing = is.na(value)) |>  
+  group_by(country, acct_year, variable) |>  
+  summarise(prop_missing = mean(missing), .groups = "drop")
+
+# Ribbon plot
+ggplot(missing_long_compare, aes(x = acct_year, y = prop_missing, fill = country, group = country)) +
+  geom_ribbon(aes(ymin = 0, ymax = prop_missing), alpha = 0.3) +
+  geom_line(aes(color = country), size = 1) +
+  facet_wrap(~variable, scales = "free_y") +
+  labs(
+    title = "Missingness Trends by Variable for Sweden and Germany (2019–2021)",
+    x = "Year",
+    y = "Proportion Missing",
+    fill = "Country",
+    color = "Country"
+  ) +
+  scale_y_continuous(labels = function(x) sprintf("%.4f", x)) +
+  theme_bw(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 11),
+    axis.text.x = element_text(face = "bold"),
+    legend.position = "right"
+  )
+
+```
+
+This plot visualizes **data completeness** across key financial variables for Sweden and Germany between 2018 and 2021. It shows the **proportion of missing values** for each variable and year, allowing a direct comparison of data quality between the two countries. The ribbon and line format highlights both the **level and trend of missingness** over time. Consistently low proportions indicate reliable data coverage, while noticeable peaks suggest potential data reporting or collection gaps. Overall, this visualization supports a **systematic evaluation of data integrity**, ensuring that subsequent analyses are based on robust and complete financial information.
+
+4.  Comparative Summary Table: Germany vs Sweden (Pandemic Years)
+
+```{r summary table}
+combined_financial_summary <- filtered_germany_sweden  |> 
+  filter(country %in% c("Germany", "Sweden"), !is.na(industry_group), acct_year >= 2019, acct_year <= 2021)  |> 
+  group_by(country, industry_group)  |> 
+  summarise(
+    median_roa = median(roa_pct, na.rm = TRUE),
+    median_liq = median(current_ratio, na.rm = TRUE),
+    median_lev = median(gearing_pct, na.rm = TRUE)
+  )  |> 
+  pivot_wider(names_from = country, values_from = c(median_roa, median_liq, median_lev))
+
+knitr::kable(combined_financial_summary, 
+             digits = 2, 
+             booktabs = TRUE, 
+             caption = "Comparison of Key Financial Medians by Industry: Germany vs Sweden (2019-2021)")
+
+```
+
+This comparative summary table presents the **median financial indicators**, return on assets (ROA), liquidity (current ratio), and leverage (gearing), for **Germany and Sweden** across various industries during the **pandemic period (2019 – 2021)**. By summarizing and contrasting these median values, the table highlights **cross-country differences in financial performance and stability** at the industry level. For instance, higher median liquidity in one country may reflect stronger short-term solvency, while lower leverage suggests more conservative financing structures. Overall, this table provides a concise yet informative overview of how the two economies’ industries **responded financially during the pandemic years**, enabling targeted comparisons of resilience and financial health.
+
+These sectoral differences indicate that financial resilience was shaped primarily by pre-pandemic capital structure and profitability levels rather than by uniform macroeconomic shock effects. The pandemic therefore amplified existing structural strengths and weaknesses across industries.
+
+### Question 4
+
+1.  Data Cleaning on Consolidation Codes
+
+The raw data from Orbis contained financial statements under different consolidation codes (C1, C2, C\*, U1, U2).
+To ensure consistency and comparability, we prioritized consolidated accounts which represent the entire economic entity.
+For each firm-year observation, we retained the highest-priority available consolidated statement following the order: C1 \> C2 \> C\*.
+Unconsolidated statements (U1, U2) were excluded from the analysis.
+
+```{r Q4 IDA 1. Data Cleaning on Consolidation Codes}
+ger_swe_q4 <- filtered_germany_sweden |>
+  mutate(
+    consolidation_priority = case_when(
+      consolidation_code == "C1" ~ 1,  # highest priority
+      consolidation_code == "C2" ~ 2,
+      consolidation_code == "C*" ~ 3,
+      consolidation_code == "U1" ~ 99, # Very low priority, about to be filtered
+      consolidation_code == "U2" ~ 99,
+      TRUE ~ 99  # Handle any unexpected code
+    )
+  ) |>
+  
+  # Group by company and year, and keep only the highest priority records
+  group_by(company_id, fy_year) |>
+  arrange(consolidation_priority, .by_group = TRUE) |>
+  slice(1) |> # Take the first row of each group, which has the highest priority
+  ungroup() |>
+  # Filter out the remaining non-consolidated records
+  filter(consolidation_priority %in% c(1, 2, 3))
+```
+
+2.  Select the columns to be analyzed
+
+```{r Q4 IDA 2. Select the columns to be analyzed}
+ger_swe_q4 <- ger_swe_q4 |>
+  select(company_id, fy_year, roa_pct, current_ratio, industry_group, country)
+```
+
+The analysis in this study is based on a dataset of company financial information.
+It is important to note that in this question we use the fiscal year, not the calendar year.
+A company's fiscal year is its own 12-month reporting period, which may not end in December.
+Using the fiscal year is more accurate for this research because it matches the company's true business cycle.
+This means that when we refer to "2020" in the data, we are talking about the fiscal year that was most affected by the pandemic, even if it does not exactly match the calendar year 2020.
+
+3.  Convert data into a tsibble object using the tsibble package
+
+Each company was defined as a key and the financial year as the index.
+Basic screening was performed to check for missing values, outliers, and duplicates.
+
+```{r Q4 IDA 3. Convert data into a tsibble object using the tsibble package}
+ger_swe_ts <- ger_swe_q4 |>
+  as_tsibble(key = company_id, index = fy_year) |>
+  arrange(company_id, fy_year)
+```
+
+4.  Missing value - Check for missing value
+
+The initial examination of missing values revealed a relatively low proportion of incomplete data in the dataset.
+As shown in @fig-missing_clu, the missing value analysis showed that only 0.9% of the total data was missing, while 99.1% of observations were complete.
+ROA contained between 3% and 3.5% missing values across the dataset, while the current ratio had a slightly higher proportion of missing data, ranging from 1% to 2% (@fig-missing_plots).
+
+```{r Q4 IDA 4. Missing value -Check for missing value}
+#| label: fig-missing_plots
+#| fig-cap: "The plots of Missing Value Distribution"
+
+# Check for missing ROA and CR
+miss_var <- 
+  gg_miss_var(ger_swe_ts, show_pct = TRUE) + 
+  labs(title = "Distribution of Missing Values", 
+       subtitle = "For all variables")
+
+# Check for missing values by industry group
+miss_industry <- ger_swe_ts |> 
+  group_by(industry_group) |> 
+  gg_miss_var(show_pct = TRUE) + 
+  labs(title = "Distribution of Missing Values", 
+       subtitle = "By industry group")
+
+  
+miss_var / miss_industry
+```
+
+```{r Q4 EDA 4. Missing value -Check for missing value 2}
+#| label: fig-missing_clu
+#| fig-cap: "The plot of clustering to visualize missing patterns"
+
+m3 <- vis_miss(ger_swe_ts, cluster = TRUE, sort_miss = TRUE) +
+  theme(axis.text.x = element_text(size = 8, angle = 45, hjust = 1),
+        axis.text.y = element_text(size = 8))
+
+m3
+```
+
+**Address missingness issues**
+
+To address missing data, observations with missing values in either ROA or current ratio were removed from the dataset.
+Additionally, to ensure temporal consistency across the study period, only industry groups that contained data for all three years (2019 – 2021) were retained.
+The 'Other / Unmapped' category was removed from the study as it comprises companies without clear industry classification.
+
+```{r Q4 IDA 4. Address missingness issues}
+ger_swe_ts <- ger_swe_ts |>
+  as_tibble() |>   # Convert to a normal tibble
+  # Remove observations with missing ROA or CR
+  filter(!is.na(roa_pct) & !is.na(current_ratio)) |>
+   # Remove industries that don't have data in 2019-2021
+  group_by(industry_group) |>
+  filter(all(2019:2021 %in% fy_year)) |>
+  filter(industry_group != "Other / Unmapped") |>
+  ungroup() |>
+  # Convert back to tsibble format
+  as_tsibble(key = company_id, index = fy_year) |>
+  arrange(company_id, fy_year)
+```
+
+5.  Summary
+
+The data preparation followed the same cleaning and preprocessing pipeline as described for Germany, ensuring comparability across the two countries.
+Consolidated financial statements were prioritized, and only industries with complete data for 2019 – 2021 were retained.
+
+The comparative analysis of ROA and Current Ratio trends (@tbl-summary) from 2017 to 2021 reveals stark differences between Germany and Sweden, with distinct pandemic-related patterns.
+German companies demonstrated remarkable resilience in profitability, with ROA recovering strongly from a low of 0.37% in 2020 to peak at 5.00% in 2021.
+It indicates a robust post-pandemic recovery.
+In contrast, Swedish firms maintained consistently negative ROA throughout the period, ranging from -9.69% to -11.29%.
+It suggests persistent profitability challenges unaffected by the pandemic.
+Regarding liquidity, both countries maintained stable Current Ratios.
+German companies showed more volatility, dipping to 2.62 in 2019 before recovering to 3.11 in 2020.
+However, Swedish firms maintained consistently higher ratios between 2.95-3.48, indicating stronger short-term liquidity positions.
+
+This difference suggests that while the pandemic significantly impacted German profitability with a subsequent strong recovery, Swedish companies faced deeper structural profitability issues.
+But both maintained adequate short-term financial stability throughout the period.
+
+```{r Q4 IDA 5. Summary}
+#| label: tbl-summary
+#| tbl-cap: "Trends in Mean Return on Assets (ROA) and Current Ratio from Pre-Pandemic to Post-Pandemic Years (2017-2021) in Two Countries"
+
+kable(ger_swe_ts |>
+  as_tibble() |>
+  group_by(fy_year, country) |>
+  summarise(mean_roa = mean(roa_pct, na.rm = TRUE),
+            mean_cr = mean(current_ratio, na.rm = TRUE)) |>
+  ungroup())
+```
+
+The divergence between profitability and liquidity patterns suggests that firms prioritised short-term financial buffers even when profitability weakened. This decoupling highlights an adaptive balance-sheet response rather than a simultaneous collapse in operational and liquidity conditions.
+
+## EDA
+
+The following exploratory analysis evaluates how corporate profitability in Germany and Sweden evolved between the pre-pandemic period (2018 – 2019) and the pandemic period (2020 – 2021). The focus is on both central tendency and dispersion to determine whether the pandemic altered typical firm performance or primarily increased variability across firms.
+
+### Question 1
+
+**1. How did profitability change across industries?**
+
+#### Profitability Measures Analysis
+
+This code recodes years into Pre (2018 – 2019) and Pandemic (2020 – 2021), reshapes five profitability measures (EBIT, EBITDA, ROA, ROE, and net income) into long format, and produces violin plots with jittered observations, median markers, and IQR overlays.
+Net income is transformed using the asinh function so that negative values remain visible while limiting the influence of extreme magnitudes.
+
+```{r q1_profitability_distributions_overall}
+#recode period to short labels
+ida_question1 <- ida_question1 |>
+  mutate(
+    period = if_else(acct_year >= 2020, "Pandemic (2020–21)", "Pre (2018–19)"),
+    period = factor(period, levels = c("Pre (2018–19)", "Pandemic (2020–21)"))
+  )
+
+#build long data
+q1_vars <- c("ebit_margin_q1","ebitda_margin_q1","roa_q1","roe_q1","net_income_eur_asinh")
+
+plot_long <- ida_question1 |>
+  select(company_id, country, period, all_of(q1_vars)) |>
+  pivot_longer(-c(company_id, country, period), names_to = "metric", values_to = "value") |>
+  mutate(
+    metric = factor(
+      metric,
+      levels = q1_vars,
+      labels = c("EBIT margin (%)","EBITDA margin (%)","ROA (%)","ROE (%)","Net income (asinh)")
+    )
+  ) |>
+  drop_na(value)
+
+#helper for IQR bar
+iqr_bar <- function(y) data.frame(
+  y    = median(y, na.rm=TRUE),
+  ymin = quantile(y, 0.25, na.rm=TRUE),
+  ymax = quantile(y, 0.75, na.rm=TRUE)
+)
+
+#helper to draw a panel
+draw_q1_panel_country <- function(data_subset, ncol = 2, title_text = "") {
+  ggplot(
+    data_subset,
+    aes(x = period, y = value, colour = country, group = interaction(country, period))
+  ) +
+    geom_violin(
+      trim = FALSE, fill = NA, linewidth = 0.45, na.rm = TRUE,
+      position = position_dodge(width = 0.75)
+    ) +
+    geom_jitter(
+      alpha = 0.10, size = 0.55, na.rm = TRUE,
+      position = position_jitterdodge(jitter.width = 0.08, jitter.height = 0, dodge.width = 0.75)
+    ) +
+    stat_summary(
+      fun.data = iqr_bar, geom = "errorbar", width = 0.12, linewidth = 0.6, na.rm = TRUE,
+      position = position_dodge(width = 0.75), show.legend = FALSE
+    ) +
+    stat_summary(
+      fun = median, geom = "point", shape = 95, size = 8, na.rm = TRUE,
+      position = position_dodge(width = 0.75), show.legend = FALSE
+    ) +
+    facet_wrap(~ metric, scales = "free_y", ncol = ncol) +
+    scale_x_discrete(labels = c(
+      `Pre (2018–19)`      = "Pre\n(2018 – 2019)",
+      `Pandemic (2020–21)` = "Pandemic\n(2020 – 2021)"
+    )) +
+    labs(x = NULL, y = NULL, colour = "country", title = title_text) +
+    theme_minimal(base_size = 11) +
+    theme(
+      strip.text  = element_text(face = "bold"),
+      axis.text.x = element_text(size = 10, margin = margin(t = 8), lineheight = 0.95),
+      plot.margin = margin(10, 15, 24, 10),
+      legend.position = "top"
+    )
+}
+```
+
+**EBIT & EBITDA Analysis using Median and IQR**
+
+```{r q1-ebit-ebitda}
+figA_metrics <- c("EBIT margin (%)", "EBITDA margin (%)")
+p_q1_A <- draw_q1_panel_country(
+  dplyr::filter(plot_long, metric %in% figA_metrics),
+  ncol = 2,
+  title_text = "Pre vs Pandemic: Germany vs Sweden\nEBIT & EBITDA Analysis using Median and IQR"
+)
+
+p_q1_A
+```
+
+According to the chart, EBIT and EBITDA margins in both Germany and Sweden remain centred close to zero in both periods. Median values change only marginally from the pre-pandemic to the pandemic years, indicating that typical operating profitability was broadly maintained.
+
+However, dispersion increases during 2020 – 2021, particularly in Sweden. The wider violin shapes suggest greater heterogeneity in firm performance, with more firms experiencing either unusually strong margins or sharper declines. Germany shows a comparatively narrower distribution, indicating relatively more stable operating profitability.
+
+Overall, the evidence suggests that the pandemic did not substantially shift median operating margins, but it widened the range of firm-level outcomes, especially in Sweden.
+
+**ROA & ROE Analysis Using Median and IQR**
+
+```{r q1-roa-roe}
+figB_metrics <- c("ROA (%)", "ROE (%)")
+p_q1_B <- draw_q1_panel_country(
+  dplyr::filter(plot_long, metric %in% figB_metrics),
+  ncol = 2,
+  title_text = "Pre vs Pandemic: Germany vs Sweden\nROA & ROE analysis using Median and IQR"
+)
+
+p_q1_B
+```
+
+The ROA and ROE plots show a similar pattern. Median values remain close to zero in both countries, indicating that typical returns on assets and equity did not collapse during the pandemic.
+
+The key change lies in the tails of the distribution. During 2020 – 2021, dispersion increases noticeably, especially for ROE in Sweden, where several firms record extremely negative values. This suggests that while most firms preserved stable returns, a subset experienced substantial losses or equity erosion.
+
+Germany also shows increased variability during the pandemic, but the magnitude of extreme outcomes is smaller compared to Sweden. The stability of the medians combined with wider tails indicates that the pandemic amplified downside risk for certain firms rather than uniformly reducing profitability.
+
+**Net income (asinh) Analysis Using Median and IQR**
+
+```{r}
+figC_metrics <- c("Net income (asinh)")
+p_q1_C <- draw_q1_panel_country(
+  dplyr::filter(plot_long, metric %in% figC_metrics),
+  ncol = 1,
+  title_text = "Pre vs Pandemic: Germany vs Sweden\nNet income (asinh) Analysis Using Median and IQR"
+)
+
+p_q1_C
+```
+
+The net income (asinh) distribution reinforces this pattern. Median values remain close to zero across both periods in Germany and Sweden, indicating that overall profit levels did not dramatically shift for the typical firm.
+
+However, Sweden exhibits heavier tails during the pandemic period, with more firms recording both high profits and deeper losses. Germany’s distribution remains more concentrated around the median, suggesting comparatively steadier firm performance.
+
+This pattern indicates that the pandemic increased volatility in firm outcomes, particularly in Sweden, even though the central tendency of profitability remained relatively stable.
+
+#### Industry Median for EBITDA Margin Analysis
+
+This code calculates median EBITDA margins by country, industry, and period, then constructs a dumbbell chart showing the change from Pre to Pandemic. The use of medians ensures that comparisons reflect typical industry performance rather than being driven by extreme firms.
+
+```{r q1_industry_ebitda_median_delta}
+#mapped industries and build period label
+eb_src <- ida_question1 |>
+  filter(
+    !is.na(ebitda_margin_q1),
+    !is.na(industry_group),
+    industry_group != "Other / Unmapped"
+  ) |>
+  mutate(
+    period = ifelse(acct_year >= 2020, "Pandemic", "Pre"),
+    period = factor(period, levels = c("Pre", "Pandemic"))
+  )
+
+#median by country × industry × period, plus delta
+eb_med_cs <- eb_src |>
+  group_by(country, industry_group, period) |>
+  summarise(med = median(ebitda_margin_q1, na.rm = TRUE), .groups = "drop") |>
+  pivot_wider(names_from = period, values_from = med) |>
+  drop_na(Pre, Pandemic) |>
+  mutate(
+    delta     = Pandemic - Pre,
+    direction = factor(ifelse(delta >= 0, "Increase", "Decrease"),
+                       levels = c("Increase", "Decrease"))
+  )
+
+#one common ordering for industries
+order_levels <- eb_med_cs |>
+  group_by(industry_group) |>
+  summarise(delta_mean = mean(delta, na.rm = TRUE), .groups = "drop") |>
+  arrange(delta_mean) |>
+  pull(industry_group)
+
+eb_med_cs <- eb_med_cs |>
+  mutate(industry_group = factor(industry_group, levels = order_levels))
+
+#facet by country
+ggplot(eb_med_cs,
+       aes(y = industry_group)) +
+  geom_segment(aes(x = Pre, xend = Pandemic,
+                   yend = industry_group, colour = direction),
+               linewidth = 1) +
+  geom_point(aes(x = Pre),      colour = "#4E79A7", size = 2) +  #pre (blue)
+  geom_point(aes(x = Pandemic), colour = "#E15759", size = 2) +  #pandemic (red)
+  geom_vline(xintercept = 0, linetype = "dashed", colour = "grey70") +
+  scale_color_manual(values = c("Increase" = "#2CA02C", "Decrease" = "#D62728")) +
+  guides(colour = guide_legend(title = NULL, override.aes = list(linewidth = 3))) +
+  labs(
+    title = "Change in Median EBITDA Margin: Pandemic vs Pre\nGermany and Sweden by Industry",
+    x = "Median EBITDA Margin (%)",
+    y = NULL
+  ) +
+  facet_grid(. ~ country) +
+  theme_minimal(base_size = 11) +
+  theme(
+    legend.position      = "top", #legend below title
+    legend.box           = "vertical",#stack under the title
+    plot.title.position  = "plot",
+    strip.text           = element_text(face = "bold"),
+    panel.grid.minor     = element_blank(),
+    plot.margin          = margin(10, 20, 10, 10)
+  )
+```
+
+The chart compares median EBITDA margins across industries in Germany and Sweden.
+
+In Germany, most industries show moderate shifts. Accommodation & Food records the most visible improvement, moving from a negative median margin to a positive one during the pandemic period. Technology and Utilities show mild increases, indicating resilience. In contrast, Health Care records the largest decline from a previously high level, marking a notable reversal.
+
+In Sweden, changes follow a broadly similar direction but are generally smaller in magnitude. Accommodation & Food improves slightly, while Health Care, Consumer Services, and Construction show declines. The overall pattern suggests more muted median adjustments but continued dispersion within sectors.
+
+Across both countries, the pandemic did not uniformly reduce industry profitability. Instead, effects were uneven: service-based and cyclical industries display greater volatility, while Technology, Utilities, and Education remain comparatively stable.
+
+The industry-level analysis confirms the earlier firm-level findings: median profitability was largely preserved, but dispersion increased and sectoral divergence became more pronounced during the pandemic.
+
+### Question 2
+
+The Exploratory Data Analysis (EDA) expands on the cleaned leverage–liquidity dataset to identify cross-country and temporal patterns in how firms managed their financial positions during the pandemic.
+Three complementary visual analyses were conducted.
+
+#### Year-wise Comparison
+
+This section tracks changes in median leverage and liquidity across 2018–2021 to reveal how firms in Germany and Sweden adjusted their balance sheets during the pandemic.
+
+```{r}
+lev_liq_long <- lev_liq_summary |>
+  pivot_longer(cols = c(median_debt_assets, median_liquidity),
+               names_to = "indicator", values_to = "value")
+
+ggplot(lev_liq_long,
+       aes(x = acct_year, y = value, colour = country, group = country)) +
+  geom_line(linewidth = 1.1) +
+  geom_point(size = 2) +
+  facet_wrap(~ indicator, scales = "free_y",
+             labeller = as_labeller(c(
+               median_debt_assets = "Median Debt-to-Assets",
+               median_liquidity   = "Median Current Ratio"
+             ))) +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) +
+  scale_colour_brewer(palette = "Set1") +
+  labs(
+    title = "Leverage and Liquidity Trends (2018–2021)",
+    subtitle = "Germany vs Sweden: Stability in liquidity, mild re-leveraging during pandemic",
+    x = "Accounting Year", y = "Median Value", colour = "Country"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(plot.title = element_text(face = "bold"),
+        plot.subtitle = element_text(size = 11),
+        panel.grid.minor = element_blank())
+```
+
+Key findings:
+
+\- Both economies experienced a slight leverage increase in 2020 (Germany +0.01, Sweden +0.02), indicating modest additional borrowing during the initial shock.
+
+\- Liquidity remained broadly stable, with median current ratios holding near 1.8 – 1.9× throughout the period.
+
+\- The pattern suggests precautionary balance-sheet adjustments rather than aggressive re-leveraging. German firms appear to have relied slightly more on credit support mechanisms, while Swedish firms maintained stronger liquidity buffers, consistent with differences in fiscal and policy responses.
+
+Overall, the trends indicate controlled financial adaptation rather than structural deterioration.
+
+#### Leverage-Solvency Relationship
+
+This section examines how leverage (debt-to-assets) relates to solvency over time, highlighting whether higher debt ratios reduced financial stability differently across the two countries.
+
+```{r}
+#| label: fig-leverage-solvency-facets
+#| fig-cap: "Leverage–Solvency Relationship by Country and Year"
+#| fig-width: 14
+#| fig-height: 9
+
+# build plotting data for the leverage–solvency faceted chart
+lev_liq_plot <- lev_liq_data |>
+  # keep sensible ranges and finite values
+  filter(
+    is.finite(debt_to_assets), is.finite(solvency_pct),
+    between(debt_to_assets, 0, 1.5),   # 0–150%
+    between(solvency_pct, -50, 100)    # -50% to 100%
+  ) |>
+  drop_na(country, acct_year)
+
+ggplot(lev_liq_plot, aes(x = debt_to_assets, y = solvency_pct, colour = country)) +
+  geom_point(alpha = 0.25, size = 1.2) +
+  geom_smooth(method = "lm", se = FALSE, linewidth = 1.1) +
+  facet_grid(acct_year ~ country) +
+  scale_x_continuous(labels = scales::percent_format(accuracy = 1), limits = c(0, 1.5)) +
+  scale_y_continuous(limits = c(-50, 100)) +
+  scale_colour_manual(values = c("Germany" = "#D55", "Sweden" = "#0072B2")) +
+  labs(
+    title = "Leverage–Solvency Relationship by Country and Year",
+    subtitle = "Stronger negative slope in Germany, especially during 2020",
+    x = "Debt-to-Assets (%)",
+    y = "Solvency (%)",
+    colour = "Country"
+  ) +
+  theme_minimal(base_size = 15) +
+  theme(
+    strip.text = element_text(face = "bold", size = 14),
+    plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
+    plot.subtitle = element_text(size = 13, hjust = 0.5),
+    legend.position = "none",  # each facet is already labelled
+    axis.text = element_text(size = 12),
+    panel.spacing.x = unit(1.2, "lines"),
+    panel.spacing.y = unit(1.0, "lines"),
+    panel.grid.minor = element_blank()
+  )
+```
+
+Across both Germany and Sweden, leverage shows a strong negative relationship with solvency from 2018 to 2021. Firms with higher debt-to-asset ratios consistently report lower solvency levels, confirming the structural trade-off between debt financing and long-term financial stability.
+
+The relationship remains stable over time, suggesting that the pandemic did not fundamentally alter the capital-structure dynamic.
+
+However, the slope is notably steeper in Germany, especially in 2020, implying that incremental increases in debt had a stronger adverse effect on solvency during the peak disruption period. This may reflect Germany’s greater exposure to capital-intensive and manufacturing industries, where revenue shocks translate more directly into balance-sheet stress.
+
+In contrast, Swedish firms show a milder slope and narrower solvency deterioration, consistent with stronger equity buffers and a more diversified sectoral structure.
+
+#### Industry-level Leverage Distributions
+
+This section explores cross-industry variation in leverage to identify which sectors carried the most debt and how these patterns evolved through the pandemic period.
+
+```{r}
+#| label: fig-leverage-industry-comparison
+#| fig-cap: "Leverage Distribution by Industry and Year for Germany and Sweden (2018–2021)"
+#| fig-width: 16
+#| fig-height: 20
+
+lev_liq_industry <- filtered_germany_sweden |>
+  filter(acct_year %in% 2018:2021,
+         total_assets_eur > 0,
+         total_liabilities_eur >= 0,
+         total_liabilities_eur / total_assets_eur <= 1.5) |>
+  mutate(
+    debt_to_assets = total_liabilities_eur / total_assets_eur
+  ) |>
+  drop_na(industry_group, country)
+
+ggplot(lev_liq_industry,
+       aes(x = debt_to_assets,
+           y = reorder(industry_group, debt_to_assets),
+           fill = country)) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.7, width = 0.6) +
+  facet_wrap(~ acct_year, ncol = 2, scales = "free_x") +
+  scale_x_continuous(labels = scales::percent_format(accuracy = 1),
+                     limits = c(0, 1.5)) +
+  scale_fill_manual(
+    values = c("Germany" = "#D55", "Sweden" = "#0072B2"),
+    name = "Country"
+  ) +
+  labs(
+    title = "Leverage Distribution by Industry and Year (2018–2021)",
+    subtitle = "Comparison between Germany and Sweden across industry groups and years",
+    x = "Debt-to-Assets Ratio",
+    y = NULL
+  ) +
+  theme_minimal(base_size = 16) +  # increased from 13 → 16
+  theme(
+    strip.text = element_text(face = "bold", size = 15),
+    plot.title = element_text(face = "bold", size = 20, hjust = 0.5),
+    plot.subtitle = element_text(size = 14, hjust = 0.5),
+    legend.position = "top",
+    legend.text = element_text(size = 13),
+    legend.title = element_text(size = 14),
+    axis.text.y = element_text(size = 12),
+    axis.text.x = element_text(size = 12),
+    panel.grid.minor = element_blank(),
+    panel.spacing.y = unit(1.2, "lines")
+  )
+```
+
+The industry-level boxplots show that leverage remained broadly stable across sectors in both countries from 2018 to 2021. Capital-intensive industries such as Manufacturing, Construction, and Transport and Storage consistently maintain higher debt-to-assets ratios than service-oriented sectors including Information and Communication or Professional and Technical Services.
+
+Median leverage levels rise slightly in 2020, consistent with temporary borrowing increases during the early pandemic period. However, the overall distribution does not shift dramatically, and both countries display similar industry-level leverage structures.
+
+When considered alongside liquidity patterns, the findings suggest that firms preserved adequate short-term financial capacity. Median current ratios remain close to 1.8 to 2.0 throughout the period, indicating that most firms retained sufficient ability to meet short-term obligations despite moderate borrowing increases.
+
+Taken together, the evidence indicates that corporate balance sheets were supported by prudent financial management and policy buffers. While leverage increased modestly in 2020, neither Germany nor Sweden experienced systemic liquidity deterioration or widespread solvency collapse during the pandemic.
+
+```{r}
+#| warning: false
+# Sensitivity check: winsorise extreme ratios
+lev_liq_summary_w <- lev_liq_data |>
+  mutate(across(c(debt_to_assets, current_ratio),
+                ~ scales::squish(., c(quantile(., 0.01, na.rm=TRUE),
+                                      quantile(., 0.99, na.rm=TRUE))))) |>
+  group_by(country, acct_year) |>
+  summarise(across(c(debt_to_assets, current_ratio), median, na.rm=TRUE), .groups="drop")
+knitr::kable(head(lev_liq_summary_w), caption="Winsorised medians confirm robustness.")
+```
+
+Summary:
+
+- Leverage: Small increase in 2020, partial normalisation by 2021.
+- Liquidity: Stable across both countries, indicating effective cash-flow management.
+- Cross-country comparison: Sweden’s firms appear marginally more liquid and slightly less leveraged, suggesting somewhat greater resilience to credit stress.
+- Overall conclusion: The pandemic triggered modest balance-sheet adjustments but did not produce systemic liquidity deterioration. Germany’s higher industrial exposure explains the slightly stronger leverage–solvency sensitivity, while Sweden’s diversified structure provided a buffer.
+
+### Question 3
+
+The purpose of this section is to examine the structure and main financial indicators of German and Swedish firms before and during the COVID-19 pandemic from 2018 to 2021. The analysis focuses on firm size, profitability, leverage, and liquidity across industries and over time to identify resilience and vulnerability patterns.
+
+#### Industry-level Financial Summary for Sweden 
+
+```{r Industry summary}
+industry_financial_summary_sweden <- filtered_germany_sweden |> 
+  filter(country == "Sweden", !is.na(industry_group), acct_year >= 2019, acct_year <= 2021) |> 
+  group_by(industry_group, acct_year) |> 
+  summarise(
+    n_firms = n(),
+    median_profit = median(net_income_eur, na.rm = TRUE),
+    median_roa = median(roa_pct, na.rm = TRUE),
+    median_liq = median(current_ratio, na.rm = TRUE),
+    median_lev = median(gearing_pct, na.rm = TRUE),
+    .groups = "drop"
+  ) |> 
+  mutate(period = ifelse(acct_year < 2020, "Pre-pandemic", "Pandemic"))
+
+```
+
+```{r Industry-level-summary, fig.height=10, fig.width=20}
+
+combined_summary <- bind_rows(
+  industry_financial_summary |> mutate(country="Germany"),
+  industry_financial_summary_sweden |> mutate(country="Sweden")
+)
+
+combined_summary$period <- factor(combined_summary$period, levels = c("Pre-pandemic", "Pandemic"))
+
+ggplot(combined_summary, aes(
+    x = industry_group,
+    y = median_profit,
+    fill = country
+  )) +
+  geom_col(position = "dodge", width = 0.6) +
+  facet_wrap(~period) +
+  labs(
+    title = "Median Profit Comparison by Industry",
+    x = "Industry",
+    y = "Median Net Income (EUR)",
+    fill = "Country"
+  ) +
+  scale_fill_manual(values = c("Germany" = "#E69F00", "Sweden" = "#56B4E9")) +
+  scale_y_continuous(
+    breaks = seq(0, max(combined_summary$median_profit, na.rm = TRUE), by = 100000),
+    labels = function(x) paste0(scales::comma(x / 1000), "k")
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 9),
+    axis.text.y = element_text(size = 10),
+    axis.title.x = element_text(size = 10, face = "bold"),
+    axis.title.y = element_text(size = 10, face = "bold"),
+    legend.position = "top",
+    plot.title = element_text(size = 10, face = "bold"),
+    strip.text = element_text(size = 10, face = "bold")
+  )
+```
+
+This analysis compares median net income across industries in Germany and Sweden during the pre-pandemic year (2019) and the pandemic period (2020 – 2021).
+
+The results show clear sectoral divergence. In Sweden, industries such as Health Care, Utilities, and Information & Communication maintain relatively strong median profitability during the pandemic, suggesting structural resilience and stable demand. In contrast, more cyclical sectors such as Transport & Storage and Accommodation & Food display greater volatility.
+
+Germany exhibits a similar pattern of sectoral dispersion but with more pronounced shifts in certain capital-intensive industries. Manufacturing and Construction show visible sensitivity to pandemic disruption, while defensive sectors remain comparatively stable.
+
+Overall, the industry comparison indicates that resilience was uneven and strongly sector-dependent rather than country-wide. The pandemic amplified pre-existing structural differences between defensive and cyclical industries.
+
+#### Trend of Median Financial Ratios Over Time 
+
+```{r median financial ratio}
+median_trends <- filtered_germany_sweden |> 
+  filter(acct_year >= 2019, acct_year <= 2021) |> 
+  group_by(country, acct_year) |> 
+  summarise(across(all_of(financial_vars), median, na.rm=TRUE), .groups="drop") |> 
+  pivot_longer(cols = all_of(financial_vars), names_to="variable", values_to="median_value")
+
+ggplot(median_trends, aes(x=acct_year, y=median_value, color=country, group=country)) +
+  geom_line(size=1) +
+  geom_point(size=2) +
+  facet_wrap(~ variable, scales="free_y") +
+  labs(title="Median Financial Indicators Over Time", x="Year", y="Median Value", color="Country") +
+  theme_minimal()
+
+```
+
+The median trend plots provide a macro-level view of how financial health evolved between 2019 and 2021.
+
+Liquidity remains relatively stable in both countries, indicating that firms maintained adequate short-term buffers throughout the crisis. Sweden shows a gradual increase in total assets by 2021, suggesting faster balance sheet expansion during the recovery phase.
+
+Profitability declines in 2020, particularly in Germany, before rebounding in 2021. This pattern reflects temporary operating disruption rather than long-term structural damage.
+
+Leverage trends differ slightly between the two countries. Germany’s gearing ratio increases modestly, consistent with greater reliance on debt during the shock period. Sweden, by contrast, shows more controlled leverage dynamics, suggesting stronger internal financing capacity.
+
+Taken together, the median trends indicate that neither economy experienced systemic financial collapse, but Sweden displays slightly stronger balance sheet expansion and leverage containment during recovery.
+
+#### Boxplots of Key Financial Ratios 
+
+```{r key financial ratios}
+# Reshape data for plotting
+eda_data <- filtered_germany_sweden |> 
+  filter(acct_year >= 2019, acct_year <= 2021) |> 
+  select(country, acct_year, all_of(financial_vars)) |> 
+  pivot_longer(cols = all_of(financial_vars), names_to = "variable", values_to = "value")
+
+ggplot(eda_data, aes(x=country, y=value, fill=country)) +
+  geom_boxplot(outlier.colour = "red", outlier.shape = 16) +
+  facet_wrap(~ variable, scales = "free_y") +
+  labs(title="Distribution of Key Financial Ratios (2019-2021)", 
+       y="Value",
+       x="Country") +
+  theme_minimal()
+```
+
+The boxplots provide insight into dispersion and firm-level heterogeneity.
+
+Both countries exhibit wide distributions in profitability and firm size, with substantial outliers. This confirms that average or aggregate figures would mask important variation across firms. The presence of extreme observations reinforces the decision to rely on medians rather than means.
+
+Germany shows slightly higher dispersion in gearing ratios, indicating greater heterogeneity in debt exposure. Sweden displays a somewhat tighter interquartile range for leverage, consistent with more moderate balance sheet risk.
+
+Importantly, dispersion increases during the pandemic period, particularly in profitability measures. This suggests that the crisis did not affect firms uniformly; instead, it created divergence between stronger and weaker firms, consistent with a partial K-shaped recovery dynamic.
+
+**Overall Interpretation**
+
+Across industries and financial indicators, the pandemic’s impact was moderate but uneven. Defensive sectors maintained profitability and liquidity, while cyclical industries experienced sharper pressure. Median values suggest overall stability, but distributional evidence reveals increased dispersion and firm-level divergence.
+
+Sweden appears slightly more resilient in terms of leverage containment and asset growth, whereas Germany shows greater sensitivity in capital-intensive sectors. However, neither country experienced widespread structural deterioration, indicating that corporate balance sheets were sufficiently robust to absorb the shock.
+
+### Question 4
+
+**4. How did the fundamental relationship between corporate liquidity and profitability evolve and fracture within industries during the pandemic?**
+
+#### Macro-level evidence: Industry recovery patterns (ROA vs CR)
+
+This section evaluates whether the structural relationship between liquidity measured by Current Ratio and profitability measured by ROA remained stable during the pandemic across industries in Germany and Sweden.
+
+```{r Q4 EDA 1. Macro-level evidence: Calculate}
+# Calculate the average ROA and current ratio for each industry each year
+industry_ts <- ger_swe_ts |>
+  group_by(industry_group, country) |>
+  index_by(fy_year) |>
+  summarise(
+    industry_roa = mean(roa_pct, na.rm = TRUE),
+    industry_cr = mean(current_ratio, na.rm = TRUE),
+    n_companies = n()  
+  )
+
+# Calculating time series features
+industry_features <- industry_ts |>
+  group_by(industry_group, country) |>
+  features(industry_roa, feat_stl) |>
+  rename_with(~ paste0("roa_", .), -c(industry_group, country))  |>
+  left_join(
+    industry_ts |>
+      features(industry_cr, features = feat_stl) |>
+      rename_with(~ paste0("cr_", .), -c(industry_group, country)),
+    by = c("industry_group", "country")
+  )
+
+# Focus on trend_strength and spikiness
+focus_features <- industry_features |>
+  select(industry_group, country,
+         roa_trend_strength, roa_spikiness,
+         cr_trend_strength, cr_spikiness)
+```
+
+**Trend Strength Analysis**
+
+In @fig-combined_analysis, colors represent industry groups and shapes denote countries. The left panel plots ROA trend strength against Current Ratio trend strength using a 0.3 threshold to identify structural disruption.
+
+Industries below this threshold experienced weakened financial trajectories. Simultaneous reductions in both profitability and liquidity trend strength indicate that the internal financial structure of the industry did not hold during the pandemic period. Germany shows fewer industries with dual breakdown, while Sweden displays more sectors with reduced stability.
+
+**Volatility Analysis**
+
+The right panel of @fig-combined_analysis compares ROA spikiness and Current Ratio spikiness. Median reference lines identify industries with above average volatility.
+
+Industries positioned above both medians experienced strong fluctuations in profitability and liquidity at the same time. Swedish industries are more concentrated in this high volatility region, suggesting greater instability in financial adjustment during the crisis.
+
+```{r Q4 EDA 1. Macro-level evidence -Combined analysis}
+#| label: fig-combined_analysis
+#| fig-cap: "Combined analysis of financial trend disruption and volatility during the pandemic. Shape denotes country (circles: Germany; triangles: Switzerland)."
+
+# Trend strength analysis to identify the hardest-hit sectors
+trend_analysis <- focus_features |>
+  group_by(country) |>
+  mutate(
+    # Identify sectors where trends are broken (low trend strength)
+    roa_trend_disrupted = roa_trend_strength < 0.3,
+    cr_trend_disrupted = cr_trend_strength < 0.3,
+    overall_trend_impact = (roa_trend_strength + cr_trend_strength) / 2
+  ) |>
+  ungroup()
+
+# Volatility analysis to identify the sectors with the greatest volatility during the pandemic
+volatility_analysis <- focus_features |>
+  group_by(country) |>
+  mutate(
+    high_roa_volatility = roa_spikiness > median(roa_spikiness),
+    high_cr_volatility = cr_spikiness > median(cr_spikiness),
+    overall_volatility = (scale(roa_spikiness) + scale(cr_spikiness)) / 2)  |>
+  ungroup()
+
+# Create trend strength plot
+trend_plot <- focus_features |>
+  ggplot(aes(x = roa_trend_strength, y = cr_trend_strength)) +
+  geom_point(aes(size = roa_spikiness, 
+                 color = industry_group, 
+                 shape = country,  
+                 text = paste("<b>Industry:</b>", industry_group, 
+                             "<br><b>Country:</b>", country,  
+                             "<br><b>ROA Trend:</b>", round(roa_trend_strength, 3),
+                             "<br><b>CR Trend:</b>", round(cr_trend_strength, 3))), 
+             alpha = 0.7) +
+  geom_hline(yintercept = 0.3, linetype = "dashed", color = "red", alpha = 0.7) +
+  geom_vline(xintercept = 0.3, linetype = "dashed", color = "red", alpha = 0.7) +
+  labs(x = "ROA Trend Strength", y = "Current Ratio Trend Strength",
+       size = "ROA Spikiness", shape = "Country") +
+  theme_minimal() + 
+  theme(legend.position = "none",
+         axis.text = element_text(size = 9)) +
+  scale_shape_manual(values = c(16, 17)) 
+
+# Convert to interactive plotly
+trend_in <- ggplotly(trend_plot, tooltip = "text") 
+
+# Create volatility plot
+volatility_plot <- focus_features |>
+  ggplot(aes(x = roa_spikiness, y = cr_spikiness)) +
+  geom_point(aes(color = industry_group, 
+                 size = roa_trend_strength, 
+                 shape = country,  
+                 text = paste("<b>Industry:</b>", industry_group,
+                             "<br><b>Country:</b>", country,  
+                             "<br><b>ROA Spikiness:</b>", round(roa_spikiness, 3),
+                             "<br><b>CR Spikiness:</b>", round(cr_spikiness, 3))), 
+             alpha = 0.7) +
+  geom_hline(yintercept = median(focus_features$cr_spikiness), 
+             linetype = "dashed", color = "blue", alpha = 0.5) +
+  geom_vline(xintercept = median(focus_features$roa_spikiness), 
+             linetype = "dashed", color = "blue", alpha = 0.5) +
+  coord_cartesian(xlim = c(0, quantile(focus_features$roa_spikiness, 0.90))) +
+  labs(x = "ROA Spikiness", y = "Current Ratio Spikiness",
+       size = "ROA Trend Strength", shape = "Country") +
+  theme_minimal() +
+  theme(legend.position = "none",
+         axis.text = element_text(size = 9)) +
+  scale_shape_manual(values = c(16, 17))  
+
+volatility_in <- ggplotly(volatility_plot, tooltip = "text")
+
+# Combined analysis
+combined_analysis <- subplot(
+  trend_in, volatility_in,
+  nrows = 1,
+  shareY = FALSE,
+  titleX = TRUE,
+  titleY = TRUE,
+  margin = 0.05
+) |>
+  plotly::layout(
+    title = list(
+      text = "<b>Industry Financial Impact Analysis During Pandemic</b>",
+      x = 0.5,
+      xanchor = "center",
+      y = 0.98,
+      font = list(size = 16, color = "black"),
+      automargin = TRUE,
+      margin = list(l = 60, r = 60, b = 100, t = 150)
+    ),
+    hoverlabel = list(
+      bgcolor = "white", 
+      font = list(size = 11, color = "black"),
+      bordercolor = "lightgray"
+    ),
+    margin = list(l = 60, r = 60, b = 80),
+    hovermode = "closest",
+    annotations = list(
+      list(
+        x = 0, y = -0.15,
+        xref = "paper", yref = "paper",
+        text = "Red lines: 0.3 threshold",
+        showarrow = FALSE,
+        font = list(size = 10, color = "red")
+      ),
+      list(
+        x = 0.85, y = -0.15,
+        xref = "paper", yref = "paper",
+        text = "Blue lines: Median volatility values",
+        showarrow = FALSE,
+        font = list(size = 10, color = "blue")
+      )
+    )
+  )
+
+combined_analysis
+```
+
+**Threshold-based Industry Classification**
+
+Industries are classified using country specific thresholds based on trend strength and spikiness.
+
+Industries with high trend strength and low volatility are classified as resilient.
+Industries with low trend strength and high volatility are classified as K shaped.
+Industries with high trend strength but high volatility are classified as hidden crisis.
+All remaining industries are classified as moderate impact.
+
+```{r Q4 EDA 1. Macro-level evidence -industry classes}
+#| label: tbl-recovery-classification
+#| tbl-cap: Industry Recovery Classification for Sweden and Germany based on Country-Specific Thresholds
+
+industry_classes <- focus_features |>
+  group_by(country) |>
+  mutate(
+    # Calculate threshold
+    trend_threshold_high = 0.7,
+    trend_threshold_low = 0.3,
+    spikiness_threshold_high = quantile(roa_spikiness, 0.75),
+    spikiness_median = median(roa_spikiness), 
+    
+    # Classification
+    recovery_pattern = case_when(
+      roa_trend_strength >= trend_threshold_high & 
+        roa_spikiness <= median(roa_spikiness) ~ "Resilient",
+      roa_trend_strength <= trend_threshold_low & 
+        roa_spikiness >= spikiness_threshold_high ~ "K-shaped",
+      roa_trend_strength >= trend_threshold_high & 
+        roa_spikiness >= spikiness_threshold_high ~ "Hidden Crisis",
+      TRUE ~ "Moderate Impact"
+    )
+  )
+
+# Comparing the classification differences between the two countries
+classification_comparison <- industry_classes |>
+  select(industry_group, country, recovery_pattern) |>
+  pivot_wider(names_from = country, values_from = recovery_pattern) |>
+  mutate(
+    pattern_match = Germany == Sweden,
+    cross_country_insight = case_when(
+      Germany == "Resilient" & Sweden != "Resilient" ~ "Resilient only in Germany",
+      Sweden == "Resilient" & Germany != "Resilient" ~ "Resilient only in Sweden",
+      Germany == "K-shaped" & Sweden != "K-shaped" ~ "K-shaped only in Germany", 
+      Sweden == "K-shaped" & Germany != "K-shaped" ~ "K-shaped only in Sweden",
+      TRUE ~ "Similar pattern"
+    )
+  ) |>
+  filter(!(Germany == "Moderate Impact" & Sweden == "Moderate Impact")) |>
+  select(industry_group, Germany, Sweden, cross_country_insight)
+
+kable(classification_comparison) |>
+  kable_styling(font_size = 11)
+```
+
+The classification reveals meaningful cross country differences. Germany demonstrates resilience in Construction and Financial Services. Sweden shows stronger recovery in Manufacturing and Administrative Support. Information and Communication displays K shaped dynamics in both countries, indicating that sector characteristics can dominate national context.
+
+#### Micro-level evidence of anomalous recovery patterns across industries (ROA and liquidity)
+
+This section evaluates firm level relationships between Current Ratio and ROA within industries that exhibited distinct macro level patterns.
+
+Selected industries include Information and Communication, Wholesale and Retail Trade, Consumer Services, Financial and Insurance, and Manufacturing.
+
+```{r Q4 EDA 2. Micro-level evidence -data}
+selected_industries <- c("Information & Communication", "Wholesale & Retail Trade", "Consumer Services", "Financial & Insurance", "Manufacturing")
+
+# Extract the companies time series data of these industries
+selected_companies_ts <- ger_swe_ts |>
+  filter(industry_group %in% selected_industries)
+```
+
+```{r Q4 EDA 2. Micro-level evidence -Calculate scagnostic}
+#| label: tbl-company
+#| tbl-cap: "Summary statistics for industries with significant slope changes (jumps > 0). The table shows average slope, maximum absolute slope change, mean residual standard deviation, number of jumps, and differences in volatility and slope before and after the COVID-19 pandemic for three industries: Wholesale & Retail Trade, Information & Communication, and Financial & Insurance."
+
+# Aggregate the original point set by industry × year
+by_ind_year <- selected_companies_ts |>
+  group_by(industry_group) |>
+  index_by(fy_year) |>
+  nest(data = c(company_id, roa_pct, current_ratio)) |>
+  mutate(n_obs = map_int(data, ~ nrow(.x)))
+
+# Calculate scagnostics
+scag_names <- c("outlying", "stringy", "striated", "clumpy", "sparse", "monotonic", "dcor")
+
+by_ind_year <- by_ind_year |>
+  mutate(
+    scags = map(data, ~ {
+      df <- .x
+      # When there are too few samples, return a row of tibble with the same column names and types.
+      if (nrow(df) < 3) {
+        return(as_tibble(set_names(as.list(rep(NA_real_, length(scag_names))), scag_names)))
+      }
+      res <- calc_scags(df$current_ratio, df$roa_pct, scags = scag_names)
+      # Make sure to convert to atomic vectors and name them, then convert to tibble
+      res_vec <- unlist(res)
+      res_named <- set_names(as.numeric(res_vec[scag_names]), scag_names)
+      as_tibble(as.list(res_named))
+    })
+  ) |>
+  unnest(cols = scags)  # Expand into multiple columns
+
+# Fit a linear regression for each industry × year and extract slope, intercept, and resid_sd
+by_ind_year <- by_ind_year |>
+  mutate(
+    fit = map(data, ~ {
+      df <- .x
+      if (nrow(df) < 3 || all(is.na(df$current_ratio)) || all(is.na(df$roa_pct))) return(NULL)
+      lm(roa_pct ~ current_ratio, data = df)
+    }),
+    slope = map_dbl(fit, ~ if (is.null(.x)) NA_real_ else coef(.x)[["current_ratio"]]),
+    intercept = map_dbl(fit, ~ if (is.null(.x)) NA_real_ else coef(.x)[["(Intercept)"]]),
+    resid_sd = map_dbl(fit, ~ if (is.null(.x)) NA_real_ else sd(residuals(.x), na.rm = TRUE))
+  ) |>
+  select(-fit)
+
+# Industry time-series features, grouped by industry_group AND country
+industry_tignostics <- by_ind_year |>
+  arrange(industry_group, country, fy_year) |>
+  group_by(industry_group, country) |>
+  mutate(
+    slope_lag = dplyr::lag(slope),
+    slope_change = slope - slope_lag,   # year-to-year change in slope
+    slope_pct_change = if_else(!is.na(slope_lag) & slope_lag != 0,
+                               (slope - slope_lag) / abs(slope_lag) * 100,
+                               NA_real_),
+    resid_sd_lag = dplyr::lag(resid_sd),
+    resid_sd_change = resid_sd - resid_sd_lag,
+    big_slope_jump = if_else(!is.na(slope_change) & abs(slope_change) > 0.5, 1L, 0L),
+    jumps_cumulative = cumsum(replace_na(big_slope_jump, 0L))
+  ) |>
+  ungroup()
+
+# Calculate the overall volatility_shift (post - pre) before and after the epidemic (taking 2020 as the epidemic year)
+vol_shift <- by_ind_year |>
+  mutate(period = case_when(
+    fy_year < 2020 ~ "pre",
+    fy_year == 2020 ~ "covid_year",
+    fy_year > 2020 ~ "post"
+  )) |>
+  group_by(industry_group, country, period) |>
+  summarise(mean_resid_sd = mean(resid_sd, na.rm = TRUE),
+            mean_slope = mean(slope, na.rm = TRUE),
+            .groups = "drop") |>
+  pivot_wider(names_from = period, values_from = c(mean_resid_sd, mean_slope)) |>
+  mutate(
+    vol_pre_post_diff = mean_resid_sd_post - mean_resid_sd_pre,
+    slope_pre_post_diff = mean_slope_post - mean_slope_pre
+  )
+
+# Merge the results to generate the final summary
+industry_summary <- industry_tignostics |>
+  group_by(industry_group, country) |>
+  summarise(
+    n_years = n_distinct(fy_year),
+    avg_slope = mean(slope, na.rm = TRUE),
+    max_abs_slope_change = if (all(is.na(slope_change))) NA_real_ else max(abs(slope_change), na.rm = TRUE),
+    mean_resid_sd = mean(resid_sd, na.rm = TRUE),
+    jumps = if (all(is.na(jumps_cumulative))) 0 else max(jumps_cumulative, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  left_join(vol_shift |> select(industry_group, country, vol_pre_post_diff, slope_pre_post_diff), 
+            by = c("industry_group", "country"))
+
+kable(industry_summary |> 
+        filter( !is.na(max_abs_slope_change)) |>
+        select(-n_years)) |>
+  kable_styling(font_size = 12)
+```
+
+@tbl-company summarises slope changes and volatility shifts.
+
+Except for Consumer Services, all industries experienced multiple major slope jumps during the pandemic. This indicates that the profitability liquidity relationship changed materially at firm level.
+
+Swedish industries display larger increases in residual dispersion and clustering measures. German industries show comparatively more stable slope evolution.
+
+```{r Q4 EDA 2. Micro-level evidence -scagnostic figure}
+#| label: fig-scagnostic2
+#| fig-cap: "Scagnostic metrics across industries and countries. Dashed line marks 2020 (COVID onset). We can see variations in outlying (extreme values), clumpy (clustering patterns), stringy (linear relationships), and monotonic (consistent trends) metrics before and after the pandemic."
+#| warning: false
+
+scag_long <- by_ind_year |>
+  select(industry_group, country, fy_year, clumpy, outlying, stringy, monotonic) |>
+  pivot_longer(cols = c(clumpy, outlying, stringy, monotonic),
+               names_to = "scag_metric", values_to = "value")
+
+ggplot(scag_long, aes(x = fy_year, y = value, color = industry_group)) +
+  geom_line(linewidth = 0.7) +
+  facet_grid(country~ scag_metric, scales = "free_y") +
+  geom_vline(xintercept = 2020, linetype = "dashed", color = "red") +
+  labs(
+    title = "Evolution of Scagnostic Metrics over Time",
+    subtitle = "Dashed line = COVID year (2020)",
+    x = "Fiscal Year", y = "Scagnostic Value",
+    color = "Industry group"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    legend.title = element_text(size = 9),
+    legend.text = element_text(size = 6),
+    legend.key.width = unit(0.8, "cm"),
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, size = 9),
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(size = 11)) +
+  guides(color = guide_legend(
+    nrow = 2, byrow = TRUE, override.aes = list(size = 3))
+    )
+```
+
+@fig-scagnostic2 shows structural evolution over time. The vertical line marks 2020. Post 2020 increases in clustering and outlying behaviour are more pronounced in Sweden, indicating stronger firm level divergence.
+
+**Summary**
+
+Germany demonstrates more stable post 2020 financial alignment across industries. Sweden exhibits stronger divergence and volatility within industries after the pandemic shock.
+
+The evidence suggests that national financial environments influenced how firms adjusted liquidity and profitability during crisis conditions.
+
+## Summary per Question
+
+### Question 1
+
+The analysis indicates that overall profitability remained broadly stable in both Germany and Sweden during the pandemic relative to the pre-pandemic period. Median EBIT, EBITDA, ROA, ROE, and net income stayed close to zero, suggesting that the typical firm did not experience a structural collapse in profitability.
+
+However, dispersion increased during 2020–2021, particularly in Sweden, where firms experienced more extreme positive and negative outcomes. At the industry level, most sectors showed only modest changes in median EBITDA margins. Accommodation and Food recorded the strongest rebound, while Health Care experienced the largest decline. Technology, Utilities, and Education remained comparatively stable in both countries.
+
+These findings suggest that the pandemic did not dramatically shift central profitability trends, but it amplified heterogeneity across firms and industries, especially within service-oriented sectors.
+
+### Question 2
+
+Both Germany and Sweden displayed financial resilience during the COVID-19 period, though through different balance sheet adjustments.
+
+Liquidity levels remained stable in both countries, with current ratios around 1.8 to 1.9. This indicates effective short-term financial management throughout the crisis. Sweden exhibited slightly greater dispersion, reflecting more variation in firm size and funding structures.
+
+Leverage increased moderately in 2020 in both economies. German firms relied more heavily on external borrowing, consistent with strong credit support mechanisms. Swedish firms appear to have relied more on internal liquidity buffers.
+
+The negative relationship between leverage and solvency is evident in both countries, though the steeper slope in Germany suggests greater sensitivity to debt accumulation. Industry patterns are broadly similar, with Manufacturing, Transport, and Construction remaining more leveraged, while Information, Health Care, and Professional Services maintain more conservative capital structures.
+
+Overall, German firms’ solvency was more exposed to leverage increases, while Swedish firms’ diversified financial structures supported steadier post-pandemic adjustment.
+
+### Question 3
+
+The comparative analysis of Germany and Sweden between 2019 and 2021 reveals distinct resilience patterns during the pandemic.
+
+Both countries experienced profitability pressures and balance sheet adjustments. However, Swedish firms maintained more stable median profitability and liquidity, with fewer extreme outliers. German firms exhibited greater cross-industry variation, particularly in hospitality and transport, indicating more uneven financial stress.
+
+These results suggest that Sweden’s corporate sector adapted with smoother financial adjustment, while Germany experienced sharper disruptions across certain industries, alongside recovery signals in capital-intensive sectors.
+
+### Question 4
+
+The pandemic altered not only financial performance levels but also the structural relationship between liquidity and profitability.
+
+Macro-level analysis shows that Germany maintained relatively stable trend strength and contained volatility across industries. Sweden displayed stronger fluctuations and more frequent structural breakdown in the profitability–liquidity relationship.
+
+Micro-level scagnostic analysis reinforces this contrast. Swedish industries experienced larger increases in clustering, outliers, and residual dispersion, indicating stronger firm-level divergence. Germany showed comparatively steadier slope evolution and more consistent financial alignment.
+
+The evidence suggests that Germany’s institutional environment supported stability in liquidity management, while Sweden’s more flexible structure allowed greater dispersion in firm outcomes. In several sectors, particularly Information and Communication, this resulted in K-shaped recovery dynamics.
+
+Overall, resilience during the pandemic depended not only on firm-level financial management but also on national institutional and policy environments shaping adjustment mechanisms.
+
+## Conclusion
+
+The comparative analysis of Germany and Sweden from 2018 to 2021 demonstrates that both economies maintained corporate financial resilience throughout the COVID-19 period, although through different adjustment mechanisms.
+
+Profitability indicators, including ROA, ROE, and EBITDA margins, remained broadly stable in both countries. The central tendency of firm performance did not collapse. However, dispersion increased during 2020 – 2021, particularly in service-oriented sectors such as accommodation and transport, indicating more uneven firm-level outcomes.
+
+Liquidity positions remained sound in both economies, with current ratios consistently around 1.8 to 1.9. This suggests that firms successfully managed short-term obligations despite economic disruption. Differences emerge in leverage dynamics. German firms relied more heavily on debt financing, supported by government-backed credit programs, while Swedish firms maintained comparatively conservative leverage and relied more on internal liquidity buffers. As a result, German solvency outcomes were more sensitive to rising leverage, whereas Swedish firms exhibited greater balance-sheet stability.
+
+Industry patterns further reinforce this contrast. Capital-intensive sectors such as manufacturing, transport, and construction operated with higher leverage but maintained adequate liquidity. Information technology, health care, and professional services showed lower debt exposure and relatively stable performance.
+
+The relationship between liquidity and profitability reveals distinct recovery structures. German firms displayed steadier, more coordinated financial adjustment. Swedish firms exhibited greater internal divergence, with stronger volatility and evidence of K-shaped dynamics in several sectors.
+
+Overall, neither country experienced a systemic liquidity crisis, and corporate stability was preserved. The findings indicate that financial resilience during crisis periods depends not only on internal balance-sheet management but also on institutional settings and policy frameworks. Germany’s coordinated fiscal interventions promoted structural stability, while Sweden’s more flexible corporate environment enabled adaptive but more heterogeneous recovery paths.
+
+## References
+
+The materials used for this report are:
+
+-   Bureau van Dijk.
+    (2025).
+    OSIRIS \[Data set: Germany and Sweden subset\].
+    Bureau van Dijk – A Moody’s Analytics Company.
+    https://www.bvdinfo.com/en-gb/our-products/data/international/osiris
+
+-   **Tidyverse:** Wickham H, Averick M, Bryan J, Chang W, McGowan LD, François R, Grolemund G, Hayes A, Henry L, Hester J, Kuhn M, Pedersen TL, Miller E, Bache SM, Müller K, Ooms J, Robinson D, Seidel DP, Spinu V, Takahashi K, Vaughan D, Wilke C, Woo K, Yutani H (2019).
+    “Welcome to the tidyverse.” *Journal of Open Source Software*, *4*(43), 1686.
+    doi:10.21105/joss.01686 <https://doi.org/10.21105/joss.01686>.
+
+-   **Conflicted:** Wickham H (2023).
+    *conflicted: An Alternative Conflict Resolution Strategy*.
+    doi:10.32614/CRAN.package.conflicted <https://doi.org/10.32614/CRAN.package.conflicted>, R package version 1.2.0, <https://CRAN.R-project.org/package=conflicted>.
+
+-   **Dplyr:** Wickham H, François R, Henry L, Müller K, Vaughan D (2023).
+    *dplyr: A Grammar of Data Manipulation*.
+    doi:10.32614/CRAN.package.dplyr <https://doi.org/10.32614/CRAN.package.dplyr>, R package version 1.1.4, <https://CRAN.R-project.org/package=dplyr>.
+
+-   **Stringr:** Wickham H (2025).
+    *stringr: Simple, Consistent Wrappers for Common String Operations*.
+    doi:10.32614/CRAN.package.stringr <https://doi.org/10.32614/CRAN.package.stringr>, R package version 1.5.2, <https://CRAN.R-project.org/package=stringr>.
+
+-   **Janitor:** Firke S (2024).
+    *janitor: Simple Tools for Examining and Cleaning Dirty Data*.
+    doi:10.32614/CRAN.package.janitor <https://doi.org/10.32614/CRAN.package.janitor>, R package version 2.2.1, <https://CRAN.R-project.org/package=janitor>.
+
+-   **Skimr:** Waring E, Quinn M, McNamara A, Arino de la Rubia E, Zhu H, Ellis S (2025).
+    *skimr: Compact and Flexible Summaries of Data*.
+    doi:10.32614/CRAN.package.skimr <https://doi.org/10.32614/CRAN.package.skimr>, R package version 2.2.1, <https://CRAN.R-project.org/package=skimr>.
+
+-   **Tsibble:** Wang, E, D Cook, and RJ Hyndman (2020).
+    A new tidy data structure to support exploration and modeling of temporal data, Journal of Computational and Graphical Statistics, 29:3, 466-478, doi:10.1080/10618600.2019.1695624.
+
+-   **Knitr:** Xie Y (2025).
+    *knitr: A General-Purpose Package for Dynamic Report Generation in R*.
+    R package version 1.50, <https://yihui.org/knitr/>.
+
+    Yihui Xie (2015) Dynamic Documents with R and knitr.
+    2nd edition.
+    Chapman and Hall/CRC.
+    ISBN 978-1498716963
+
+    Yihui Xie (2014) knitr: A Comprehensive Tool for Reproducible Research in R.
+    In Victoria Stodden, Friedrich Leisch and Roger D. Peng, editors, Implementing Reproducible Computational Research.
+    Chapman and Hall/CRC.
+    ISBN 978-1466561595
+
+-   **Naniar:** Tierney N, Cook D (2023).
+    “Expanding Tidy Data Principles to Facilitate Missing Data Exploration, Visualization and Assessment of Imputations.” *Journal of Statistical Software*, *105*(7), 1-31.
+    doi:10.18637/jss.v105.i07 <https://doi.org/10.18637/jss.v105.i07>.
+
+-   **Patchwork:** Pedersen T (2025).
+    *patchwork: The Composer of Plots*.
+    doi:10.32614/CRAN.package.patchwork <https://doi.org/10.32614/CRAN.package.patchwork>, R package version 1.3.2, <https://CRAN.R-project.org/package=patchwork>.
+
+-   **Plotly:** C. Sievert.
+    Interactive Web-Based Data Visualization with R, plotly, and shiny.
+    Chapman and Hall/CRC Florida, 2020.
+
+-   **tsibbletalk:** Wang E, Cook D (2020).
+    *tsibbletalk: Interactive Graphics for Tsibble Objects*.
+    doi:10.32614/CRAN.package.tsibbletalk <https://doi.org/10.32614/CRAN.package.tsibbletalk>, R package version 0.1.0, <https://CRAN.R-project.org/package=tsibbletalk>.
+
+-   **Feasts:** O'Hara-Wild M, Hyndman R, Wang E (2025).
+    *feasts: Feature Extraction and Statistics for Time Series*.
+    doi:10.32614/CRAN.package.feasts <https://doi.org/10.32614/CRAN.package.feasts>, R package version 0.4.2, <https://CRAN.R-project.org/package=feasts>.
+
+-   **Broom:** Robinson D, Hayes A, Couch S (2025).
+    *broom: Convert Statistical Objects into Tidy Tibbles*.
+    doi:10.32614/CRAN.package.broom <https://doi.org/10.32614/CRAN.package.broom>, R package version 1.0.9, <https://CRAN.R-project.org/package=broom>.
+
+-   **Purrr:** Wickham H, Henry L (2025).
+    *purrr: Functional Programming Tools*.
+    doi:10.32614/CRAN.package.purrr <https://doi.org/10.32614/CRAN.package.purrr>, R package version 1.1.0, <https://CRAN.R-project.org/package=purrr>.
+
+-   **Cassowaryr:** L. Wilkinson, A. Anand and R.
+    Grossman, Graph-theoretic scagnostics, IEEE Symposium on Information Visualization, 2005.
+    INFOVIS 2005., 2005, pp. 157-164, doi: 10.1109/INFVIS.2005.1532142.
+
+    L. Wilkinson and G.
+    Wills (2008) Scagnostics Distributions, Journal of Computational and Graphical Statistics, 17(2), pp 473-491, doi:10.1198/106186008X320465
+
+    K. Grimm, Kennzahlenbasierte Grafikauswahl, doctoral thesis, Universitat Augsburg, 2016.
+
+    H. Mason, Lee, S., Laa, U.
+    and Cook, D.
+
+    (2022) cassowaryr: Compute Scagnostics on Pairs of Numeric Variables in a Data Set. R package version 2.0.0. https://CRAN.R-project.org/package=cassowary
+
+-   **Gganimate:** Pedersen T, Robinson D (2025).
+    *gganimate: A Grammar of Animated Graphics*.
+    doi:10.32614/CRAN.package.gganimate <https://doi.org/10.32614/CRAN.package.gganimate>, R package version 1.0.11, <https://CRAN.R-project.org/package=gganimate>.
+
+-   **Gifski:** Ooms J, Kornel Lesiński, Authors of the dependency Rust crates (2025).
+    *gifski: Highest Quality GIF Encoder*.
+    doi:10.32614/CRAN.package.gifski <https://doi.org/10.32614/CRAN.package.gifski>, R package version 1.32.0-2, <https://CRAN.R-project.org/package=gifski>.
+
+-   **KableExtra:** Zhu H (2024).
+    *kableExtra: Construct Complex Table with 'kable' and Pipe Syntax*.
+    doi:10.32614/CRAN.package.kableExtra <https://doi.org/10.32614/CRAN.package.kableExtra>, R package version 1.4.0, <https://CRAN.R-project.org/package=kableExtra>.
+
+-   **Ggplot2:** H. Wickham.
+    ggplot2: Elegant Graphics for Data Analysis.
+    Springer-Verlag New York, 2016.
+
+-   **Scales:** Wickham H, Pedersen T, Seidel D (2025).
+    *scales: Scale Functions for Visualization*.
+    doi:10.32614/CRAN.package.scales <https://doi.org/10.32614/CRAN.package.scales>, R package version 1.4.0, <https://CRAN.R-project.org/package=scales>.
+
+-   **Tidyr:** Wickham H, Vaughan D, Girlich M (2024).
+    *tidyr: Tidy Messy Data*.
+    doi:10.32614/CRAN.package.tidyr <https://doi.org/10.32614/CRAN.package.tidyr>, R package version 1.3.1, <https://CRAN.R-project.org/package=tidyr>.
+
+-   **Ggrepel:** Slowikowski K (2024).
+    *ggrepel: Automatically Position Non-Overlapping Text Labels with 'ggplot2'*.
+    doi:10.32614/CRAN.package.ggrepel <https://doi.org/10.32614/CRAN.package.ggrepel>, R package version 0.9.6, <https://CRAN.R-project.org/package=ggrepel>.
+
+-   **ViridisLite:** Simon Garnier, Noam Ross, Robert Rudis, Antônio P. Camargo, Marco Sciaini, and Cédric Scherer (2023).
+    viridis(Lite) - Colorblind-Friendly Color Maps for R.
+    viridisLite package version 0.4.2.
+
+-   The Associated Press.
+    (2020).
+    Europe braces for next wave of coronavirus pandemic in Berlin.
+    AP News.
+    https://apnews.com/article/coronavirus-pandemic-health-europe-epidemics-berlin-b61de99739774c1f52b4ba6860054d6d
+    
+-   Godin, M. (2020). Sweden’s relaxed approach to the coronavirus could already be back-firing. Time. https://time.com/5817412/sweden-coronavirus/

@@ -1,0 +1,32 @@
+---
+title: "Corporate Financial Resilience During COVID-19"
+format: 
+    html:
+      css: "assignment.css"
+      theme: cerulean
+      page-layout: full
+---
+
+## Overview
+
+This project compares corporate financial adjustment patterns in Germany and Sweden between 2018 and 2021.  
+It evaluates profitability stability, leverage dynamics, liquidity preservation, and structural changes in firm-level financial relationships during the COVID-19 shock.
+
+---
+
+## Germany: Firm-Level Financial Adjustment During COVID-19
+
+This report investigates how German firms responded to the pandemic shock using firm-level financial data from 2018 to 2021. It examines profitability dispersion, leverage changes, liquidity preservation, and sectoral divergence across industries. While median profitability indicators remained broadly stable, firm-level variation increased significantly during 2020 to 2021, revealing uneven impact rather than systemic collapse.  
+The analysis also evaluates whether traditional liquidity and profitability dynamics weakened during peak uncertainty, providing insight into how German firms prioritised financial stability during crisis conditions.
+
+[Read Report 1: Germany](report1.qmd)
+
+---
+
+## Germany vs Sweden: Comparative Financial Resilience
+
+This report compares financial resilience patterns between Germany and Sweden during the COVID-19 period. Using firm-level data, it analyses profitability trends, leverage sensitivity, liquidity buffers, and structural shifts in the relationship between current ratio and return on assets.  
+Although both economies maintained overall financial stability, adjustment mechanisms differed.  
+German firms showed more coordinated balance-sheet responses, while Swedish firms exhibited greater dispersion and heterogeneous recovery patterns across industries. The comparative analysis highlights how institutional environments shape corporate financial adaptation under systemic stress.
+
+[Read Report 2: Germany VS Sweden](report2.qmd)

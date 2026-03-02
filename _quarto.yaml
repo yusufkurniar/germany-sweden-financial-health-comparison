@@ -1,0 +1,28 @@
+project:
+  type: website
+  output-dir: docs
+
+website:
+  title: "Financial Health of Firms During COVID-19"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+    right:
+      - href: report1.qmd
+        text: Germany
+      - href: report2.qmd
+        text: Germany vs Sweden
+
+format:
+  html:
+    theme: cosmo
+    toc: false
+    number-sections: true
+    code-fold: true
+    css: assignment.css
+
+execute:
+  echo: false
+  warning: false
+  message: false

@@ -146,7 +146,7 @@ details summary {
   h2 { font-size: 1.3em; }
 }
 
-/* === TABSET STYLING === */
+/* Table styling */
 .panel-tabset {
   margin-top: 1.2rem;
   border: 1px solid #dce4ec;
@@ -163,4 +163,24 @@ details summary {
 .nav-tabs > li.active > a {
   background-color: #e7f1fa;
   border-color: #d0e2f2;
+}
+
+/* Fix overlap title */
+body {
+  padding-top: 70px;
+}
+
+/* Extra space the title block */
+.quarto-title-block {
+  padding-top: 0.5rem;
+}
+
+body {
+  padding-top: 4.25rem;
+}
+
+@media (max-width: 992px) {
+  body {
+    padding-top: 5.25rem;
+  }
 }
